@@ -1,0 +1,14 @@
+{
+    "editor.codeActionsOnSave": {
+        "source.fixAll.eslint": "explicit"
+    },
+    "search.exclude": {
+        "dist": true
+    },
+    "[vue][vuex][javascript][json][markdown][css][typescript]": {
+        "editor.defaultFormatter": "esbenp.prettier-vscode"
+    },
+    "npm.packageManager": "pnpm",
+    "files.insertFinalNewline": true,
+    "files.trimTrailingWhitespace": true
+}

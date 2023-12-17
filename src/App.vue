@@ -9,5 +9,8 @@ onShow(() => {
 onHide(() => {
   console.log("App Hide");
 });
+uni.onError((err) => {
+
+});
 </script>
 <style></style>

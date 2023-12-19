@@ -236,21 +236,20 @@ export function parseHTML(html: string): ItemAttrs[] {
 	}
 
 	function parseScript(type: keyof typeof scriptMap, item: ItemAttrsScript) {
-		const scriptMatch = new RegExp(`^([^(?:<\\/${type})]*)<\\/${type}[^>]*>`);
-		const result = html.match(scriptMatch);
-		console.log(html);
-		console.log(result);
-
-		if (!result) {
-			throw new Error(`Tag ${type} not close tag`);
+		const scriptMatch = new RegExp(`^<\\/${type}[^>]*>`);
+		let text = '';
+		while (!scriptMatch.test(html)) {
+			text += html.slice(0, 1);
+			advance(1);
 		}
-		item.children.push({
-			type: 'text',
-			text: result[1],
-			start: index,
-			end: index + result[1].length,
-		});
-		advance(result[1].length);
+		if (text.length > 0) {
+			item.children.push({
+				type: 'text',
+				text,
+				start: index,
+				end: index + text.length,
+			});
+		}
 	}
 
 	function parseStartTag() {
@@ -310,14 +309,6 @@ export function parseHTML(html: string): ItemAttrs[] {
 		const isScript = tagName in scriptMap;
 
 		const item: ItemAttrsScript | ItemAttrsTag = {
-			tag: tagName,
-			lowerCasedTag: tagName.toLowerCase(),
-			attrs: attrs,
-			start: match.start,
-			end: match.end,
-			startTagIndex: match.start,
-			endTagIndex: -1,
-			children: [],
 			...(isScript
 				? {
 						type: 'script',
@@ -326,6 +317,14 @@ export function parseHTML(html: string): ItemAttrs[] {
 				: {
 						type: 'tag',
 					}),
+			tag: tagName,
+			lowerCasedTag: tagName.toLowerCase(),
+			attrs: attrs,
+			start: match.start,
+			end: match.end,
+			startTagIndex: match.start,
+			endTagIndex: -1,
+			children: [],
 		};
 		if (stack.length > 0) {
 			const target = stack[stack.length - 1];

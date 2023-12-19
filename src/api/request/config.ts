@@ -1,7 +1,5 @@
 import { getDomainInfo } from '../domain';
 
-export const TARGET = 'dingdian';
-
 /**
  * header头数据
  **/
@@ -12,7 +10,7 @@ const HEADER = {
 /**
  * 全局环境
  **/
-export const URL = getDomainInfo(TARGET, 'domain');
+export const URL = getDomainInfo(NetRequest.TARGET, 'domain');
 
 /**
  * 请求参数处理

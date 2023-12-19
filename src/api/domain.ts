@@ -1,10 +1,3 @@
-const interfaceInfo = {
-	dingdian: {
-		domain: 'https://m.ytryx.com/',
-		search: 'search',
-	},
-} as const;
-
 type ExtractInterfaceName<T extends object> = keyof T;
 
 type ExtractInterfaceProperty<T extends object, K extends keyof T> = keyof T[K];

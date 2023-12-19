@@ -16,7 +16,7 @@ search('斗破苍穹')
 		console.log(res);
 		const data = String(res);
 		const parse = parseHTML(data)[0];
-		console.log(parse.type === 'tag' ? parse.children : parse.text);
+		console.log(parse.type === 'tag' || parse.type === 'script' ? parse.children : parse.text);
 	})
 	.catch(err => {
 		console.error(err);

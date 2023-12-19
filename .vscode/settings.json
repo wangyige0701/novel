@@ -6,7 +6,8 @@
         "dist": true
     },
     "[vue][vuex][javascript][json][markdown][css][typescript]": {
-        "editor.defaultFormatter": "esbenp.prettier-vscode"
+        "editor.defaultFormatter": "esbenp.prettier-vscode",
+        "editor.formatOnSave": true
     },
     "npm.packageManager": "pnpm",
     "files.insertFinalNewline": true,

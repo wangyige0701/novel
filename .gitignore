@@ -21,3 +21,5 @@ dist
 *.sw?
 
 pnpm-lock.yaml
+**/@types/auto-import.d.ts
+test/**

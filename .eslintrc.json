@@ -27,6 +27,7 @@
     "ignorePatterns": [
         "dist",
         "**/*.d.ts",
-        "test"
+        "test",
+        "**/parseHtml.ts"
     ]
 }

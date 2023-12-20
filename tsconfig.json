@@ -1,8 +1,6 @@
 {
-  "extends": "@vue/tsconfig/tsconfig.json",
+  "extends": "./tsconfig.basic.json",
   "compilerOptions": {
-    "ignoreDeprecations": "5.0",
-    "verbatimModuleSyntax": false,
     "sourceMap": true,
     "baseUrl": ".",
     "strict": true,

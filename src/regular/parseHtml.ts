@@ -1,3 +1,5 @@
+import { toFreeze } from '@/utils/freeze';
+
 function makeMap(str: string, expectsLowerCase?: boolean): (key: string) => true | void {
 	const map = Object.create(null);
 	const list: Array<string> = str.split(',');
@@ -69,44 +71,12 @@ const scriptMap = {
 	style: 'css',
 } as const;
 
-type ItemAttrsText = {
-	type: 'text';
-	text: string;
-	start: number;
-	end: number;
-};
-
-type ItemAttrsTagOrigin = {
-	tag: string;
-	lowerCasedTag: string;
-	attrs: {
-		name: string;
-		value: string;
-	}[];
-	start: number;
-	end: number;
-	startTagIndex: number;
-	endTagIndex: number;
-	children: ItemAttrs[];
-};
-
-type ItemAttrsTag = ItemAttrsTagOrigin & {
-	type: 'tag';
-};
-
-type ItemAttrsScript = ItemAttrsTagOrigin & {
-	type: 'script';
-	script: 'js' | 'css';
-};
-
-type ItemAttrs = ItemAttrsText | ItemAttrsTag | ItemAttrsScript;
-
 /**
  * 解析html，from: vue
  */
-export function parseHTML(html: string): ItemAttrs[] {
+export function parseHTML(html: string, freeze: boolean = true): HTMLParse[] {
 	const stack: any[] = [];
-	const result: ItemAttrs[] = [];
+	const result: HTMLParse[] = [];
 	let index = 0;
 	let last: string, lastTag: string;
 	while (html) {
@@ -190,12 +160,14 @@ export function parseHTML(html: string): ItemAttrs[] {
 			if (text) {
 				const completeText = text.trim();
 				if (completeText && stack.length > 0) {
-					stack[stack.length - 1].children.push({
+					const textTarget: HTMLParseText = {
 						type: 'text',
 						text: completeText,
 						start: index,
 						end: index + completeText.length,
-					});
+					};
+					toFreeze(textTarget, freeze);
+					stack[stack.length - 1].children.push(textTarget);
 				}
 				advance(text.length);
 			}
@@ -235,7 +207,7 @@ export function parseHTML(html: string): ItemAttrs[] {
 		html = html.substring(n);
 	}
 
-	function parseScript(type: keyof typeof scriptMap, item: ItemAttrsScript) {
+	function parseScript(type: keyof typeof scriptMap, item: HTMLParseScript) {
 		const scriptMatch = new RegExp(`^<\\/${type}[^>]*>`);
 		let text = '';
 		while (!scriptMatch.test(html)) {
@@ -243,12 +215,14 @@ export function parseHTML(html: string): ItemAttrs[] {
 			advance(1);
 		}
 		if (text.length > 0) {
-			item.children.push({
+			const textTarget: HTMLParseText = {
 				type: 'text',
 				text,
 				start: index,
 				end: index + text.length,
-			});
+			};
+			toFreeze(textTarget, freeze);
+			item.children.push(textTarget);
 		}
 	}
 
@@ -308,7 +282,7 @@ export function parseHTML(html: string): ItemAttrs[] {
 
 		const isScript = tagName in scriptMap;
 
-		const item: ItemAttrsScript | ItemAttrsTag = {
+		const item: HTMLParseScript | HTMLParseTag = {
 			...(isScript
 				? {
 						type: 'script',
@@ -338,7 +312,7 @@ export function parseHTML(html: string): ItemAttrs[] {
 			parseEndTag(tagName, void 0, void 0, true);
 		}
 		if (isScript) {
-			parseScript(tagName as 'script' | 'style', item as ItemAttrsScript);
+			parseScript(tagName as 'script' | 'style', item as HTMLParseScript);
 		}
 	}
 
@@ -365,6 +339,8 @@ export function parseHTML(html: string): ItemAttrs[] {
 				// 单标签，并且栈内数据不匹配处理
 				if (notCloseTagTarget && isUnary) {
 					notCloseTagTarget.endTagIndex = notCloseTagTarget.end;
+					// 设置完结束索引后再冻结对象
+					toFreeze(notCloseTagTarget, freeze);
 					const notCloseTagTargetChildren = notCloseTagTarget.children.splice(0);
 					const insert = stack[pos - 1];
 					if (insert) {
@@ -375,6 +351,7 @@ export function parseHTML(html: string): ItemAttrs[] {
 			const correctCloseTarget = stack[pos];
 			if (correctCloseTarget) {
 				correctCloseTarget.endTagIndex = end;
+				toFreeze(correctCloseTarget, freeze);
 			}
 		} else {
 			// If no tag name is provided, clean shop
@@ -387,5 +364,5 @@ export function parseHTML(html: string): ItemAttrs[] {
 			lastTag = pos && stack[pos - 1].tag;
 		}
 	}
-	return result;
+	return toFreeze(result, freeze);
 }

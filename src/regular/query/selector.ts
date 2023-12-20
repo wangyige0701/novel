@@ -1,5 +1,5 @@
 import { regexpMatchWithNoAdvance } from '@/utils/regexp';
-import { AttributeData, MatchResult } from '../@types/query';
+import { AttributeData, MatchResult, SelectorInfo } from '../@types/query';
 import { Combinators } from './combinator';
 import { getAttributeDatas, getDataInQuote, nameMatch, split } from './match';
 
@@ -59,12 +59,23 @@ function handleSelectorType(matchName: string, data: MatchResult) {
 		const selectorVal = idVal || classVal || tagVal;
 		const innerData = data.selector.find(item => item.type === typeVal);
 		if (!innerData) {
-			data.selector.push({
-				type: typeVal,
-				name: [selectorVal],
-			});
+			const item: SelectorInfo =
+				typeVal === 'tag'
+					? {
+							type: typeVal,
+							name: selectorVal,
+						}
+					: {
+							type: typeVal,
+							name: [selectorVal],
+						};
+			data.selector.push(item);
 		} else {
-			innerData.name.push(selectorVal);
+			if (innerData.type === 'tag') {
+				innerData.name = selectorVal;
+			} else {
+				innerData.name.push(selectorVal);
+			}
 		}
 		if (!!attrs) {
 			// 属性判断
@@ -101,13 +112,13 @@ export function handleSelector(selector: string): MatchResult[] {
 			continue;
 		}
 		// 组合器
-		let combinators = (item[1] || '').trim();
+		let combinator = (item[1] || '').trim();
 		let matchName = item[2].trim();
 		const localData: MatchResult = {
 			...(result.length > 0
 				? {
-						combinators:
-							combinators in combinatorTypes ? combinatorTypes[combinators] : Combinators.DESCENDANT,
+						combinator:
+							combinator in combinatorTypes ? combinatorTypes[combinator] : Combinators.DESCENDANT,
 					}
 				: {}),
 			selector: [],

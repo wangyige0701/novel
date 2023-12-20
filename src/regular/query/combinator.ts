@@ -39,6 +39,7 @@ export enum Combinators {
 	 * <div>
 	 * 	<a></a>
 	 * 	<b><!-- this --></b>
+	 * 	<b></b>
 	 * </div>
 	 * ```
 	 */

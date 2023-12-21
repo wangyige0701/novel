@@ -1,11 +1,11 @@
-type HTMLParseText = {
+export type HTMLParseText = {
 	type: 'text';
 	text: string;
 	start: number;
 	end: number;
 };
 
-type HTMLParseTagCommon = {
+export type HTMLParseTagCommon = {
 	tag: string;
 	lowerCasedTag: string;
 	attrs: {
@@ -19,13 +19,13 @@ type HTMLParseTagCommon = {
 	children: HTMLParse[];
 };
 
-type HTMLParseTag = HTMLParseTagCommon & {
+export type HTMLParseTag = HTMLParseTagCommon & {
 	type: 'tag';
 };
 
-type HTMLParseScript = HTMLParseTagCommon & {
+export type HTMLParseScript = HTMLParseTagCommon & {
 	type: 'script';
 	script: 'js' | 'css';
 };
 
-type HTMLParse = HTMLParseText | HTMLParseTag | HTMLParseScript;
+export type HTMLParse = HTMLParseText | HTMLParseTag | HTMLParseScript;

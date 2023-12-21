@@ -22,4 +22,4 @@ dist
 
 pnpm-lock.yaml
 **/@types/auto-import.d.ts
-test/**
+test

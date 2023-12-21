@@ -6,7 +6,6 @@ export default defineConfig({
 	plugins: [
 		AutoImport({
 			imports: ['vue'],
-			dirs: ['./src/api', './src/config'],
 			dts: './src/@types/auto-import.d.ts',
 		}),
 	],

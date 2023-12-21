@@ -1,3 +1,4 @@
+import { HTMLParse, HTMLParseTag } from '../@types/parse';
 import { SelectPosition, SelectorInfo } from '../@types/query';
 import { Combinators } from './combinator';
 import { handleSelector } from './selector';

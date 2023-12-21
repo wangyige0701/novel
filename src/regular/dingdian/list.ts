@@ -8,7 +8,7 @@ type ListTarget = {
 	author: HTMLParseTag | undefined;
 };
 
-type ReturnVal = { name: string; author: string; href: string };
+type ListReturnVal = { name: string; author: string; href: string };
 
 const listSelector = 'div.container > div.row > div.layout.layout2.layout-co18 > ul.txt-list.txt-list-row5 > li';
 
@@ -50,7 +50,7 @@ function getHTMLText(data: ListTarget) {
  * @param sort desc - 降序；  asc - 升序
  * @returns
  */
-function mergeByAuthor(list: ReturnVal[], sort: 'desc' | 'asc' | undefined = void 0) {
+function mergeByAuthor(list: ListReturnVal[], sort: 'desc' | 'asc' | undefined = void 0) {
 	const nameList: string[] = [];
 	const result = list.reduce(
 		(prev, curr) => {
@@ -65,7 +65,7 @@ function mergeByAuthor(list: ReturnVal[], sort: 'desc' | 'asc' | undefined = voi
 			}
 			return prev;
 		},
-		<Array<{ author: string; value: ReturnVal[] }>>[],
+		<Array<{ author: string; value: ListReturnVal[] }>>[],
 	);
 	if (sort === 'asc' || sort === 'desc') {
 		// asc: 升序，desc: 降序
@@ -86,7 +86,7 @@ export function getListData(
 	searchContent: string,
 	merge: true | 'desc' | 'asc',
 ): Promise<ReturnType<typeof mergeByAuthor>>;
-export function getListData(searchContent: string, merge?: undefined): Promise<ReturnVal[]>;
+export function getListData(searchContent: string, merge?: undefined): Promise<ListReturnVal[]>;
 export function getListData(searchContent: string, merge: true | 'desc' | 'asc' | undefined = void 0) {
 	return new Promise(resolve => {
 		search(searchContent)
@@ -94,7 +94,7 @@ export function getListData(searchContent: string, merge: true | 'desc' | 'asc' 
 				return parseHTMLString(String(res));
 			})
 			.then(data => {
-				return <ReturnVal[]>data.map(item => getHTMLText(item)).filter(Boolean);
+				return <ListReturnVal[]>data.map(item => getHTMLText(item)).filter(Boolean);
 			})
 			.then(data => {
 				if (merge === true || merge === 'desc' || merge === 'asc') {

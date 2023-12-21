@@ -1,7 +1,21 @@
 import type { HTMLParseTag } from '@/core/@types/parse';
-import { home } from '@/api/dingdian/home';
+import { suffixWithPathParam } from '@/api/dingdian/suffix';
 import { parseHTML, query, queryText } from '@/core';
 import log from '@/log';
+
+type HomePageReturnVal = {
+	novelName: string;
+	author: {
+		name: string;
+		href: string | undefined;
+	};
+	introduction: string;
+	novelType: string;
+	chaptersList: {
+		href: string | undefined;
+		name: string;
+	}[];
+};
 
 /** 信息容器定位 */
 const messageBoxSelector = 'div.container > div.row.row-detail > div.layout.layout-col1 > div.detail-box > div.info';
@@ -48,12 +62,12 @@ function parseGetAllChapterPath(html: string): string | undefined {
  * @param html
  * @returns
  */
-function getAllChapters(html: string): undefined | ReturnType<typeof home> {
+function getAllChapters(html: string): undefined | ReturnType<typeof suffixWithPathParam> {
 	const path = parseGetAllChapterPath(html);
 	if (!path) {
 		return;
 	}
-	return home(path);
+	return suffixWithPathParam(path);
 }
 
 /**
@@ -61,11 +75,13 @@ function getAllChapters(html: string): undefined | ReturnType<typeof home> {
  * @param html
  * @returns
  */
-function handleHomePageHTML(html: string) {
+function handleHomePageHTML(html: string): HomePageReturnVal {
 	const parse = parseHTML(html);
 	const body = query(parse).$body();
 	const novelName = queryText(body.$(novelNameSelector));
-	const authorName = queryText(body.$(authorNameSelector));
+	const authorInfo = body.$(authorNameSelector);
+	const authorName = queryText(authorInfo);
+	const authorHref = authorInfo?.attrs.find(a => a.name === 'href')?.value;
 	const introduction = queryText(body.$(introductionSelector));
 	const novelType = queryText(body.$(novelTypeSelector));
 	const allChapters = body.$all(allChaptersSeelctor);
@@ -74,13 +90,16 @@ function handleHomePageHTML(html: string) {
 		const href = (item as HTMLParseTag).attrs.find(a => a.name === 'href')?.value;
 		const chapterName = queryText(item);
 		chaptersList.push({
-			hreaf: href,
+			href: href,
 			name: chapterName,
 		});
 	}
 	return {
 		novelName,
-		authorName,
+		author: {
+			name: authorName,
+			href: authorHref,
+		},
 		introduction,
 		novelType,
 		chaptersList,
@@ -92,9 +111,9 @@ function handleHomePageHTML(html: string) {
  * @param homeId
  * @returns
  */
-export function getHomepageData(homeId: string) {
+export function getHomepageData(homeId: string): Promise<HomePageReturnVal> {
 	return new Promise(resolve => {
-		home(homeId)
+		suffixWithPathParam(homeId)
 			.then(data => {
 				return getAllChapters(String(data));
 			})

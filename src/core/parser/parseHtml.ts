@@ -1,5 +1,5 @@
+import type { HTMLParse, HTMLParseScript, HTMLParseTag, HTMLParseText } from '../@types/parse';
 import { toFreeze } from '@/utils/freeze';
-import { HTMLParse, HTMLParseScript, HTMLParseTag, HTMLParseText } from '../@types/parse';
 
 function makeMap(str: string, expectsLowerCase?: boolean): (key: string) => true | void {
 	const map = Object.create(null);

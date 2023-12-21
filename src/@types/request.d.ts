@@ -12,7 +12,7 @@ interface RequestOptions {
 
 type RequestOptionsUsed = Omit<RequestOptions, 'method'>;
 
-type AllRequestFunc = ['get', 'post', 'Delete', 'put', 'uploadFile', 'downloadFile'];
+type AllRequestFunc = ['Get', 'Post', 'Delete', 'Put', 'UploadFile', 'DownloadFile'];
 
 type RequestList = {
 	[key: string]: UniNamespace.RequestTask | UniNamespace.DownloadTask | UniNamespace.UploadTask;

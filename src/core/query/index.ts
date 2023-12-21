@@ -1,5 +1,5 @@
-import { HTMLParse, HTMLParseTag } from '../@types/parse';
-import { SelectPosition, SelectorInfo } from '../@types/query';
+import type { HTMLParse, HTMLParseTag, HTMLParseText } from '../@types/parse';
+import type { SelectPosition, SelectorInfo } from '../@types/query';
 import { Combinators } from './combinator';
 import { handleSelector } from './selector';
 
@@ -7,7 +7,7 @@ type TravselCalback = (tag: HTMLParseTag, index: number, parent: HTMLParse[]) =>
 
 /**
  * 遍历树
- * @param deep
+ * @param deep 是否遍历整棵树，为false则只遍历一层
  * @param d
  * @param callback
  * @param parent
@@ -15,15 +15,15 @@ type TravselCalback = (tag: HTMLParseTag, index: number, parent: HTMLParse[]) =>
  */
 function _traversal(
 	deep: boolean,
-	d: HTMLParse[],
+	data: HTMLParse[],
 	callback: TravselCalback,
 	parent?: HTMLParse[],
 ): undefined | SelectPosition {
 	const queue: HTMLParseTag[] = [];
 	let index = 0; // 只在tag处自增
-	for (const item of d) {
+	for (const item of data) {
 		if (item.type === 'tag') {
-			const parentVal = parent ? parent : d;
+			const parentVal = parent ? parent : data;
 			if (callback(item, index, parentVal)) {
 				return {
 					parent: parentVal,
@@ -57,9 +57,9 @@ function _traversal(
  * @param callback
  * @returns
  */
-function _traversal_all(deep: boolean, d: HTMLParse[], callback: TravselCalback): SelectPosition[] {
+function _traversal_all(deep: boolean, data: HTMLParse[], callback: TravselCalback): SelectPosition[] {
 	const result: SelectPosition[] = [];
-	_traversal(true, d, (tag, index, parent) => {
+	_traversal(deep, data, (tag, index, parent) => {
 		if (callback(tag, index, parent)) {
 			result.push({
 				parent,
@@ -187,7 +187,7 @@ function handleCombinators(
 		params = [parent, (tag, i) => i === index + 1 && handleSelectorMatched(tag, selector)];
 	} else if (combinator === Combinators.SUBSEQUENT_SIBLING) {
 		// 后代兄弟
-		params = [parent, (tag, i) => i >= index && handleSelectorMatched(tag, selector)];
+		params = [parent, (tag, i) => i > index && handleSelectorMatched(tag, selector)];
 	}
 	if (params) {
 		return all ? useFunc(...params, true) : useFunc(...params, false);
@@ -204,50 +204,44 @@ function select(data: HTMLParse[], selectorStr: string, all: true): SelectPositi
 function select(data: HTMLParse[], selectorStr: string, all?: false): SelectPosition | undefined;
 function select(data: HTMLParse[], selectorStr: string, all: boolean = false) {
 	const parseResult = handleSelector(selectorStr);
-	let matchSuccess: SelectPosition | SelectPosition[] | undefined = void 0;
+	let matchSuccess: SelectPosition[] = [];
+	let index = 0;
 	for (const parse of parseResult) {
+		index++;
 		const { combinator, selector } = parse;
 		if (!combinator) {
 			// 开始
-			const target = all
-				? _deep(data, tag => handleSelectorMatched(tag, selector), true)
-				: _deep(data, tag => handleSelectorMatched(tag, selector));
-			if (target) {
-				matchSuccess = target;
-			} else {
-				return;
-			}
+			matchSuccess.push(..._deep(data, tag => handleSelectorMatched(tag, selector), true));
 			continue;
 		}
-		if (!matchSuccess) {
+		if (matchSuccess.length === 0) {
 			return;
 		}
-		if (Array.isArray(matchSuccess)) {
-			let result: SelectPosition[] = [];
-			for (const matchItem of matchSuccess) {
-				result.push(
-					...handleCombinators(
-						combinator,
-						selector,
-						matchItem.target,
-						matchItem.index,
-						matchItem.parent,
-						true,
-					),
-				);
+		let record: SelectPosition[] = [];
+		for (const matchItem of matchSuccess) {
+			let result = handleCombinators(
+				combinator,
+				selector,
+				matchItem.target,
+				matchItem.index,
+				matchItem.parent,
+				true,
+			);
+			// 最后一层，如果已经匹配到了结果则直接返回
+			if (!all && index === parseResult.length && result.length > 0) {
+				return result[0];
 			}
-			matchSuccess = result;
-			continue;
+			record.push(...result);
 		}
-		matchSuccess = handleCombinators(
-			combinator,
-			selector,
-			matchSuccess.target,
-			matchSuccess.index,
-			matchSuccess.parent,
-		);
+		matchSuccess.splice(0, matchSuccess.length, ...record);
 	}
-	return matchSuccess;
+	if (matchSuccess.length > 0) {
+		if (all) {
+			return matchSuccess;
+		}
+		return matchSuccess[0];
+	}
+	return;
 }
 
 /**
@@ -258,6 +252,28 @@ function select(data: HTMLParse[], selectorStr: string, all: boolean = false) {
 function positionToBody(data: HTMLParse[]): HTMLParse[] {
 	const result = _deep(data, tag => tag.tag === 'body');
 	return result ? [result.target] : [];
+}
+
+/**
+ * 获取当前元素的文本数据
+ * @param data
+ * @returns
+ */
+export function queryText(data: HTMLParse | undefined) {
+	if (!data) {
+		return '';
+	}
+	if (data.type === 'text') {
+		return data.text;
+	}
+	if (data.children.length === 0) {
+		return '';
+	}
+	const children = data.children.find(item => item.type === 'text');
+	if (!children) {
+		return '';
+	}
+	return (children as HTMLParseText).text || '';
 }
 
 /**
@@ -277,8 +293,9 @@ export function query(data: HTMLParse[] | HTMLParse) {
 			 * @param selector 选择器字符
 			 * @returns
 			 */
-			$: function (selector: string) {
-				return select(data, selector)?.target;
+			$: function (selector: string): HTMLParseTag | undefined {
+				const target = select(data, selector);
+				return target ? target.target : void 0;
 			},
 			/**
 			 * 匹配所有元素
@@ -291,6 +308,13 @@ export function query(data: HTMLParse[] | HTMLParse) {
 						return item.target;
 					})
 					.filter(Boolean);
+			},
+			/**
+			 * 获取当前元素文本信息，如果传入数组，则获取第一个
+			 * @returns
+			 */
+			$text: function () {
+				return queryText(data[0]);
 			},
 		};
 	}

@@ -1,5 +1,5 @@
+import type { AttributeData, MatchResult, SelectorInfo } from '../@types/query';
 import { regexpMatchWithNoAdvance } from '@/utils/regexp';
-import { AttributeData, MatchResult, SelectorInfo } from '../@types/query';
 import { Combinators } from './combinator';
 import { getAttributeDatas, getDataInQuote, nameMatch, split } from './match';
 

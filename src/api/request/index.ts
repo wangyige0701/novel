@@ -12,12 +12,12 @@ export const request: RequestObject = {
 	/**
 	 * get请求
 	 **/
-	get: getRequest,
+	Get: getRequest,
 
 	/**
 	 * post请求
 	 **/
-	post: postRequest,
+	Post: postRequest,
 
 	/**
 	 * delete请求
@@ -27,15 +27,15 @@ export const request: RequestObject = {
 	/**
 	 * put请求
 	 **/
-	put: putRequest,
+	Put: putRequest,
 
 	/**
 	 * 文件上传请求
 	 **/
-	uploadFile: uploadFile,
+	UploadFile: uploadFile,
 
 	/**
 	 * 文件下载请求
 	 **/
-	downloadFile: downloadFile,
+	DownloadFile: downloadFile,
 };

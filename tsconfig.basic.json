@@ -16,7 +16,6 @@
       "incremental": true,
       "noFallthroughCasesInSwitch": true,
       "sourceMap": true,
-      "rootDir": "src",
       "useUnknownInCatchVariables": false
     }
   }

@@ -11,5 +11,9 @@
     },
     "npm.packageManager": "pnpm",
     "files.insertFinalNewline": true,
-    "files.trimTrailingWhitespace": true
+    "files.trimTrailingWhitespace": true,
+    "files.associations": {
+        "manifest.json": "jsonc",
+        "pages.json": "jsonc",
+    }
 }

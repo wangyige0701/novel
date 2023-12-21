@@ -1,5 +1,4 @@
-import { getDomainInfo } from '../domain';
-import { NetRequest } from '@/config';
+import { getInterfaceDataDefault } from '@/config';
 
 /**
  * header头数据
@@ -11,8 +10,26 @@ const HEADER = {
 /**
  * 全局环境
  **/
-export const URL = getDomainInfo(NetRequest.TARGET, 'domain');
+const URL = getInterfaceDataDefault('domain');
 
+/**
+ * header请求头的返回值整理
+ */
+function returnHeadreValue(header: any) {
+	if (!header) {
+		return HEADER;
+	} else {
+		debugger;
+		// 处理请求头
+		if (!header['content-type'] && !header['contentType']) {
+			header['content-type'] = HEADER['content-type'];
+		} else if (header['contentType']) {
+			header['content-type'] = header['contentType'];
+			delete header.contentType;
+		}
+		return header;
+	}
+}
 /**
  * 请求参数处理
  * @param data 请求参数
@@ -40,8 +57,9 @@ export function checkOptions(
 				data['url'] = data['base'] + data['url'];
 			}
 		}
-
-		data['url'] = URL + data['url']; // 完整路径
+		if (!data['url'].startsWith('http')) {
+			data['url'] = URL + data['url']; // 完整路径
+		}
 	}
 
 	if (!isFile) {
@@ -98,25 +116,6 @@ export function checkOptions(
 	};
 
 	return data;
-}
-
-/**
- * header请求头的返回值整理
- */
-function returnHeadreValue(header: any) {
-	if (!header) {
-		return HEADER;
-	} else {
-		debugger;
-		// 处理请求头
-		if (!header['content-type'] && !header['contentType']) {
-			header['content-type'] = HEADER['content-type'];
-		} else if (header['contentType']) {
-			header['content-type'] = header['contentType'];
-			delete header.contentType;
-		}
-		return header;
-	}
 }
 
 export function _uni_request(options: UniNamespace.RequestOptions) {

@@ -7,12 +7,19 @@
 
 <script setup lang="ts">
 import { getListData } from '@/regular/dingdian/list';
+import { getHomepageData } from '@/regular/dingdian/homepage';
 
 const req = ref('');
 
-getListData('斗破苍穹').then(res => {
-	console.log(res);
-});
+getListData('斗破苍穹', 'desc')
+	.then(res => {
+		console.log(res);
+		const href = res[0].value[3].href;
+		return getHomepageData(href);
+	})
+	.then(res => {
+		console.log(res);
+	});
 </script>
 
 <style lang="scss"></style>

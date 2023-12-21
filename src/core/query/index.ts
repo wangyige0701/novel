@@ -277,6 +277,22 @@ export function queryText(data: HTMLParse | undefined) {
 }
 
 /**
+ * 获取属性值
+ * @param data
+ * @param attr
+ * @returns
+ */
+export function queryAttr(data: HTMLParse | undefined, attr: string) {
+	if (!data) {
+		return '';
+	}
+	if (data.type === 'text') {
+		return '';
+	}
+	return data.attrs.find(item => item.name === attr)?.value || '';
+}
+
+/**
  * 通过解析树进行元素查找，每次只查找一个元素
  */
 export function query(data: HTMLParse[] | HTMLParse) {
@@ -315,6 +331,14 @@ export function query(data: HTMLParse[] | HTMLParse) {
 			 */
 			$text: function () {
 				return queryText(data[0]);
+			},
+			/**
+			 * 获取属性值
+			 * @param attr
+			 * @returns
+			 */
+			$attr: function (attr: string) {
+				return queryAttr(data[0], attr);
 			},
 		};
 	}

@@ -1,6 +1,6 @@
 import type { HTMLParseTag } from '@/core/@types/parse';
 import { suffixWithPathParam } from '@/api/dingdian/suffix';
-import { parseHTML, query, queryText } from '@/core';
+import { parseHTML, query, queryAttr, queryText } from '@/core';
 import log from '@/log';
 
 type HomePageReturnVal = {
@@ -50,11 +50,11 @@ function parseGetAllChapterPath(html: string): string | undefined {
 	if (!getAllChapter) {
 		return;
 	}
-	const target = getAllChapter.attrs.find(item => item.name === 'href');
+	const target = queryAttr(getAllChapter, 'href');
 	if (!target) {
 		return;
 	}
-	return target.value;
+	return target;
 }
 
 /**
@@ -81,13 +81,13 @@ function handleHomePageHTML(html: string): HomePageReturnVal {
 	const novelName = queryText(body.$(novelNameSelector));
 	const authorInfo = body.$(authorNameSelector);
 	const authorName = queryText(authorInfo);
-	const authorHref = authorInfo?.attrs.find(a => a.name === 'href')?.value;
+	const authorHref = queryAttr(authorInfo, 'href');
 	const introduction = queryText(body.$(introductionSelector));
 	const novelType = queryText(body.$(novelTypeSelector));
 	const allChapters = body.$all(allChaptersSeelctor);
 	const chaptersList = [];
 	for (const item of allChapters) {
-		const href = (item as HTMLParseTag).attrs.find(a => a.name === 'href')?.value;
+		const href = queryAttr(item as HTMLParseTag, 'href');
 		const chapterName = queryText(item);
 		chaptersList.push({
 			href: href,

@@ -1,4 +1,5 @@
 import { getDomainInfo } from '../domain';
+import { NetRequest } from '@/config';
 
 /**
  * header头数据

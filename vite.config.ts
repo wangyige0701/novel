@@ -8,7 +8,6 @@ export default defineConfig({
 		uni(),
 		AutoImport({
 			imports: ['vue', 'vue-router', 'uni-app'],
-			dirs: ['./src/api', './src/config'],
 			dts: './src/@types/auto-import.d.ts',
 		}),
 	],

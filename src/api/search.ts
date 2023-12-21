@@ -1,11 +1,11 @@
 import { getDomainInfo } from './domain';
 import { request } from './request';
 
-export function search(searchValue: string) {
+export function searchInDingdian(value: string) {
 	return request.post({
-		url: getDomainInfo(NetRequest.TARGET, 'search'),
+		url: getDomainInfo('dingdian', 'search'),
 		data: {
-			searchkey: searchValue,
+			searchkey: value,
 			Submit: '搜索',
 		},
 	});

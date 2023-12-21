@@ -6,21 +6,13 @@
 </template>
 
 <script setup lang="ts">
-import { search } from '@/api/search';
-import { parseHTML } from '@/regular/parseHtml';
+import { getListData } from '@/regular/dingdian/list';
 
 const req = ref('');
 
-search('斗破苍穹')
-	.then(res => {
-		console.log(res);
-		const data = String(res);
-		const parse = parseHTML(data)[0];
-		console.log(parse.type === 'tag' || parse.type === 'script' ? parse.children : parse.text);
-	})
-	.catch(err => {
-		console.error(err);
-	});
+getListData('斗破苍穹').then(res => {
+	console.log(res);
+});
 </script>
 
 <style lang="scss"></style>

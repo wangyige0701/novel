@@ -254,7 +254,7 @@ function select(data: HTMLParse[], selectorStr: string, all: boolean = false) {
  * @param data
  * @returns
  */
-export function positionToBody(data: HTMLParse[]): HTMLParse[] {
+function positionToBody(data: HTMLParse[]): HTMLParse[] {
 	const result = _deep(data, tag => tag.tag === 'body');
 	return result ? [result.target] : [];
 }
@@ -262,27 +262,36 @@ export function positionToBody(data: HTMLParse[]): HTMLParse[] {
 /**
  * 通过解析树进行元素查找，每次只查找一个元素
  */
-export function query(data: HTMLParse[]) {
-	return {
-		/**
-		 * 匹配单个元素
-		 * @param selector 选择器字符
-		 * @returns
-		 */
-		$: function (selector: string) {
-			return select(data, selector)?.target;
-		},
-		/**
-		 * 匹配所有元素
-		 * @param selector 选择器字符
-		 * @returns
-		 */
-		$all: function (selector: string) {
-			return select(data, selector, true)
-				.map(item => {
-					return item.target;
-				})
-				.filter(Boolean);
-		},
-	};
+export function query(data: HTMLParse[] | HTMLParse) {
+	if (!Array.isArray(data)) {
+		data = [data];
+	}
+	function _query(data: HTMLParse[]) {
+		return {
+			$body() {
+				return query(positionToBody(data));
+			},
+			/**
+			 * 匹配单个元素
+			 * @param selector 选择器字符
+			 * @returns
+			 */
+			$: function (selector: string) {
+				return select(data, selector)?.target;
+			},
+			/**
+			 * 匹配所有元素
+			 * @param selector 选择器字符
+			 * @returns
+			 */
+			$all: function (selector: string) {
+				return select(data, selector, true)
+					.map(item => {
+						return item.target;
+					})
+					.filter(Boolean);
+			},
+		};
+	}
+	return _query(data);
 }

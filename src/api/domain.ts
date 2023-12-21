@@ -1,3 +1,5 @@
+import { interfaceInfo } from '@/config';
+
 type ExtractInterfaceName<T extends object> = keyof T;
 
 type ExtractInterfaceProperty<T extends object, K extends keyof T> = keyof T[K];

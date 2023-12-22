@@ -92,11 +92,16 @@ function getChaptersData(chaptersData: HTMLParseTag[]) {
 	return chaptersList;
 }
 
+/**
+ * 请求章节数据并直接返回整理后的数据结构
+ * @param path
+ * @returns
+ */
 function getPagesDataAndParse(path: string) {
-	return new Promise<ChapterList>((_resolve, _reject) => {
+	return new Promise<ChapterList>((resolve, reject) => {
 		suffixWithPathParam(path)
 			.then(data => {
-				_resolve(
+				resolve(
 					getChaptersData(
 						query(parseHTML(String(data)))
 							.$body()
@@ -104,7 +109,7 @@ function getPagesDataAndParse(path: string) {
 					),
 				);
 			})
-			.catch(_reject);
+			.catch(reject);
 	});
 }
 

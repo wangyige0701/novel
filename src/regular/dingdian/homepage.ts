@@ -120,6 +120,7 @@ function mergePagingChapters(
 	pages: HTMLParseTag[],
 	nowChapterData: HTMLParseTag[],
 	chaptersRefresh?: ChapterCallback,
+	containFirst?: boolean,
 ): Promise<ChapterList> {
 	return new Promise<ChapterList>(resolve => {
 		const allPages = pages.length;
@@ -136,7 +137,9 @@ function mergePagingChapters(
 			if (index === indexVal) {
 				if (index === 0) {
 					resolve(data);
-				} else {
+				}
+				// containFirst为true或者索引大于零时调用回调函数
+				if (containFirst === true || index > 0) {
 					chaptersRefresh?.(data);
 				}
 				index++;
@@ -178,9 +181,15 @@ function mergePagingChapters(
 /**
  * 解析主页数据
  * @param html
+ * @param chaptersRefresh
+ * @param containFirst
  * @returns
  */
-async function handleHomePageHTML(html: string, chaptersRefresh?: ChapterCallback): Promise<HomePageReturnVal> {
+async function handleHomePageHTML(
+	html: string,
+	chaptersRefresh?: ChapterCallback,
+	containFirst?: boolean,
+): Promise<HomePageReturnVal> {
 	const parse = parseHTML(html);
 	const body = query(parse).$body();
 	const novelName = queryText(body.$(novelNameSelector));
@@ -191,7 +200,7 @@ async function handleHomePageHTML(html: string, chaptersRefresh?: ChapterCallbac
 	const novelType = queryText(body.$(novelTypeSelector));
 	const pageDatas = body.$all(pagesSelector);
 	const allChapters = body.$all(allChaptersSeelctor);
-	const chaptersList = await mergePagingChapters(pageDatas, allChapters, chaptersRefresh);
+	const chaptersList = await mergePagingChapters(pageDatas, allChapters, chaptersRefresh, containFirst);
 	return {
 		novelName,
 		author: {
@@ -208,16 +217,22 @@ async function handleHomePageHTML(html: string, chaptersRefresh?: ChapterCallbac
 /**
  * 获取主页展示数据，包括小说名，简介，作者，章节列表
  * @param homeId
+ * @param chaptersRefresh 异步请求分页数据后通过此回调函数接收数据
+ * @param containFirst 回调函数中是否包含第一条分页数据
  * @returns
  */
-export function getHomepageData(homeId: string, chaptersRefresh?: ChapterCallback): Promise<HomePageReturnVal> {
+export function getHomepageData(
+	homeId: string,
+	chaptersRefresh?: ChapterCallback,
+	containFirst?: boolean,
+): Promise<HomePageReturnVal> {
 	return new Promise((resolve, reject) => {
 		suffixWithPathParam(homeId)
 			.then(data => {
 				return getAllChapters(String(data));
 			})
 			.then(data => {
-				return handleHomePageHTML(String(data), chaptersRefresh);
+				return handleHomePageHTML(String(data), chaptersRefresh, containFirst);
 			})
 			.then(resolve)
 			.catch(reject);

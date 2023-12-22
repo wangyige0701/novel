@@ -5,10 +5,15 @@ import { handleSelector } from './selector';
 
 type TravselCalback = (tag: HTMLParseTag, index: number, parent: HTMLParse[]) => boolean;
 
+type SingleQueryReturn = {
+	target: HTMLParseTag | undefined;
+	index: number | undefined;
+};
+
 /**
  * 遍历树
  * @param deep 是否遍历整棵树，为false则只遍历一层
- * @param d
+ * @param data
  * @param callback
  * @param parent
  * @returns
@@ -74,33 +79,33 @@ function _traversal_all(deep: boolean, data: HTMLParse[], callback: TravselCalba
 
 /**
  * 广度优先遍历树
- * @param d
+ * @param data
  * @param callback
  * @param all 是否匹配树内所有满足条件的数据
  * @returns 返回匹配到的元素及其索引，以及父元素
  */
-function _deep(d: HTMLParse[], callback: TravselCalback, all: true): SelectPosition[];
-function _deep(d: HTMLParse[], callback: TravselCalback, all?: false): SelectPosition | undefined;
-function _deep(d: HTMLParse[], callback: TravselCalback, all: boolean = false) {
+function _deep(data: HTMLParse[], callback: TravselCalback, all: true): SelectPosition[];
+function _deep(data: HTMLParse[], callback: TravselCalback, all?: false): SelectPosition | undefined;
+function _deep(data: HTMLParse[], callback: TravselCalback, all: boolean = false) {
 	if (all) {
-		return _traversal_all(true, d, callback);
+		return _traversal_all(true, data, callback);
 	}
-	return _traversal(true, d, callback);
+	return _traversal(true, data, callback);
 }
 
 /**
  * 不进行深度递归，只在第一层检测
- * @param d
+ * @param data
  * @param callback
  * @returns
  */
-function _shallow(d: HTMLParse[], callback: TravselCalback, all: true): SelectPosition[];
-function _shallow(d: HTMLParse[], callback: TravselCalback, all?: false): SelectPosition | undefined;
-function _shallow(d: HTMLParse[], callback: TravselCalback, all: boolean = false) {
+function _shallow(data: HTMLParse[], callback: TravselCalback, all: true): SelectPosition[];
+function _shallow(data: HTMLParse[], callback: TravselCalback, all?: false): SelectPosition | undefined;
+function _shallow(data: HTMLParse[], callback: TravselCalback, all: boolean = false) {
 	if (all) {
-		return _traversal_all(false, d, callback);
+		return _traversal_all(false, data, callback);
 	}
-	return _traversal(false, d, callback);
+	return _traversal(false, data, callback);
 }
 
 /**
@@ -111,6 +116,9 @@ function _shallow(d: HTMLParse[], callback: TravselCalback, all: boolean = false
  */
 function handleSelectorType(matchTarget: HTMLParseTag, selector: SelectorInfo) {
 	if (selector.type === 'tag') {
+		if (selector.name === '*') {
+			return true;
+		}
 		return matchTarget.tag === selector.name;
 	}
 	const attrs = matchTarget.attrs.find(item => item.name === selector.type);
@@ -300,6 +308,25 @@ export function query(data: HTMLParse[] | HTMLParse) {
 		data = [data];
 	}
 	function _query(data: HTMLParse[]) {
+		/**
+		 * 匹配单个元素
+		 * @param selector 选择器字符
+		 * @param index 是否返回元素在同层级下的索引
+		 * @returns
+		 */
+		function _single(selector: string, index: true): SingleQueryReturn;
+		function _single(selector: string, index?: false): HTMLParseTag | undefined;
+		function _single(selector: string, index?: boolean) {
+			const target = select(data, selector);
+			const result = target ? target.target : void 0;
+			if (index === true) {
+				return {
+					target: result,
+					index: target?.index ?? undefined,
+				};
+			}
+			return result;
+		}
 		return {
 			$body() {
 				return query(positionToBody(data));
@@ -307,12 +334,10 @@ export function query(data: HTMLParse[] | HTMLParse) {
 			/**
 			 * 匹配单个元素
 			 * @param selector 选择器字符
+			 * @param index 是否返回元素在同层级下的索引
 			 * @returns
 			 */
-			$: function (selector: string): HTMLParseTag | undefined {
-				const target = select(data, selector);
-				return target ? target.target : void 0;
-			},
+			$: _single,
 			/**
 			 * 匹配所有元素
 			 * @param selector 选择器字符

@@ -16,15 +16,20 @@ getListData('斗破苍穹', 'desc')
 	.then(res => {
 		// console.log(res);
 		const href = res[0].value[3].href;
-		return getHomepageData(href);
+		return getHomepageData(href, (data, err) => {
+			if (err) {
+				console.log(err);
+				return;
+			}
+		});
 	})
 	.then(res => {
-		// console.log(res);
+		console.log(res);
 		const href = res.chaptersList[0].href;
 		return getArticleData(href!);
 	})
 	.then(res => {
-		console.log(res);
+		// console.log(res);
 	});
 </script>
 

@@ -1,7 +1,7 @@
 import type { HTMLParseTag } from '@/core/@types/parse';
 import { suffixWithPathParam } from '@/api/dingdian/suffix';
 import { parseHTML, query, queryAttr, queryText } from '@/core';
-import log from '@/log';
+import { RequestQueue } from '@/utils/requestQueue';
 
 type HomePageReturnVal = {
 	novelName: string;
@@ -15,7 +15,12 @@ type HomePageReturnVal = {
 		href: string | undefined;
 		name: string;
 	}[];
+	allPage: number;
 };
+
+type ChapterList = HomePageReturnVal['chaptersList'];
+
+type ChapterCallback = (chapter?: ChapterList, err?: any) => void;
 
 /** 信息容器定位 */
 const messageBoxSelector = 'div.container > div.row.row-detail > div.layout.layout-col1 > div.detail-box > div.info';
@@ -35,9 +40,13 @@ const novelTypeSelector = messageBoxSelector + ' > div.top > div.fix > p.xs-show
 /** 获取简介 */
 const introductionSelector = messageBoxSelector + ' > div.desc.xs-hidden';
 
+const chapterBox = 'div.container > div.row.row-section > div.layout.layout-col1';
+
 /** 获取所有章节 */
-const allChaptersSeelctor =
-	'div.container > div.row.row-section > div.layout.layout-col1 > div.section-box > ul.section-list.fix > li > a';
+const allChaptersSeelctor = chapterBox + ' > div.section-box > ul.section-list.fix > li > a';
+
+/** 获取分页数据 */
+const pagesSelector = chapterBox + ' > div.index-container > select#indexselect > option';
 
 /**
  * 解析获取所有章节的请求路径
@@ -70,12 +79,103 @@ function getAllChapters(html: string): undefined | ReturnType<typeof suffixWithP
 	return suffixWithPathParam(path);
 }
 
+function getChaptersData(chaptersData: HTMLParseTag[]) {
+	const chaptersList: ChapterList = [];
+	for (const item of chaptersData) {
+		const href = queryAttr(item as HTMLParseTag, 'href');
+		const chapterName = queryText(item);
+		chaptersList.push({
+			href: href,
+			name: chapterName,
+		});
+	}
+	return chaptersList;
+}
+
+function getPagesDataAndParse(path: string) {
+	return new Promise<ChapterList>((_resolve, _reject) => {
+		suffixWithPathParam(path)
+			.then(data => {
+				_resolve(
+					getChaptersData(
+						query(parseHTML(String(data)))
+							.$body()
+							.$all(allChaptersSeelctor),
+					),
+				);
+			})
+			.catch(_reject);
+	});
+}
+
+/**
+ * 整合分页数据，异步请求获取
+ */
+function mergePagingChapters(
+	pages: HTMLParseTag[],
+	nowChapterData: HTMLParseTag[],
+	chaptersRefresh?: ChapterCallback,
+): Promise<ChapterList> {
+	return new Promise<ChapterList>(resolve => {
+		const allPages = pages.length;
+		if (allPages === 0) {
+			return resolve([]);
+		}
+		const { index: positionIndex } = query(pages).$('option[selected="selected"]', true);
+		const requestQueue = new RequestQueue<ChapterList>();
+		/** 缓存数据，使数据按顺序调用回调函数 */
+		const cache = new Map<number, ChapterList>();
+		let index = 0;
+		/** 数据发送顺序判断 */
+		function _c(data: ChapterList, indexVal: number, recursive: boolean = true) {
+			if (index === indexVal) {
+				if (index === 0) {
+					resolve(data);
+				} else {
+					chaptersRefresh?.(data);
+				}
+				index++;
+				return true;
+			} else {
+				cache.set(indexVal, data);
+				if (!recursive) {
+					return false;
+				}
+				for (const __i of cache.keys()) {
+					const state = _c(cache.get(__i)!, __i, false);
+					if (state === true) {
+						cache.delete(__i);
+					}
+				}
+			}
+		}
+		// 遍历通过请求队列获取所有数据
+		for (let i = 0; i < allPages; i++) {
+			if (i === positionIndex) {
+				_c(getChaptersData(nowChapterData), i);
+				continue;
+			}
+			const _i = i;
+			const target = pages[_i];
+			const href = queryAttr(target, 'value');
+			requestQueue
+				.add(getPagesDataAndParse.bind(null, href))
+				.then(val => {
+					_c(val, _i);
+				})
+				.catch(err => {
+					chaptersRefresh?.(void 0, err);
+				});
+		}
+	});
+}
+
 /**
  * 解析主页数据
  * @param html
  * @returns
  */
-function handleHomePageHTML(html: string): HomePageReturnVal {
+async function handleHomePageHTML(html: string, chaptersRefresh?: ChapterCallback): Promise<HomePageReturnVal> {
 	const parse = parseHTML(html);
 	const body = query(parse).$body();
 	const novelName = queryText(body.$(novelNameSelector));
@@ -84,16 +184,9 @@ function handleHomePageHTML(html: string): HomePageReturnVal {
 	const authorHref = queryAttr(authorInfo, 'href');
 	const introduction = queryText(body.$(introductionSelector));
 	const novelType = queryText(body.$(novelTypeSelector));
+	const pageDatas = body.$all(pagesSelector);
 	const allChapters = body.$all(allChaptersSeelctor);
-	const chaptersList = [];
-	for (const item of allChapters) {
-		const href = queryAttr(item as HTMLParseTag, 'href');
-		const chapterName = queryText(item);
-		chaptersList.push({
-			href: href,
-			name: chapterName,
-		});
-	}
+	const chaptersList = await mergePagingChapters(pageDatas, allChapters, chaptersRefresh);
 	return {
 		novelName,
 		author: {
@@ -103,6 +196,7 @@ function handleHomePageHTML(html: string): HomePageReturnVal {
 		introduction,
 		novelType,
 		chaptersList,
+		allPage: pageDatas.length,
 	};
 }
 
@@ -111,15 +205,16 @@ function handleHomePageHTML(html: string): HomePageReturnVal {
  * @param homeId
  * @returns
  */
-export function getHomepageData(homeId: string): Promise<HomePageReturnVal> {
-	return new Promise(resolve => {
+export function getHomepageData(homeId: string, chaptersRefresh?: ChapterCallback): Promise<HomePageReturnVal> {
+	return new Promise((resolve, reject) => {
 		suffixWithPathParam(homeId)
 			.then(data => {
 				return getAllChapters(String(data));
 			})
 			.then(data => {
-				resolve(handleHomePageHTML(String(data)));
+				return handleHomePageHTML(String(data), chaptersRefresh);
 			})
-			.catch(log.error);
+			.then(resolve)
+			.catch(reject);
 	});
 }

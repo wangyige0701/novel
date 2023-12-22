@@ -28,6 +28,7 @@
         "dist",
         "**/*.d.ts",
         "test",
-        "**/parseHtml.ts"
+        "**/parseHtml.ts",
+        "src/core"
     ]
 }

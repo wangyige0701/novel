@@ -13,4 +13,17 @@ onError(err => {
 	console.log(err);
 });
 </script>
-<style></style>
+<style lang="scss">
+@import './style.scss';
+@import './uni.scss';
+
+/* #ifndef APP-NVUE */
+* {
+	margin: 0;
+	padding: 0;
+}
+html {
+	font-size: $uni-font-size-base;
+}
+/* #endif */
+</style>

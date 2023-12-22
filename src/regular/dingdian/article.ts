@@ -1,7 +1,6 @@
 import type { HTMLParseTag } from '@/core/@types/parse';
 import { suffixWithPathParam } from '@/api/dingdian/suffix';
 import { parseHTML, query, queryAttr, queryText } from '@/core';
-import log from '@/log';
 
 type ArticleReturnVal = {
 	content: HTMLParseTag[];
@@ -30,7 +29,7 @@ const prevSelector = containerSeelctor + ' > div.section-opt > a#prev_url';
 
 const titleSelector = containerSeelctor + ' > h1.title';
 
-const contentSelector = containerSeelctor + ' > div#content > p';
+const contentSelector = containerSeelctor + ' > div#content > *';
 
 /**
  * url状态判断
@@ -131,7 +130,7 @@ async function parseHTMLString(html: string, nowId: string): Promise<ArticleRetu
  * @returns
  */
 export function getArticleData(articlePath: string): Promise<ArticleReturnVal> {
-	return new Promise(resolve => {
+	return new Promise((resolve, reject) => {
 		const match = articlePath.match(matchArticleInfo);
 		const [_, articleId] = match || [];
 		suffixWithPathParam(articlePath)
@@ -141,6 +140,6 @@ export function getArticleData(articlePath: string): Promise<ArticleReturnVal> {
 			.then(res => {
 				resolve(res);
 			})
-			.catch(log.error);
+			.catch(reject);
 	});
 }

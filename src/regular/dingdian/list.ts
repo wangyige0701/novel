@@ -1,5 +1,4 @@
 import type { HTMLParseTag } from '@/core/@types/parse';
-import log from '@/log';
 import { search } from '@/api/dingdian/search';
 import { parseHTML, query, queryText } from '@/core';
 
@@ -88,7 +87,7 @@ export function getListData(
 ): Promise<ReturnType<typeof mergeByAuthor>>;
 export function getListData(searchContent: string, merge?: undefined): Promise<ListReturnVal[]>;
 export function getListData(searchContent: string, merge: true | 'desc' | 'asc' | undefined = void 0) {
-	return new Promise(resolve => {
+	return new Promise((resolve, reject) => {
 		search(searchContent)
 			.then(res => {
 				return parseHTMLString(String(res));
@@ -102,6 +101,6 @@ export function getListData(searchContent: string, merge: true | 'desc' | 'asc' 
 				}
 				resolve(data);
 			})
-			.catch(log.error);
+			.catch(reject);
 	});
 }

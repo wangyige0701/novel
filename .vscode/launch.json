@@ -10,6 +10,13 @@
             "name": "ts-node",
             "console": "integratedTerminal",
             "runtimeArgs": ["--loader", "ts-node/esm", "${file}"],
+        },
+        {
+            "type": "node",
+            "request": "launch",
+            "name": "sass",
+            "console": "integratedTerminal",
+            "runtimeArgs": ["-r", "sass", "${file}", "${workspaceFolder}\\.sass_cache\\output.css", "-w"]
         }
     ]
 }

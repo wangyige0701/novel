@@ -19,6 +19,12 @@
 			"options": {
 				"tabWidth": 2
 			}
+		},
+		{
+			"files": ["*.scss", "*.sass"],
+			"options": {
+				"parser": "scss"
+			}
 		}
 	]
 }

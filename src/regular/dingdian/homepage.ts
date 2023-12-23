@@ -4,18 +4,28 @@ import { parseHTML, query, queryAttr, queryText } from '@/core';
 import { RequestQueue } from '@/utils/requestQueue';
 
 type HomePageReturnVal = {
+	/** 小说名 */
 	novelName: string;
+	/** 作者信息 */
 	author: {
+		/** 作者名 */
 		name: string;
+		/** 作者主页路径 */
 		href: string | undefined;
 	};
+	/** 简介 */
 	introduction: string;
+	/** 小说类型 */
 	novelType: string;
+	/** 章节列表信息 */
 	chaptersList: {
+		/** 章节对应路径 */
 		href: string | undefined;
+		/** 章节名 */
 		name: string;
 	}[];
-	allPage: number;
+	/** 分页数量 */
+	pageNumber: number;
 };
 
 type ChapterList = HomePageReturnVal['chaptersList'];
@@ -40,6 +50,7 @@ const novelTypeSelector = messageBoxSelector + ' > div.top > div.fix > p.xs-show
 /** 获取简介 */
 const introductionSelector = messageBoxSelector + ' > div.desc.xs-hidden';
 
+/** 章节容器 */
 const chapterBox = 'div.container > div.row.row-section > div.layout.layout-col1';
 
 /** 获取所有章节 */
@@ -79,6 +90,11 @@ function getAllChapters(html: string): undefined | ReturnType<typeof suffixWithP
 	return suffixWithPathParam(path);
 }
 
+/**
+ * 整理章节数据
+ * @param chaptersData
+ * @returns
+ */
 function getChaptersData(chaptersData: HTMLParseTag[]) {
 	const chaptersList: ChapterList = [];
 	for (const item of chaptersData) {
@@ -192,9 +208,9 @@ async function handleHomePageHTML(
 ): Promise<HomePageReturnVal> {
 	const parse = parseHTML(html);
 	const body = query(parse).$body();
-	const novelName = queryText(body.$(novelNameSelector));
 	const authorInfo = body.$(authorNameSelector);
 	const authorName = queryText(authorInfo);
+	const novelName = queryText(body.$(novelNameSelector));
 	const authorHref = queryAttr(authorInfo, 'href');
 	const introduction = queryText(body.$(introductionSelector));
 	const novelType = queryText(body.$(novelTypeSelector));
@@ -210,7 +226,7 @@ async function handleHomePageHTML(
 		introduction,
 		novelType,
 		chaptersList,
-		allPage: pageDatas.length,
+		pageNumber: pageDatas.length,
 	};
 }
 

@@ -15,7 +15,7 @@ onError(err => {
 </script>
 
 <style lang="scss">
-@import './static/scss/uni.scss';
+@import './static/scss/config/uni.scss';
 
 /* #ifndef APP-NVUE */
 * {
@@ -25,6 +25,5 @@ onError(err => {
 html {
 	font-size: $uni-font-size-base;
 }
-
 /* #endif */
 </style>

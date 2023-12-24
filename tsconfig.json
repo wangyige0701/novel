@@ -7,13 +7,14 @@
     "strict": true,
     "paths": {
       "@/*": ["./src/*"],
-      "@static/*": ["./src/static/*"]
+      "@comp/*": ["./src/components/*"]
     },
     "lib": ["esnext", "dom"],
     "typeRoots": [
       "./node_modules/@dcloudio/types",
       "./node_modules/@types",
-      "./src/@types"
+      "./src/@types",
+      "./src/components/@types"
     ]
   },
   "exclude": ["node_modules/**/*"],

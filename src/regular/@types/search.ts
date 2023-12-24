@@ -9,6 +9,6 @@ export type ListTarget = {
 };
 
 /**
- * 列表数据处理返回类型
+ * 查询列表数据处理返回类型
  */
 export type ListReturnVal = { name: string; author: string; href: string };

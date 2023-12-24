@@ -16,6 +16,7 @@ onError(err => {
 
 <style lang="scss">
 @import './static/scss/config/main.scss';
+@import './static/scss/config/color.scss';
 
 /* #ifndef APP-NVUE */
 * {
@@ -28,6 +29,11 @@ html {
 .full-screen {
 	width: 100vw;
 	height: 100vh;
+}
+
+text {
+	font-size: $wyg-font-size-base;
+	color: $wyg-text-color-normal;
 }
 /* #endif */
 </style>

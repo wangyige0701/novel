@@ -18,7 +18,7 @@ export default defineConfig({
 	resolve: {
 		alias: {
 			'@': path.resolve(__dirname, 'src'),
-			'@static': path.resolve(__dirname, 'src', 'static'),
+			'@comp': path.resolve(__dirname, 'src/components'),
 		},
 	},
 	plugins: [

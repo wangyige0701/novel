@@ -2,25 +2,19 @@
 	<view class="full-screen content">
 		<view class="search-container"></view>
 		<view class="book-list">
-			<view class="book" v-for="(item, index) in bookList" :key="'book-list-' + index"></view>
+			<BookList v-if="showType === 'bookList'"></BookList>
 		</view>
 	</view>
 </template>
 
 <script setup lang="ts">
-import type { BookList } from './type';
+import BookList from '@comp/list/bookList.vue';
 
-/** 图书列表 */
-const bookList = ref<BookList[]>([
-	{
-		name: 'test',
-		href: '#',
-	},
-]);
+const showType = ref<'bookList' | 'searchList'>('bookList');
 </script>
 
 <style scoped lang="scss">
-@import '~@static/scss/config/main.scss';
+@import '../../static/scss/config/main.scss';
 
 .content {
 	overflow: scroll;
@@ -29,5 +23,6 @@ const bookList = ref<BookList[]>([
 
 .search-container {
 	width: 100%;
+	height: $wyg-search-bar-height;
 }
 </style>

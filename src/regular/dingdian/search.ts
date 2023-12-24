@@ -1,4 +1,4 @@
-import type { ListReturnVal, ListTarget } from '../@types/list';
+import type { ListReturnVal, ListTarget } from '../@types/search';
 import { search } from '@/api/dingdian/search';
 import { parseHTML, query, queryText } from '@/core';
 
@@ -22,7 +22,7 @@ function parseHTMLString(html: string): ListTarget[] {
 }
 
 /**
- *
+ * 查询列表数据整理
  * @param data
  * @returns
  */

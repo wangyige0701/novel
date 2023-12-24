@@ -1,40 +1,40 @@
 
 /* 行为相关颜色 */
-$uni-color-primary: #2979ff;
-$uni-color-primary-hover: lighten($uni-color-primary, 10%);
-$uni-color-primary-active: darken($uni-color-primary, 10%);
-$uni-color-primary-disabled: lighten($uni-color-primary, 30%);
+$wyg-color-primary: #2979ff;
+$wyg-color-primary-hover: lighten($wyg-color-primary, 10%);
+$wyg-color-primary-active: darken($wyg-color-primary, 10%);
+$wyg-color-primary-disabled: lighten($wyg-color-primary, 30%);
 
-$uni-color-success: #19be6b;
-$uni-color-success-hover: lighten($uni-color-success, 10%);
-$uni-color-success-active: darken($uni-color-success, 10%);
-$uni-color-success-disabled: lighten($uni-color-success, 30%);
+$wyg-color-success: #19be6b;
+$wyg-color-success-hover: lighten($wyg-color-success, 10%);
+$wyg-color-success-active: darken($wyg-color-success, 10%);
+$wyg-color-success-disabled: lighten($wyg-color-success, 30%);
 
-$uni-color-warning: #ff9900;
-$uni-color-warning-hover: lighten($uni-color-warning, 10%);
-$uni-color-warning-active: darken($uni-color-warning, 10%);
-$uni-color-warning-disabled: lighten($uni-color-warning, 30%);
+$wyg-color-warning: #ff9900;
+$wyg-color-warning-hover: lighten($wyg-color-warning, 10%);
+$wyg-color-warning-active: darken($wyg-color-warning, 10%);
+$wyg-color-warning-disabled: lighten($wyg-color-warning, 30%);
 
-$uni-color-error: #fa3534;
-$uni-color-error-hover: lighten($uni-color-error, 10%);
-$uni-color-error-active: darken($uni-color-error, 10%);
-$uni-color-error-disabled: lighten($uni-color-error, 30%);
+$wyg-color-error: #fa3534;
+$wyg-color-error-hover: lighten($wyg-color-error, 10%);
+$wyg-color-error-active: darken($wyg-color-error, 10%);
+$wyg-color-error-disabled: lighten($wyg-color-error, 30%);
 
 /* 文字基本颜色 */
-$uni-text-color: #303133; // 主要文字
-$uni-text-color-normal: #606266; // 常规文字
-$uni-text-color-inverse: #fff; // 反色
-$uni-text-color-grey: #999; // 辅助灰色，如加载更多的提示信息
-$uni-text-color-secondary: #909399; // 次要文字颜色
-$uni-text-color-placeholder: #c0c4cc;
-$uni-text-color-disable: #d5d5d5;
+$wyg-text-color: #303133; // 主要文字
+$wyg-text-color-normal: #606266; // 常规文字
+$wyg-text-color-inverse: #fff; // 反色
+$wyg-text-color-grey: #999; // 辅助灰色，如加载更多的提示信息
+$wyg-text-color-secondary: #909399; // 次要文字颜色
+$wyg-text-color-placeholder: #c0c4cc;
+$wyg-text-color-disable: #d5d5d5;
 
 /* 背景颜色 */
-$uni-bg-color: #fff;
-$uni-bg-color-grey: #f8f8f8;
-$uni-bg-color-hover: #f1f1f1; // 点击状态颜色
-$uni-bg-color-mask: rgba(0, 0, 0, 0.4); // 遮罩颜色
-$uni-bg-color-disable: #f7f6f6;
+$wyg-bg-color: #fff;
+$wyg-bg-color-grey: #f8f8f8;
+$wyg-bg-color-hover: #f1f1f1; // 点击状态颜色
+$wyg-bg-color-mask: rgba(0, 0, 0, 0.4); // 遮罩颜色
+$wyg-bg-color-disable: #f7f6f6;
 
 /* 边框颜色 */
-$uni-border-color: #c8c7cc;
+$wyg-border-color: #c8c7cc;

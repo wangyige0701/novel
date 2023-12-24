@@ -15,7 +15,7 @@ onError(err => {
 </script>
 
 <style lang="scss">
-@import './static/scss/config/uni.scss';
+@import './static/scss/config/main.scss';
 
 /* #ifndef APP-NVUE */
 * {
@@ -23,7 +23,11 @@ onError(err => {
 	padding: 0;
 }
 html {
-	font-size: $uni-font-size-base;
+	font-size: $wyg-font-size-base;
+}
+.full-screen {
+	width: 100vw;
+	height: 100vh;
 }
 /* #endif */
 </style>

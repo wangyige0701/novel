@@ -1,36 +1,33 @@
 <template>
-	<view class="content">
-		<text>{{ req }}</text>
-		<text>abcdefg</text>
+	<view class="full-screen content">
+		<view class="search-container"></view>
+		<view class="book-list">
+			<view class="book" v-for="(item, index) in bookList" :key="'book-list-' + index"></view>
+		</view>
 	</view>
 </template>
 
 <script setup lang="ts">
-import { getListData } from '@/regular/dingdian/list';
-import { getHomepageData } from '@/regular/dingdian/homepage';
-import { getArticleData } from '@/regular/dingdian/article';
+import type { BookList } from './type';
 
-const req = ref('');
-
-getListData('斗破苍穹', 'desc')
-	.then(res => {
-		// console.log(res);
-		const href = res[0].value[3].href;
-		return getHomepageData(href, (data, err) => {
-			if (err) {
-				console.log(err);
-				return;
-			}
-		});
-	})
-	.then(res => {
-		console.log(res);
-		const href = res.chaptersList[0].href;
-		return getArticleData(href!);
-	})
-	.then(res => {
-		// console.log(res);
-	});
+/** 图书列表 */
+const bookList = ref<BookList[]>([
+	{
+		name: 'test',
+		href: '#',
+	},
+]);
 </script>
 
-<style lang="scss"></style>
+<style scoped lang="scss">
+@import '~@static/scss/config/main.scss';
+
+.content {
+	overflow: scroll;
+	position: relative;
+}
+
+.search-container {
+	width: 100%;
+}
+</style>

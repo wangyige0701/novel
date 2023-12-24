@@ -1,36 +1,8 @@
 import type { HTMLParseTag } from '@/core/@types/parse';
+import type { HomePageReturnVal, ChapterCallback, ChapterList } from '../@types/homepage';
 import { suffixWithPathParam } from '@/api/dingdian/suffix';
 import { parseHTML, query, queryAttr, queryText } from '@/core';
 import { RequestQueue } from '@/utils/requestQueue';
-
-type HomePageReturnVal = {
-	/** 小说名 */
-	novelName: string;
-	/** 作者信息 */
-	author: {
-		/** 作者名 */
-		name: string;
-		/** 作者主页路径 */
-		href: string | undefined;
-	};
-	/** 简介 */
-	introduction: string;
-	/** 小说类型 */
-	novelType: string;
-	/** 章节列表信息 */
-	chaptersList: {
-		/** 章节对应路径 */
-		href: string | undefined;
-		/** 章节名 */
-		name: string;
-	}[];
-	/** 分页数量 */
-	pageNumber: number;
-};
-
-type ChapterList = HomePageReturnVal['chaptersList'];
-
-type ChapterCallback = (chapter?: ChapterList, err?: any) => void;
 
 /** 信息容器定位 */
 const messageBoxSelector = 'div.container > div.row.row-detail > div.layout.layout-col1 > div.detail-box > div.info';

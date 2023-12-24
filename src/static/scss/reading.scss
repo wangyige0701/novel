@@ -1,9 +1,9 @@
-@import "./config/uni.scss";
-@import "./config/read_style.scss";
+@import "./config/main.scss";
+@import "./config/readStyle.scss";
 
 #novel_content {
     color: $wyg-font-default;
-	font-size: $uni-font-size-base;
+	font-size: $wyg-font-size-base;
 }
 
 // 阅读样式，背景色和字色

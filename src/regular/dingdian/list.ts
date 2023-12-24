@@ -1,16 +1,14 @@
-import type { HTMLParseTag } from '@/core/@types/parse';
+import type { ListReturnVal, ListTarget } from '../@types/list';
 import { search } from '@/api/dingdian/search';
 import { parseHTML, query, queryText } from '@/core';
 
-type ListTarget = {
-	name: HTMLParseTag | undefined;
-	author: HTMLParseTag | undefined;
-};
-
-type ListReturnVal = { name: string; author: string; href: string };
-
 const listSelector = 'div.container > div.row > div.layout.layout2.layout-co18 > ul.txt-list.txt-list-row5 > li';
 
+/**
+ * 解析html文本并获取需要数据
+ * @param html
+ * @returns
+ */
 function parseHTMLString(html: string): ListTarget[] {
 	const parse = parseHTML(html);
 	// 获取列表元素并去除
@@ -23,6 +21,11 @@ function parseHTMLString(html: string): ListTarget[] {
 	});
 }
 
+/**
+ *
+ * @param data
+ * @returns
+ */
 function getHTMLText(data: ListTarget) {
 	const { name, author } = data;
 	if (!name || !author) {

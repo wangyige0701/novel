@@ -1,13 +1,6 @@
-import type { HTMLParseTag } from '@/core/@types/parse';
+import type { ArticleReturnVal } from '../@types/article';
 import { suffixWithPathParam } from '@/api/dingdian/suffix';
 import { parseHTML, query, queryAttr, queryText } from '@/core';
-
-type ArticleReturnVal = {
-	content: HTMLParseTag[];
-	title: string;
-	next_href: string;
-	prev_href: string;
-};
 
 enum URLType {
 	/** 改变页数 */

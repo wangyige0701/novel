@@ -267,7 +267,7 @@ function positionToBody(data: HTMLParse[]): HTMLParse[] {
  * @param data
  * @returns
  */
-export function queryText(data: HTMLParse | undefined) {
+export function queryText(data: HTMLParse | undefined): string {
 	if (!data) {
 		return '';
 	}

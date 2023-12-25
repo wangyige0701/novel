@@ -2,15 +2,32 @@
 	<view class="full-screen content">
 		<view class="search-container"></view>
 		<view class="book-list">
-			<BookList v-if="showType === 'bookList'"></BookList>
+			<BookList v-if="showType === 'bookList'" :book-list="testData" @click="bookHomepage"></BookList>
 		</view>
 	</view>
 </template>
 
 <script setup lang="ts">
 import BookList from '@comp/list/bookList.vue';
+import { storage } from '@storage/index';
+import { data as testData } from '@test/data/bookList.test';
 
 const showType = ref<'bookList' | 'searchList'>('bookList');
+
+function bookHomepage(item: BookListClickType) {
+	console.log(item);
+}
+storage.set(
+	{
+		key: 'c',
+		data: 4,
+	},
+	() => {
+		storage.get(['a', 'b', 'c'], data => {
+			console.log(data);
+		});
+	},
+);
 </script>
 
 <style scoped lang="scss">

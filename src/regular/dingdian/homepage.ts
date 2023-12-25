@@ -2,7 +2,7 @@ import type { HTMLParseTag } from '@/core/@types/parse';
 import type { HomePageReturnVal, ChapterCallback, ChapterList } from '../@types/homepage';
 import { suffixWithPathParam } from '@/api/dingdian/suffix';
 import { parseHTML, query, queryAttr, queryText } from '@/core';
-import { RequestQueue } from '@/utils/requestQueue';
+import { AsyncQueue } from '@/utils/asyncQueue';
 
 /** 信息容器定位 */
 const messageBoxSelector = 'div.container > div.row.row-detail > div.layout.layout-col1 > div.detail-box > div.info';
@@ -116,7 +116,7 @@ function mergePagingChapters(
 			return resolve([]);
 		}
 		const { index: positionIndex } = query(pages).$('option[selected="selected"]', true);
-		const requestQueue = new RequestQueue<ChapterList>();
+		const requestQueue = new AsyncQueue<ChapterList>();
 		/** 缓存数据，使数据按顺序调用回调函数 */
 		const cache = new Map<number, ChapterList>();
 		let index = 0;

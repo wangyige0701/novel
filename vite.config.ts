@@ -19,6 +19,8 @@ export default defineConfig({
 		alias: {
 			'@': path.resolve(__dirname, 'src'),
 			'@comp': path.resolve(__dirname, 'src/components'),
+			'@test': path.resolve(__dirname, 'src/test'),
+			'@storage': path.resolve(__dirname, 'src/storage'),
 		},
 	},
 	plugins: [

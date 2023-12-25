@@ -1,14 +1,16 @@
-import type { HTMLParseTag } from '@/core/@types/parse';
-
 /**
  * 列表数据
  */
 export type ListTarget = {
-	name: HTMLParseTag | undefined;
-	author: HTMLParseTag | undefined;
+	name: string;
+	href: string;
+	author: string;
+	type: string;
 };
 
 /**
  * 查询列表数据处理返回类型
  */
-export type ListReturnVal = { name: string; author: string; href: string };
+export type ListReturnVal = {
+	[K in keyof ListTarget]: ListTarget[K];
+};

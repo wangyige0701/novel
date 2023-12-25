@@ -1,4 +1,4 @@
-type ResolveFunc = (value: any) => void;
+type ResolveFunc<T extends any = any> = (value: T) => void;
 
 type RejectFunc = (reason?: any) => void;
 

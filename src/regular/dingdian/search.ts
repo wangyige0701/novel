@@ -1,6 +1,8 @@
 import type { ListReturnVal, ListTarget } from '../@types/search';
 import { search } from '@/api/dingdian/search';
-import { parseHTML, query, queryText } from '@/core';
+import { parseHTML, query, queryAttr, queryText } from '@/core';
+
+const getTypeContent = /\[?(.*)\]?/;
 
 const listSelector = 'div.container > div.row > div.layout.layout2.layout-co18 > ul.txt-list.txt-list-row5 > li';
 
@@ -14,9 +16,13 @@ function parseHTMLString(html: string): ListTarget[] {
 	// 获取列表元素并去除
 	const liTargets = query(parse).$body().$all(listSelector).splice(1);
 	return liTargets.map(item => {
+		const targetChild = query(item);
+		const novel = targetChild.$('span.s2 > a');
 		return {
-			name: query(item).$('span.s2 > a'),
-			author: query(item).$('span.s4'),
+			name: queryText(novel),
+			href: queryAttr(novel, 'href'),
+			author: queryText(targetChild.$('span.s4')),
+			type: queryText(targetChild.$('span.s1')).match(getTypeContent)?.[1] ?? '',
 		};
 	});
 }
@@ -27,15 +33,7 @@ function parseHTMLString(html: string): ListTarget[] {
  * @returns
  */
 function getHTMLText(data: ListTarget) {
-	const { name, author } = data;
-	if (!name || !author) {
-		return;
-	}
-	const nameChild = name.children[0];
-	const authorChild = author.children[0];
-	const href = name.attrs[0].value;
-	const novelName = queryText(nameChild);
-	const authorName = queryText(authorChild);
+	const { name: novelName, author: authorName, type, href } = data;
 	if (!novelName || !authorName) {
 		return;
 	}
@@ -43,6 +41,7 @@ function getHTMLText(data: ListTarget) {
 		name: novelName,
 		author: authorName,
 		href,
+		type,
 	};
 }
 

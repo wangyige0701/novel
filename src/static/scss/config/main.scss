@@ -5,12 +5,12 @@ $wyg-font-size-base: 24rpx;
 $wyg-font-size-lg: 28rpx;
 
 /* 文章场景相关 */
-$wyg-color-title: #2c405a; // 文章标题颜色
-$wyg-font-size-title: 20px;
-$wyg-color-subtitle: #555; // 二级标题颜色
-$wyg-font-size-subtitle: 18px;
-$wyg-color-paragraph: #3f536e; // 文章段落颜色
-$wyg-font-size-paragraph: 15px;
+$wyg-color-title: #303133; // 文章标题颜色
+$wyg-font-size-title: 32rpx;
+$wyg-color-subtitle: #909399; // 二级标题颜色
+$wyg-font-size-subtitle: 26rpx;
+$wyg-color-paragraph: #606266; // 文章段落颜色
+$wyg-font-size-paragraph: 24rpx;
 
 /* 图片尺寸 */
 $wyg-img-size-sm: 20px;
@@ -39,4 +39,4 @@ $wyg-opacity-disabled: 0.3; // 组件禁用态的透明度
 /* 导航栏高度 */
 $wyg-navigation-bar-height: 44px;
 
-$wyg-search-bar-height: 60px;
+$wyg-search-bar-height: 50px;

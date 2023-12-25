@@ -40,7 +40,7 @@ function returnHeadreValue(header: any) {
 export function checkOptions(
 	this: RequestObject,
 	data: any,
-	resolve: ResolveFunc,
+	resolve: ResolveFunc<string | AnyObject | ArrayBuffer>,
 	reject: RejectFunc,
 	isFile: boolean = false,
 ) {

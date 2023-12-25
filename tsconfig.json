@@ -7,7 +7,9 @@
     "strict": true,
     "paths": {
       "@/*": ["./src/*"],
-      "@comp/*": ["./src/components/*"]
+      "@comp/*": ["./src/components/*"],
+      "@test/*": ["./src/test/*"],
+      "@storage/*": ["./src/storage/*"]
     },
     "lib": ["esnext", "dom"],
     "typeRoots": [
@@ -17,6 +19,6 @@
       "./src/components/@types"
     ]
   },
-  "exclude": ["node_modules/**/*"],
+  "exclude": ["node_modules/**/*", "src/test/**/*"],
   "include": ["src/**/*.ts", "src/**/*.d.ts", "src/**/*.tsx", "src/**/*.vue"]
 }

@@ -29,6 +29,7 @@
         "**/*.d.ts",
         "test",
         "**/parseHtml.ts",
-        "src/core"
+        "src/core",
+        "src/storage"
     ]
 }

@@ -23,17 +23,25 @@ onError(err => {
 	margin: 0;
 	padding: 0;
 }
+
 html {
 	font-size: $wyg-font-size-base;
 }
+
+text {
+	font-size: inherit;
+	color: inherit;
+}
+
 .full-screen {
 	width: 100vw;
 	height: 100vh;
 }
 
-text {
-	font-size: $wyg-font-size-base;
-	color: $wyg-text-color-normal;
+.text-ellipsis {
+	overflow: hidden;
+	white-space: nowrap;
+	text-overflow: ellipsis;
 }
 /* #endif */
 </style>

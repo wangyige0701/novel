@@ -101,13 +101,13 @@ export function getStorage(
 	}
 	if (getAll) {
 		if (callback === 'promise') {
-			// 获取全部缓存时返回promise
+			// 通过promise异步获取全部缓存
 			return _get();
 		}
 		if (!isFunction(callback)) {
 			throw new TypeError('`callback` must be function or string of `promise` when entry');
 		}
-		// 获取全部缓存通过回调函数调用
+		// 通过回调函数异步获取全部缓存
 		_get()
 			.then(data => {
 				callback(data);
@@ -120,6 +120,7 @@ export function getStorage(
 	const asyncQueue = new AsyncQueue<any>(1);
 	const result: any[] = [];
 	if (callback === 'promise') {
+		// 通过promise异步获取指定键值缓存
 		const [prom, resolve, reject] = createProm<any[]>();
 		asyncQueue.empty(() => {
 			resolve(returnType === 'array' ? result : result[0]);
@@ -140,6 +141,7 @@ export function getStorage(
 	if (!isFunction(callback)) {
 		throw new TypeError('`callback` must be function or string of `promise` when entry');
 	}
+	// 通过回调函数异步执行获取指定键值缓存
 	asyncQueue.empty(() => {
 		callback(returnType === 'array' ? result : result[0]);
 	});

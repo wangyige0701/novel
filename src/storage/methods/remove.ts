@@ -8,14 +8,15 @@ import { createProm, prefixCheck } from './main';
  * @param callabck 传入`promise`时，会返回一个promise实例；传入一个回调函数不接受任何参数
  */
 export function removeStorage(keys: string | string[]): void;
-export function removeStorage(keys: string | string[], callback: () => void): void;
+export function removeStorage(keys: string | string[], callback: (err?: any) => void): void;
 export function removeStorage(keys: string | string[], callabck: 'promise'): Promise<void>;
-export function removeStorage(keys: string | string[], callback?: 'promise' | (() => void)) {
+export function removeStorage(keys: string | string[], callback?: 'promise' | ((err?: any) => void)) {
 	if (!isArray(keys)) {
 		keys = [keys];
 	}
 	if (!callback) {
 		try {
+			// 同步删除缓存数据
 			keys.map(key => {
 				if (prefixCheck(key)) {
 					return;
@@ -49,6 +50,7 @@ export function removeStorage(keys: string | string[], callback?: 'promise' | ((
 	}
 	const asyncQueue = new AsyncQueue<void>(1);
 	if (callback === 'promise') {
+		// 通过promise异步删除指定键值缓存
 		const [prom, resolve, reject] = createProm();
 		asyncQueue.empty(() => {
 			resolve();
@@ -64,6 +66,7 @@ export function removeStorage(keys: string | string[], callback?: 'promise' | ((
 	if (!isFunction(callback)) {
 		throw new TypeError('`callback` must be function or string of `promise` when entry');
 	}
+	// 通过回调函数异步删除指定键值缓存
 	asyncQueue.empty(() => {
 		callback();
 	});
@@ -71,6 +74,8 @@ export function removeStorage(keys: string | string[], callback?: 'promise' | ((
 		if (prefixCheck(key)) {
 			continue;
 		}
-		asyncQueue.add(_remove.bind(null, key));
+		asyncQueue.add(_remove.bind(null, key)).catch(err => {
+			callback(err);
+		});
 	}
 }

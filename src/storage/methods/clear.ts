@@ -2,7 +2,7 @@ import { getStorage } from './getter';
 import { removeStorage } from './remove';
 
 /**
- * 清除本地缓存
+ * 清除本地缓存,不删除系统指定前缀的缓存
  * @param module 不传默认同步清除，传入`asyn`则为异步清除
  */
 export function clearStorage(module: 'asyn'): void;

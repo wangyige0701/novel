@@ -114,7 +114,6 @@ export function checkOptions(
 			}
 		}
 	};
-
 	return data;
 }
 

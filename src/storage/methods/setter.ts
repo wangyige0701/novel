@@ -13,14 +13,18 @@ type SetterDataType = {
  * @param callback 传入`promise`时，会返回一个promise实例；传入一个回调函数不接受任何参数
  */
 export function setStorage(storeDatas: SetterDataType | SetterDataType[]): void;
-export function setStorage(storeDatas: SetterDataType | SetterDataType[], callback: () => void): void;
+export function setStorage(storeDatas: SetterDataType | SetterDataType[], callback: (err?: any) => void): void;
 export function setStorage(storeDatas: SetterDataType | SetterDataType[], callback: 'promise'): Promise<void>;
-export function setStorage(storeDatas: SetterDataType | SetterDataType[], callback?: 'promise' | (() => void)) {
+export function setStorage(
+	storeDatas: SetterDataType | SetterDataType[],
+	callback?: 'promise' | ((err?: any) => void),
+) {
 	if (!isArray(storeDatas)) {
 		storeDatas = [storeDatas];
 	}
 	if (!callback) {
 		try {
+			// 同步设置缓存数据
 			storeDatas.map(storeData => {
 				if (prefixCheck(storeData.key)) {
 					return;
@@ -56,6 +60,7 @@ export function setStorage(storeDatas: SetterDataType | SetterDataType[], callba
 	}
 	const asyncQueue = new AsyncQueue<void>(1);
 	if (callback === 'promise') {
+		// 通过promise异步设置缓存
 		const [prom, resolve, reject] = createProm();
 		asyncQueue.empty(() => {
 			resolve();
@@ -72,6 +77,7 @@ export function setStorage(storeDatas: SetterDataType | SetterDataType[], callba
 	if (!isFunction(callback)) {
 		throw new TypeError('`callback` must be function or string of `promise` when entry');
 	}
+	// 通过回调函数异步设置缓存
 	asyncQueue.empty(() => {
 		callback();
 	});
@@ -80,7 +86,7 @@ export function setStorage(storeDatas: SetterDataType | SetterDataType[], callba
 			continue;
 		}
 		asyncQueue.add(_set.bind(null, storeData.key, storeData.data)).catch(err => {
-			throw new Error(err);
+			callback(err);
 		});
 	}
 }

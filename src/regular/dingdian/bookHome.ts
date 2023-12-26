@@ -209,7 +209,7 @@ async function handleHomePageHTML(
  * @param containFirst 回调函数中是否包含第一页的分页数据
  * @returns
  */
-export function getHomepageData(
+export function getBookHomeData(
 	homeId: string,
 	chaptersRefresh?: ChapterCallback,
 	containFirst?: boolean,

@@ -1,3 +1,3 @@
 export * from './article';
-export * from './homepage';
+export * from './bookHome';
 export * from './search';

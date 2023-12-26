@@ -1,14 +1,14 @@
-import { interfaceInfo, NetRequest } from './data';
+import { ConfigTarget, ConfigSelect } from './data';
 
-export { interfaceInfo, NetRequest };
+export { ConfigTarget, ConfigSelect };
 
 type ExtractInterfaceName<T extends object> = keyof T;
 
 type ExtractInterfaceProperty<T extends object, K extends keyof T> = keyof T[K];
 
-type InterfaceNames = ExtractInterfaceName<typeof interfaceInfo>;
+type InterfaceNames = ExtractInterfaceName<typeof ConfigTarget>;
 
-type InterfaceProperties<T extends InterfaceNames> = ExtractInterfaceProperty<typeof interfaceInfo, T>;
+type InterfaceProperties<T extends InterfaceNames> = ExtractInterfaceProperty<typeof ConfigTarget, T>;
 
 const endOfSlash = /^[\w\W]*[\\\/]+$/;
 
@@ -38,7 +38,7 @@ export function getInterfaceData<T extends InterfaceNames, K extends InterfacePr
 	...values: K
 ): string {
 	return values.reduce((prev, curr) => {
-		let val: string = interfaceInfo[name][curr] as string;
+		let val: string = ConfigTarget[name][curr] as string;
 		[prev, val] = _removeSlash(prev, val);
 		return prev + val;
 	}, '');
@@ -49,10 +49,10 @@ export function getInterfaceData<T extends InterfaceNames, K extends InterfacePr
  * @param values
  * @returns
  */
-export function getInterfaceDataDefault<K extends InterfaceProperties<typeof NetRequest.TARGET>[]>(
+export function getInterfaceDataDefault<K extends InterfaceProperties<typeof ConfigSelect.TARGET>[]>(
 	...values: K
 ): string {
-	return getInterfaceData(NetRequest.TARGET, ...values);
+	return getInterfaceData(ConfigSelect.TARGET, ...values);
 }
 
 /**
@@ -64,7 +64,7 @@ export function mergeWithDomain<T extends InterfaceNames>(name: T, ...values: st
 	return values.reduce((prev, curr) => {
 		[prev, curr] = _removeSlash(prev, curr);
 		return prev + curr;
-	}, interfaceInfo[name].domain as string);
+	}, ConfigTarget[name].domain as string);
 }
 
 /**
@@ -73,5 +73,5 @@ export function mergeWithDomain<T extends InterfaceNames>(name: T, ...values: st
  * @returns
  */
 export function mergeWithDomainDefault(...values: string[]): string {
-	return mergeWithDomain(NetRequest.TARGET, ...values);
+	return mergeWithDomain(ConfigSelect.TARGET, ...values);
 }

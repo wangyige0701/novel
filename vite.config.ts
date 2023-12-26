@@ -21,6 +21,12 @@ export default defineConfig({
 			'@comp': path.resolve(__dirname, 'src/components'),
 			'@test': path.resolve(__dirname, 'src/test'),
 			'@storage': path.resolve(__dirname, 'src/storage'),
+			'@path': path.resolve(__dirname, 'src/path'),
+		},
+	},
+	build: {
+		rollupOptions: {
+			external: ['uni'],
 		},
 	},
 	plugins: [

@@ -2,7 +2,8 @@ import type { ListReturnVal, ListTarget } from '../@types/search';
 import { search } from '@/api/dingdian/search';
 import { parseHTML, query, queryAttr, queryText } from '@/core';
 
-const getTypeContent = /\[?(.*)\]?/;
+/** 获取小说类型数据 */
+const getTypeContent = /(?:^\[?([^\[\]]*)\]?$)|(?:^(.*)$)/;
 
 const listSelector = 'div.container > div.row > div.layout.layout2.layout-co18 > ul.txt-list.txt-list-row5 > li';
 
@@ -18,11 +19,12 @@ function parseHTMLString(html: string): ListTarget[] {
 	return liTargets.map(item => {
 		const targetChild = query(item);
 		const novel = targetChild.$('span.s2 > a');
+		const typeValue = queryText(targetChild.$('span.s1')).trim().match(getTypeContent);
 		return {
 			name: queryText(novel),
 			href: queryAttr(novel, 'href'),
 			author: queryText(targetChild.$('span.s4')),
-			type: queryText(targetChild.$('span.s1')).match(getTypeContent)?.[1] ?? '',
+			type: typeValue?.[1] ?? typeValue?.[2] ?? '',
 		};
 	});
 }
@@ -80,7 +82,9 @@ function mergeByAuthor(list: ListReturnVal[], sort: 'desc' | 'asc' | undefined =
 /**
  * 获取顶点小说网站查询列表
  * @param searchContent
- * @param merge 不传返回未合并的数据，为true根据作者名进行合并，为desc或者asc进行排序，desc降序、asc升序
+ * @param merge 不传返回未合并的数据，为true根据作者名进行合并，为desc或者asc默认合并同时进行排序
+ * - desc 降序
+ * - asc 升序
  * @returns
  */
 export function getListData(

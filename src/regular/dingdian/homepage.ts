@@ -206,7 +206,7 @@ async function handleHomePageHTML(
  * 获取主页展示数据，包括小说名，简介，作者，章节列表
  * @param homeId
  * @param chaptersRefresh 异步请求分页数据后通过此回调函数接收数据
- * @param containFirst 回调函数中是否包含第一条分页数据
+ * @param containFirst 回调函数中是否包含第一页的分页数据
  * @returns
  */
 export function getHomepageData(

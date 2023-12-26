@@ -9,7 +9,8 @@
       "@/*": ["./src/*"],
       "@comp/*": ["./src/components/*"],
       "@test/*": ["./src/test/*"],
-      "@storage/*": ["./src/storage/*"]
+      "@storage/*": ["./src/storage/*"],
+      "@path/*": ["./src/path/*"]
     },
     "lib": ["esnext", "dom"],
     "typeRoots": [

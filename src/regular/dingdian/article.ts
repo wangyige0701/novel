@@ -1,3 +1,4 @@
+import type { HTMLParse } from '@/core/@types/parse';
 import type { ArticleReturnVal } from '../@types/article';
 import { suffixWithPathParam } from '@/api/dingdian/suffix';
 import { parseHTML, query, queryAttr, queryText } from '@/core';
@@ -87,6 +88,22 @@ function handleEnd(prev_next: string) {
 }
 
 /**
+ * 将文本树的文本内容解析出来
+ * @param content
+ * @returns
+ */
+function parseContentTree(content: HTMLParse[]) {
+	let result: string[] = [];
+	for (const item of content) {
+		const text = queryText(item);
+		if (text) {
+			result.push(text);
+		}
+	}
+	return result;
+}
+
+/**
  * 解析小说html页面
  * @param html
  * @param nowId
@@ -97,7 +114,7 @@ async function parseHTMLString(html: string, nowId: string): Promise<ArticleRetu
 	const body = query(parse);
 	const next_but = body.$(nextSelector);
 	const prev_but = body.$(prevSelector);
-	const content = body.$all(contentSelector);
+	const content = parseContentTree(body.$all(contentSelector));
 	const title = queryText(body.$(titleSelector));
 	const prev_href = queryAttr(prev_but, 'href');
 	let next_href = queryAttr(next_but, 'href');

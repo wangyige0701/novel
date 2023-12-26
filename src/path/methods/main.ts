@@ -1,15 +1,12 @@
 import { isObject } from '@/utils/types';
 
 type ParamsType = {
-	key: string;
-	value: number | boolean | string;
+	[key: string]: number | boolean | string;
 };
-
-type ParamConfigType = ParamsType[];
 
 /** 配置中的参数属性 */
 export type OptionsParams = {
-	params?: ParamConfigType;
+	params?: ParamsType;
 };
 
 type MethodTypes = 'nagivateBack' | 'nagivateTo' | 'redirectTo' | 'reLaunch';
@@ -33,7 +30,7 @@ type CheckOptions<T extends MethodTypes> = T extends 'nagivateBack' ? OptionsCal
  * @param datas
  * @returns
  */
-export function createURLParam(datas: ParamConfigType, start: '?' | '&' = '?'): string {
+export function createURLParam(datas: ParamsType, start: '?' | '&' = '?'): string {
 	if (!datas) {
 		return '';
 	}
@@ -56,7 +53,7 @@ export function createURLParam(datas: ParamConfigType, start: '?' | '&' = '?'): 
  * @param params
  * @returns
  */
-export function urlArrange(url: string, params: ParamConfigType): string {
+export function urlArrange(url: string, params: ParamsType): string {
 	const start = /[^?]*\?.*/.test(url as string) ? '&' : '?';
 	const paramsStr = createURLParam(params, start);
 	url += paramsStr;
@@ -85,6 +82,7 @@ export function optionsArrange<T extends MethodTypes>(
 			let url = copy.url;
 			if (copy.params) {
 				url = urlArrange(url as string, copy.params);
+				delete copy.params;
 			}
 			copy.url = url;
 		}

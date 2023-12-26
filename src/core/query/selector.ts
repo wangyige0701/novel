@@ -93,6 +93,8 @@ function handleSelectorType(matchName: string, data: MatchResult) {
 }
 
 /**
+ * 选择器处理函数
+ * @example
  * ```css
  * #id[attr=1].class[attr=2]img.class[attr=3]
  * ```

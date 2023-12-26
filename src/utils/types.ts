@@ -30,6 +30,10 @@ export function isObject(value: any): value is { [key: string | number | symbol]
 	return !isNull(value) && !isArray(value) && typeof value === 'object';
 }
 
+export function isGeneralObject(value: any): value is object {
+	return !isNull(value) && typeof value === 'object';
+}
+
 export function isBigint(value: any): value is bigint {
 	return typeof value === 'bigint';
 }

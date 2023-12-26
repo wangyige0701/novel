@@ -97,12 +97,13 @@ async function parseHTMLString(html: string, nowId: string): Promise<ArticleRetu
 	const body = query(parse);
 	const next_but = body.$(nextSelector);
 	const prev_but = body.$(prevSelector);
-	const title = queryText(body.$(titleSelector));
 	const content = body.$all(contentSelector);
+	const title = queryText(body.$(titleSelector));
 	const prev_href = queryAttr(prev_but, 'href');
 	let next_href = queryAttr(next_but, 'href');
 	const need_next_page = handleNeedNextPage(next_href, nowId);
 	if (need_next_page) {
+		// 判断是否需要请求下一页数据
 		const next_data = await getArticleData(next_href);
 		content.push(...next_data.content);
 		next_href = next_data.next_href;

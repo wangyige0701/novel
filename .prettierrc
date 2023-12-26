@@ -7,6 +7,8 @@
 	"printWidth": 120,
 	"semi": true,
 	"endOfLine": "lf",
+	"bracketSpacing": true,
+	"bracketSameLine": false,
 	"overrides": [
 		{
 			"files": ".prettierrc",

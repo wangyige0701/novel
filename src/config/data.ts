@@ -1,3 +1,4 @@
+/** 接口数据配置 */
 export const interfaceInfo = {
 	dingdian: {
 		domain: 'https://m.ytryx.com/',
@@ -5,6 +6,7 @@ export const interfaceInfo = {
 	},
 } as const;
 
+/** 网络请求对象 */
 export const NetRequest: {
 	TARGET: keyof typeof interfaceInfo;
 } = {

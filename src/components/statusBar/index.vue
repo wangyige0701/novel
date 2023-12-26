@@ -7,7 +7,7 @@
 				'background-color': props.color ?? '#fff',
 			}"
 		></view>
-		<slot name="statusBar"></slot>
+		<slot name="statusBar" :height="statusBarHeight"></slot>
 	</view>
 </template>
 

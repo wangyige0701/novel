@@ -1,7 +1,7 @@
 <template>
 	<view class="full-screen content">
 		<StatusBar color="red">
-			<template v-slot:statusBar>
+			<template #statusBar>
 				<view class="status-bar search-container"></view>
 			</template>
 		</StatusBar>

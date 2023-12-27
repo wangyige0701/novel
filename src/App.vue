@@ -48,5 +48,11 @@ text {
 	white-space: nowrap;
 	text-overflow: ellipsis;
 }
+
+.no-scrollbar {
+	&::-webkit-scrollbar {
+		display: none;
+	}
+}
 /* #endif */
 </style>

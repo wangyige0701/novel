@@ -9,11 +9,11 @@ export function getRequest(
 	options: RequestOptionsUsed,
 ): Promise<string | AnyObject | ArrayBuffer> {
 	return new Promise((resolve, reject) => {
-		options = checkOptions.call(this, options, resolve, reject); // 传参数据整理
-		(options as RequestOptions).method = 'GET';
-
-		const obj: UniNamespace.RequestTask = _uni_request(options); // requestTask对象
-
-		_request_cache.call(this, options as RequestOptions, obj);
+		const settintOptions = checkOptions.call(this, options, resolve, reject); // 传参数据整理
+		if (settintOptions) {
+			settintOptions.method = 'GET';
+			const obj: UniNamespace.RequestTask = _uni_request(settintOptions); // requestTask对象
+			_request_cache.call(this, settintOptions, obj);
+		}
 	});
 }

@@ -1,3 +1,4 @@
+import type { ChapterCallback } from './@types/homepage';
 import { ConfigSelect } from '@/config';
 import { getArticleData, getBookHomeData, getListData } from './dingdian';
 
@@ -6,9 +7,18 @@ const SEARCH_FUN = {
 	dingdian: getListData,
 };
 
-/** 图书主页数据方法映射 */
-const BOOK_HOME_FUN = {
-	dingdian: getBookHomeData,
+/** 主页信息方法映射 */
+const BOOK_INFO_FUN = {
+	dingdian: function (id: string) {
+		return getBookHomeData(id, 'noChapter');
+	},
+};
+
+/** 图书章节列表方法映射 */
+const CHAPTER_LIST_FUN = {
+	dingdian: function (id: string, callback?: ChapterCallback, containFirst?: boolean) {
+		return getBookHomeData(id, callback, containFirst);
+	},
 };
 
 /** 小说章节内容方法映射 */
@@ -22,10 +32,16 @@ export function search(content: string) {
 	return _f(content);
 }
 
-/** 获取小说主页数据 */
-export function bookHome(id: string) {
-	const _f = BOOK_HOME_FUN[ConfigSelect.TARGET];
+/** 获取小说信息数据 */
+export function bookInfo(id: string) {
+	const _f = BOOK_INFO_FUN[ConfigSelect.TARGET];
 	return _f(id);
+}
+
+/** 获取小说章节列表数据 */
+export function chapterList(id: string, callback?: ChapterCallback, containFirst?: boolean) {
+	const _f = CHAPTER_LIST_FUN[ConfigSelect.TARGET];
+	return _f(id, callback, containFirst);
 }
 
 /** 获取小说章节内容数据 */

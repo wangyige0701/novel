@@ -19,7 +19,6 @@ function returnHeadreValue(header: any) {
 	if (!header) {
 		return HEADER;
 	} else {
-		debugger;
 		// 处理请求头
 		if (!header['content-type'] && !header['contentType']) {
 			header['content-type'] = HEADER['content-type'];
@@ -30,6 +29,7 @@ function returnHeadreValue(header: any) {
 		return header;
 	}
 }
+
 /**
  * 请求参数处理
  * @param data 请求参数
@@ -42,8 +42,13 @@ export function checkOptions(
 	data: any,
 	resolve: ResolveFunc<string | AnyObject | ArrayBuffer>,
 	reject: RejectFunc,
-	isFile: boolean = false,
-) {
+	isFile?: boolean,
+): RequestOptions | undefined {
+	if (typeof isFile === 'undefined') {
+		// 默认不是文件传输
+		isFile = false;
+	}
+
 	// 请求的传参参数判断
 	if (!data.hasOwnProperty('url')) {
 		// 路径
@@ -60,6 +65,19 @@ export function checkOptions(
 		if (!data['url'].startsWith('http')) {
 			data['url'] = URL + data['url']; // 完整路径
 		}
+	}
+
+	const url = data.url;
+	// 检查缓存
+	if (!isFile && data.cache !== false && url in this.cacheList && this.cacheList[url] && this.cacheList[url].data) {
+		resolve(this.cacheList[url].data);
+		if (this.cacheList[url].timeid) {
+			clearTimeout(this.cacheList[url].timeid);
+		}
+		this.cacheList[url].timeid = setTimeout(() => {
+			delete this.cacheList[url];
+		}, this.cacheTime);
+		return;
 	}
 
 	if (!isFile) {
@@ -90,9 +108,17 @@ export function checkOptions(
 	}
 
 	// 请求回调统一配置
-	data.success = function (res: UniApp.RequestSuccessCallbackResult) {
+	data.success = (res: UniApp.RequestSuccessCallbackResult) => {
 		if (res.statusCode === 200) {
 			resolve(res.data);
+			if (!isFile && data.cache !== false) {
+				this.cacheList[url] = {
+					data: res.data,
+					timeid: setTimeout(() => {
+						delete this.cacheList[url];
+					}, this.cacheTime),
+				};
+			}
 		} else {
 			reject(res.data);
 		}
@@ -101,17 +127,9 @@ export function checkOptions(
 		reject(err);
 	};
 	data.complete = () => {
-		if (data.url) {
-			// 接口请求结束后删除记录
-			let url = data.url;
-			if (url.includes('?')) {
-				url = url.split('?')[0];
-			}
-
-			if (this.requestList.hasOwnProperty(url)) {
-				// 请求结束后删除队列中此次请求的记录
-				delete this.requestList[url];
-			}
+		if (url && this.requestList.hasOwnProperty(url)) {
+			// 请求结束后删除队列中此次请求的记录
+			delete this.requestList[url];
 		}
 	};
 	return data;
@@ -126,19 +144,16 @@ export function _request_cache(
 	options: RequestOptions,
 	obj: UniNamespace.RequestTask | UniNamespace.DownloadTask | UniNamespace.UploadTask,
 ) {
-	if (options.url && !options.syncRequest) {
-		// 判断同一个接口得请求是否结束，同一个接口的前一个请求未结束则终止前一个请求
-		let url = options.url;
-		if (url.includes('?')) {
-			url = url.split('?')[0];
-		}
-
-		if (this.requestList[url]) {
-			// 当前请求正在进行
-			this.requestList[url].abort(); // 终止上一个请求
-			this.requestList[url] = obj; // 队列中的请求覆盖为此次请求
-		} else {
-			this.requestList[url] = obj;
+	if (options.url) {
+		const url = options.url;
+		if (options.asyn === true) {
+			// 判断同一个接口得请求是否结束，同一个接口的前一个请求未结束则终止前一个请求
+			if (url in this.requestList && this.requestList[url] !== obj) {
+				this.requestList[url]?.abort(); // 终止请求
+				this.requestList[url] = obj; // 队列中的请求覆盖为此次请求
+			} else {
+				this.requestList[url] = obj;
+			}
 		}
 	}
 }

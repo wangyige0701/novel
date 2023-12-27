@@ -28,6 +28,7 @@ let observer: UniApp.IntersectionObserver;
 
 export default defineComponent({
 	name: 'bookListItem',
+	expose: [],
 	props: {
 		item: {
 			type: Object as PropType<BookListType>,
@@ -49,10 +50,37 @@ export default defineComponent({
 				href: item.href,
 			});
 		},
+		getTargetSize(callback: Function) {
+			// #ifdef APP
+			const query = uni.createSelectorQuery().in(this);
+			const { fields } = query.select('.delete');
+			fields(
+				{
+					size: true,
+					rect: true,
+				},
+				data => {
+					console.log(data);
+					if (Array.isArray(data) && data.length > 0) {
+						callback(data[0].left);
+					} else {
+						callback((data as UniApp.NodeInfo).left);
+					}
+				},
+			);
+			// #endif
+			// #ifdef H5
+			const target = document.querySelector('.delete') as HTMLElement;
+			callback(target.getBoundingClientRect().left);
+			// #endif
+		},
 		observeScroll() {
-			observer = uni.createIntersectionObserver(this);
-			observer.relativeTo('.book-list-item-container', { right: 0 }).observe('.delete', res => {
-				console.log(res);
+			this.getTargetSize((left: number) => {
+				observer = uni.createIntersectionObserver(this);
+				observer.relativeTo('.book-list-item-container', { left: -1 * left }).observe('.delete', res => {
+					console.log(res);
+				});
+				console.log(left);
 			});
 		},
 	},

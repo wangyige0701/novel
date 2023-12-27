@@ -6,7 +6,7 @@
 		@click="props.full === true ? onClick() : null"
 	>
 		<view class="status-bar-heigth" :style="{ 'background-color': props.color ?? '#fff' }"></view>
-		<view v-if="props.full === true" class="slot-container">
+		<view v-if="props.full === true" class="no-scrollbar slot-container">
 			<slot name="statusBar" :height="statusBarHeight"></slot>
 		</view>
 		<slot v-else name="statusBar" :height="statusBarHeight"></slot>
@@ -29,7 +29,6 @@ interface Emits {
 
 /** 状态栏高度 */
 const statusBarHeight = GlobalStore.data.statusBarHeight;
-console.log(GlobalStore.data.deviceType);
 
 const props = withDefaults(defineProps<Props>(), {
 	color: '#fff',

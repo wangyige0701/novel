@@ -31,3 +31,6 @@ export type ChapterList = HomePageReturnVal['chaptersList'];
 
 /** 章节数据更新回调函数 */
 export type ChapterCallback = (chapter?: ChapterList, err?: any) => void;
+
+/** 忽略章节数据的类型 */
+export type HomePageExcludeChapter = Omit<HomePageReturnVal, 'chaptersList' | 'pageNumber'>;

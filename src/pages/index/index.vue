@@ -33,12 +33,12 @@ function globalClick() {
 	console.log(1);
 }
 
-// path.navigateTo({
-// 	url: '/pages/home/index',
-// 	params: {
-// 		bookId: '/b5738/',
-// 	},
-// });
+path.navigateTo({
+	url: '/pages/home/index',
+	params: {
+		bookId: '/b5738/',
+	},
+});
 </script>
 
 <style scoped lang="scss">

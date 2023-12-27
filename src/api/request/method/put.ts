@@ -9,11 +9,11 @@ export function putRequest(
 	options: RequestOptionsUsed,
 ): Promise<string | AnyObject | ArrayBuffer> {
 	return new Promise((resolve, reject) => {
-		options = checkOptions.call(this, options, resolve, reject); // 传参数据整理
-		(options as RequestOptions).method = 'PUT';
-
-		const obj = _uni_request(options); // requestTask对象
-
-		_request_cache.call(this, options as RequestOptions, obj);
+		const settingOptions = checkOptions.call(this, options, resolve, reject); // 传参数据整理
+		if (settingOptions) {
+			settingOptions.method = 'PUT';
+			const obj = _uni_request(settingOptions); // requestTask对象
+			_request_cache.call(this, settingOptions, obj);
+		}
 	});
 }

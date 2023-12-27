@@ -6,8 +6,14 @@ import { uploadFile } from './method/uploadFile';
 import { downloadFile } from './method/downloadFile';
 
 export const request: RequestObject = {
+	// 缓存时间，单位ms
+	cacheTime: 1 * 60 * 1000,
+
 	// 请求队列
 	requestList: {},
+
+	// 请求数据缓存队列
+	cacheList: {},
 
 	/**
 	 * get请求

@@ -9,12 +9,11 @@ export function downloadFile(
 	options: RequestOptionsUsed,
 ): Promise<string | AnyObject | ArrayBuffer> {
 	return new Promise((resolve, reject) => {
-		options = checkOptions.call(this, options, resolve, reject, true); // 传参数据整理
-
-		const obj: UniNamespace.DownloadTask = (
-			uni.downloadFile as (options: UniNamespace.DownloadFileOption) => UniNamespace.DownloadTask
-		)(options); // requestTask对象
-
-		_request_cache.call(this, options as RequestOptions, obj);
+		const settingOptions = checkOptions.call(this, options, resolve, reject, true); // 传参数据整理
+		if (settingOptions) {
+			type Func = (options: UniNamespace.DownloadFileOption) => UniNamespace.DownloadTask;
+			const obj: UniNamespace.DownloadTask = (uni.downloadFile as Func)(settingOptions); // requestTask对象
+			_request_cache.call(this, settingOptions, obj);
+		}
 	});
 }

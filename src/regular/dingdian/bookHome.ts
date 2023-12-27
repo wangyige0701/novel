@@ -1,5 +1,5 @@
 import type { HTMLParseTag } from '@/core/@types/parse';
-import type { HomePageReturnVal, ChapterCallback, ChapterList } from '../@types/homepage';
+import type { HomePageReturnVal, ChapterCallback, ChapterList, HomePageExcludeChapter } from '../@types/homepage';
 import { suffixWithPathParam } from '@/api/dingdian/suffix';
 import { parseHTML, query, queryAttr, queryText } from '@/core';
 import { AsyncQueue } from '@/utils/asyncQueue';
@@ -173,11 +173,17 @@ function mergePagingChapters(
  * @param containFirst
  * @returns
  */
+async function handleHomePageHTML(html: string, chaptersRefresh: 'noChapter'): Promise<HomePageExcludeChapter>;
 async function handleHomePageHTML(
 	html: string,
 	chaptersRefresh?: ChapterCallback,
 	containFirst?: boolean,
-): Promise<HomePageReturnVal> {
+): Promise<HomePageReturnVal>;
+async function handleHomePageHTML(
+	html: string,
+	chaptersRefresh?: ChapterCallback | 'noChapter',
+	containFirst?: boolean,
+): Promise<HomePageReturnVal | HomePageExcludeChapter> {
 	const parse = parseHTML(html);
 	const body = query(parse).$body();
 	const authorInfo = body.$(authorNameSelector);
@@ -186,9 +192,13 @@ async function handleHomePageHTML(
 	const authorHref = queryAttr(authorInfo, 'href');
 	const introduction = queryText(body.$(introductionSelector));
 	const novelType = queryText(body.$(novelTypeSelector));
-	const pageDatas = body.$all(pagesSelector);
 	const allChapters = body.$all(allChaptersSeelctor);
-	const chaptersList = await mergePagingChapters(pageDatas, allChapters, chaptersRefresh, containFirst);
+	let chaptersList: ChapterList = [];
+	let pageDatas: HTMLParseTag[] = [];
+	if (chaptersRefresh !== 'noChapter') {
+		pageDatas = body.$all(pagesSelector);
+		chaptersList = await mergePagingChapters(pageDatas, allChapters, chaptersRefresh, containFirst);
+	}
 	return {
 		novelName,
 		author: {
@@ -196,30 +206,43 @@ async function handleHomePageHTML(
 			href: authorHref,
 		},
 		introduction,
-		novelType,
-		chaptersList,
-		pageNumber: pageDatas.length,
+		novelType: novelType.match(/^(?:[^\:：]*[\:：])?(.*)$/)?.[1] ?? novelType,
+		...(chaptersRefresh === 'noChapter'
+			? {}
+			: {
+					chaptersList,
+					pageNumber: pageDatas.length,
+				}),
 	};
 }
 
 /**
  * 获取主页展示数据，包括小说名，简介，作者，章节列表
  * @param homeId
- * @param chaptersRefresh 异步请求分页数据后通过此回调函数接收数据
+ * @param chaptersRefresh 异步请求分页数据后通过此回调函数接收数据，如果传入`noChapter`则表示不会返回章节列表数据
  * @param containFirst 回调函数中是否包含第一页的分页数据
  * @returns
  */
+export function getBookHomeData(homeId: string, chaptersRefresh: 'noChapter'): Promise<HomePageExcludeChapter>;
 export function getBookHomeData(
 	homeId: string,
 	chaptersRefresh?: ChapterCallback,
 	containFirst?: boolean,
-): Promise<HomePageReturnVal> {
+): Promise<HomePageReturnVal>;
+export function getBookHomeData(
+	homeId: string,
+	chaptersRefresh?: ChapterCallback | 'noChapter',
+	containFirst?: boolean,
+): Promise<HomePageReturnVal | HomePageExcludeChapter> {
 	return new Promise((resolve, reject) => {
 		suffixWithPathParam(homeId)
 			.then(data => {
 				return getAllChapters(String(data));
 			})
 			.then(data => {
+				if (chaptersRefresh === 'noChapter') {
+					return handleHomePageHTML(String(data), 'noChapter');
+				}
 				return handleHomePageHTML(String(data), chaptersRefresh, containFirst);
 			})
 			.then(resolve)

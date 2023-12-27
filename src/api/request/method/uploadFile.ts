@@ -9,15 +9,15 @@ export function uploadFile(
 	options: RequestOptionsUsed,
 ): Promise<string | AnyObject | ArrayBuffer> {
 	return new Promise((resolve, reject) => {
-		options = checkOptions.call(this, options, resolve, reject, true); // 传参数据整理
-
-		if (!options.hasOwnProperty('fileType')) {
+		const settingOptions = checkOptions.call(this, options, resolve, reject, true); // 传参数据整理
+		if (!settingOptions || !settingOptions.hasOwnProperty('fileType')) {
 			// 上传文件需要fileType参数，image/video/audio（仅支付宝小程序）
 			throw new Error('Request object needs fileType value');
 		}
-
-		const obj = (uni.uploadFile as (options: UniNamespace.UploadFileOption) => UniNamespace.UploadTask)(options); // requestTask对象
-
-		_request_cache.call(this, options as RequestOptions, obj);
+		if (settingOptions) {
+			type Func = (options: UniNamespace.UploadFileOption) => UniNamespace.UploadTask;
+			const obj = (uni.uploadFile as Func)(settingOptions); // requestTask对象
+			_request_cache.call(this, settingOptions, obj);
+		}
 	});
 }

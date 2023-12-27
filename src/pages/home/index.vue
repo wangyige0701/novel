@@ -3,10 +3,12 @@
 		<template #statusBar="{ height }">
 			<view class="content">
 				<view class="placeholder" v-if="hasData === false"></view>
-				<view class="container" v-else>
-					<view class="info"></view>
+				<view class="no-scrollbar container" v-else>
+					<view class="info">
+						<BookInfo :info="testData"></BookInfo>
+					</view>
 					<view class="list">
-						<!--  -->
+						<!-- 章节列表 -->
 					</view>
 				</view>
 			</view>
@@ -15,8 +17,9 @@
 </template>
 
 <script setup lang="ts">
-import StatusBar from '@/components/statusBar/index.vue';
-import { bookHome } from '@/regular/index';
+import StatusBar from '@comp/statusBar/index.vue';
+import BookInfo from '@comp/info/book.vue';
+import { bookInfo } from '@/regular/index';
 import { homePageData as testData } from '@test/data/homepage.test';
 
 const hasData = ref(false);
@@ -31,7 +34,7 @@ onLoad(options => {
 
 function getBookHomeData(id: string) {
 	settingDatas(testData);
-	// bookHome(id)
+	// bookInfo(id)
 	// 	.then(data => {
 	// 		console.log(data);
 	// 	})
@@ -62,6 +65,7 @@ function settingDatas(datas: any) {
 	display: flex;
 	flex-direction: column;
 	flex-wrap: nowrap;
+	align-items: center;
 	overflow-y: scroll;
 	scroll-snap-type: y proximity;
 
@@ -73,14 +77,16 @@ function settingDatas(datas: any) {
 
 	.info {
 		width: 100%;
-		height: 400px;
-		background-color: green;
+		height: 400rpx;
+
+		@media screen and (min-width: 1024px) {
+			width: 70%;
+		}
 	}
 
 	.list {
 		width: 100%;
-		height: 2000px;
-		background: linear-gradient(to bottom, #b142e4, #f71212);
+		min-height: calc(100% - 400rpx);
 	}
 }
 </style>

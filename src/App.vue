@@ -38,6 +38,11 @@ text {
 	height: 100vh;
 }
 
+.full-size {
+	width: 100%;
+	height: 100%;
+}
+
 .text-ellipsis {
 	overflow: hidden;
 	white-space: nowrap;

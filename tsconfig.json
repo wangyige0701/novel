@@ -10,7 +10,8 @@
       "@comp/*": ["./src/components/*"],
       "@test/*": ["./src/test/*"],
       "@storage/*": ["./src/storage/*"],
-      "@path/*": ["./src/path/*"]
+      "@path/*": ["./src/path/*"],
+      "@store": ["./src/config/store.ts"]
     },
     "lib": ["esnext", "dom"],
     "typeRoots": [

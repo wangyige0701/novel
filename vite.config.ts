@@ -13,15 +13,42 @@ function createPages() {
 	};
 }
 
+/**
+ * 获取teconfig中的重定向配置
+ * @returns
+ */
+function getAllAlias() {
+	const value = require('./tsconfig.json').compilerOptions.paths;
+	const result = {};
+	const match = /^(@?.*)[\/\\]\*$/;
+	function _r(str: string) {
+		return str.match(match)?.[1] || '';
+	}
+	for (const key in value) {
+		const valueKey = key.match(match)?.[1] || '@';
+		const valueTarget = value[key];
+		let target: string[] = [];
+		if (!Array.isArray(valueTarget)) {
+			target.push(_r(valueTarget));
+		} else if (Array.isArray(valueTarget) && valueTarget.length > 0) {
+			for (const item of valueTarget) {
+				target.push(_r(item));
+			}
+		}
+		if (target.length > 0) {
+			result[valueKey] = target.map(item => {
+				return path.resolve(__dirname, item);
+			});
+		}
+	}
+	return result;
+}
+
 // https://vitejs.dev/config/
 export default defineConfig({
 	resolve: {
 		alias: {
-			'@': path.resolve(__dirname, 'src'),
-			'@comp': path.resolve(__dirname, 'src/components'),
-			'@test': path.resolve(__dirname, 'src/test'),
-			'@storage': path.resolve(__dirname, 'src/storage'),
-			'@path': path.resolve(__dirname, 'src/path'),
+			...getAllAlias(),
 		},
 	},
 	build: {

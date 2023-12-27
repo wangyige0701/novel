@@ -1,11 +1,13 @@
 <template>
-	<StatusBar color="transparent">
+	<StatusBar color="transparent" :full="true">
 		<template #statusBar="{ height }">
-			<view class="full-screen content">
+			<view class="content">
 				<view class="placeholder" v-if="hasData === false"></view>
 				<view class="container" v-else>
 					<view class="info"></view>
-					<view class="list"></view>
+					<view class="list">
+						<!--  -->
+					</view>
 				</view>
 			</view>
 		</template>
@@ -49,6 +51,11 @@ function settingDatas(datas: any) {
 </script>
 
 <style scoped lang="scss">
+.content {
+	width: 100%;
+	height: 100%;
+}
+
 .container {
 	width: 100%;
 	height: 100%;
@@ -58,7 +65,7 @@ function settingDatas(datas: any) {
 	overflow-y: scroll;
 	scroll-snap-type: y proximity;
 
-	* {
+	> * {
 		flex-shrink: 0;
 		scroll-snap-align: start;
 		scroll-snap-stop: always;

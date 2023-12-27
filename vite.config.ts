@@ -20,12 +20,16 @@ function createPages() {
 function getAllAlias() {
 	const value = require('./tsconfig.json').compilerOptions.paths;
 	const result = {};
-	const match = /^(@?.*)[\/\\]\*$/;
-	function _r(str: string) {
-		return str.match(match)?.[1] || '';
+	const match = /(?:^(@?.*)[\/\\]\*$)|(?:^(@?.*[^\\\/][^@])$)/;
+	function _r(str: string, _default: string = '') {
+		const r = str.match(match);
+		if (!r) {
+			return '';
+		}
+		return r[1] || r[2] || _default;
 	}
 	for (const key in value) {
-		const valueKey = key.match(match)?.[1] || '@';
+		const valueKey = _r(key, '@');
 		const valueTarget = value[key];
 		let target: string[] = [];
 		if (!Array.isArray(valueTarget)) {

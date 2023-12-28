@@ -15,7 +15,6 @@
 
 <script setup lang="ts">
 import type { HomePageExcludeChapter } from '@/regular/@types/homepage';
-import { homePageData as testData } from '@test/data/homepage.test';
 import { bookInfo } from '@/regular/index';
 
 interface Props {
@@ -34,21 +33,19 @@ const noData = ref(false);
 const placeholder = ref(PlaceholderText.placeholder);
 
 /** 渲染数据 */
-// let renderData: HomePageExcludeChapter;
-let renderData: HomePageExcludeChapter = testData;
+let renderData: HomePageExcludeChapter;
 
 const props = withDefaults(defineProps<Props>(), {
 	bookId: '',
 });
 
 function requestBookInfo(id: string) {
+	render.value = false;
 	if (!id) {
-		render.value = false;
 		noData.value = true;
 		placeholder.value = PlaceholderText.noId;
 		return;
 	}
-	render.value = false;
 	noData.value = false;
 	placeholder.value = PlaceholderText.locading;
 	bookInfo(id)
@@ -60,11 +57,9 @@ function requestBookInfo(id: string) {
 			}
 			renderData = data;
 			render.value = true;
-			noData.value = false;
 			placeholder.value = '';
 		})
 		.catch(err => {
-			render.value = true;
 			noData.value = true;
 			placeholder.value = PlaceholderText.system;
 			throw new Error(err);
@@ -74,8 +69,7 @@ function requestBookInfo(id: string) {
 watch(
 	() => props.bookId,
 	newVal => {
-		console.log(import.meta);
-		// requestBookInfo(newVal);
+		requestBookInfo(newVal);
 	},
 	{
 		immediate: true,

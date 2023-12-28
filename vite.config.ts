@@ -3,6 +3,7 @@ import { defineConfig } from 'vite';
 import path from 'path';
 import uniPlugin from '@dcloudio/vite-plugin-uni';
 import AutoImport from 'unplugin-auto-import/vite';
+import ProxyConfig from './src/request/proxy';
 
 function createPages() {
 	return <Plugin>{
@@ -17,7 +18,7 @@ function createPages() {
  * 获取teconfig中的重定向配置
  * @returns
  */
-function getAllAlias() {
+function createAliasConfig() {
 	const value = require('./tsconfig.json').compilerOptions.paths;
 	const result = {};
 	const match = /(?:^(@?.*)[\/\\]\*$)|(?:^(@?.*[^\\\/][^@])$)/;
@@ -48,11 +49,33 @@ function getAllAlias() {
 	return result;
 }
 
+/**
+ * h5环境下根据代理配置生成对象
+ * @returns
+ */
+function createProxyConfig() {
+	const keys = Object.keys(ProxyConfig);
+	const result = keys.reduce((prev, curr) => {
+		prev[`/${curr}`] = {
+			target: `${ProxyConfig[curr]}/`,
+			changeOrigin: true,
+			rewrite: path => path.replace(new RegExp(`^/${curr}`), ''),
+		};
+		return prev;
+	}, {});
+	return result;
+}
+
 // https://vitejs.dev/config/
 export default defineConfig({
 	resolve: {
 		alias: {
-			...getAllAlias(),
+			...createAliasConfig(),
+		},
+	},
+	server: {
+		proxy: {
+			...createProxyConfig(),
 		},
 	},
 	build: {

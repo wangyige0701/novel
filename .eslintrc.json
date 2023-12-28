@@ -31,6 +31,6 @@
         "**/parseHtml.ts",
         "src/core",
         "src/storage",
-        "src/api/request"
+        "src/request"
     ]
 }

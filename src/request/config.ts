@@ -1,5 +1,17 @@
 import { getInterfaceDataDefault } from '@/config';
 
+// #ifdef H5
+import ProxyConfig from './proxy';
+
+const DomainMap = Object.keys(ProxyConfig).reduce(
+	(prev, curr) => {
+		prev[ProxyConfig[curr as keyof typeof ProxyConfig]] = curr;
+		return prev;
+	},
+	{} as { [key: string]: string },
+);
+// #endif
+
 /**
  * header头数据
  **/
@@ -10,7 +22,7 @@ const HEADER = {
 /**
  * 全局环境
  **/
-const URL = getInterfaceDataDefault('domain');
+const GLOBAL_URL = getInterfaceDataDefault('domain');
 
 /**
  * header请求头的返回值整理
@@ -55,17 +67,24 @@ export function checkOptions(
 		throw new Error('Request object needs url value');
 	} else {
 		if (data.hasOwnProperty('base')) {
-			if (data['base'] === '' && data['url'].startsWith('/')) {
+			if (data.base === '' && data.url.startsWith('/')) {
 				// 如果没有base值且第一个字符为/，删除/
-				data['url'] = data['url'].slice(1);
+				data.url = data.url.slice(1);
 			} else {
-				data['url'] = data['base'] + data['url'];
+				data.url = data.base + data.url;
 			}
 		}
-		if (!data['url'].startsWith('http')) {
-			data['url'] = URL + data['url']; // 完整路径
+		if (!data.url.startsWith('http')) {
+			data.url = GLOBAL_URL + data.url; // 完整路径
 		}
 	}
+
+	// #ifdef H5
+	const origin = new URL(data.url).origin ?? '';
+	if (origin in DomainMap) {
+		data.url = DomainMap[origin] + data.url.slice(origin.length);
+	}
+	// #endif
 
 	const url = data.url;
 	// 检查缓存

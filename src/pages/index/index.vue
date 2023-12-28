@@ -24,6 +24,7 @@ function bookHomepage(item: BookListClickType) {
 	// path.navigateTo({
 	// 	url: '/pages/home/index',
 	// 	params: {
+	// 		name: item.name,
 	// 		bookId: item.href,
 	// 	},
 	// });
@@ -36,6 +37,7 @@ function globalClick() {
 path.navigateTo({
 	url: '/pages/home/index',
 	params: {
+		bookName: '斗破苍穹',
 		bookId: '/b5738/',
 	},
 });

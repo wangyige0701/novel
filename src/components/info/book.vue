@@ -1,5 +1,12 @@
 <template>
-	<view v-if="!render" class="book-info-no-render" :class="noData === true ? 'placeholder' : 'locading'"></view>
+	<view
+		v-if="!render.show.value"
+		class="book-info-no-render"
+		:class="
+			render.loading.value ? 'loading' : render.empty.value ? 'placeholder' : render.error.value ? 'error' : ''
+		"
+		>{{ placeholder }}</view
+	>
 	<view v-else class="full-size book-info-container">
 		<view class="image">
 			<image src="" mode="scaleToFill" />
@@ -16,65 +23,71 @@
 <script setup lang="ts">
 import type { HomePageExcludeChapter } from '@/regular/@types/homepage';
 import { bookInfo } from '@/regular/index';
+import { pageRender } from '@/custom/ref/pageRender';
 
 interface Props {
 	bookId: string;
+	bookName: string;
 }
 
 const PlaceholderText = {
-	locading: '加载中...',
+	loading: '加载中...',
 	placeholder: '暂无数据',
 	noId: '书籍id未知',
 	system: '系统错误',
 };
 
-const render = ref(false);
-const noData = ref(false);
-const placeholder = ref(PlaceholderText.placeholder);
+const render = pageRender();
+const placeholder = ref('');
 
 /** 渲染数据 */
 let renderData: HomePageExcludeChapter;
 
 const props = withDefaults(defineProps<Props>(), {
 	bookId: '',
+	bookName: '',
 });
 
 function requestBookInfo(id: string) {
-	render.value = false;
+	render.init();
 	if (!id) {
-		noData.value = true;
-		placeholder.value = PlaceholderText.noId;
+		render.toEmpty();
 		return;
 	}
-	noData.value = false;
-	placeholder.value = PlaceholderText.locading;
+	render.toLoad();
 	bookInfo(id)
 		.then(data => {
 			if (!data) {
-				noData.value = true;
-				placeholder.value = PlaceholderText.placeholder;
+				render.toEmpty();
 				return;
 			}
 			renderData = data;
-			render.value = true;
-			placeholder.value = '';
+			render.toRender();
 		})
 		.catch(err => {
-			noData.value = true;
-			placeholder.value = PlaceholderText.system;
+			render.toError();
 			throw new Error(err);
 		});
 }
 
-watch(
-	() => props.bookId,
-	newVal => {
-		requestBookInfo(newVal);
-	},
-	{
-		immediate: true,
-	},
-);
+const stop = watchEffect(() => {
+	// 请求数据
+	requestBookInfo(props.bookId);
+	// 占位文字调整
+	placeholder.value = render.loading
+		? PlaceholderText.loading
+		: render.empty
+			? props.bookId
+				? PlaceholderText.placeholder
+				: PlaceholderText.noId
+			: render.error
+				? PlaceholderText.system
+				: '';
+});
+
+onBeforeUnmount(() => {
+	stop?.();
+});
 </script>
 
 <style scoped lang="scss">

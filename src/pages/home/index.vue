@@ -4,10 +4,12 @@
 			<view class="content">
 				<view class="no-scrollbar container">
 					<view class="info">
-						<BookInfo :bookId="bookId"></BookInfo>
+						<BookInfo :book-id="bookId" :book-name="bookName"></BookInfo>
 					</view>
 					<view class="list">
-						<!-- 章节列表 -->
+						<view class="no-scrollbar list-container">
+							<ChapterList :book-id="bookId" :book-name="bookName"></ChapterList>
+						</view>
 					</view>
 				</view>
 			</view>
@@ -18,15 +20,18 @@
 <script setup lang="ts">
 import StatusBar from '@comp/statusBar/index.vue';
 import BookInfo from '@comp/info/book.vue';
+import ChapterList from '@comp/list/chapterList.vue';
 
 const bookId = ref('');
+const bookName = ref('');
 
 onLoad(options => {
 	if (!options) {
 		return;
 	}
-	const { bookId: id } = options;
+	const { bookId: id, bookName: name } = options;
 	bookId.value = id;
+	bookName.value = name;
 });
 </script>
 
@@ -64,6 +69,19 @@ onLoad(options => {
 	.list {
 		width: 100%;
 		min-height: calc(100% - 400rpx);
+
+		.list-container {
+			width: 80%;
+			height: 100%;
+			margin: 0 auto;
+			box-sizing: border-box;
+			padding-top: 20rpx;
+			overflow: scroll;
+
+			@media screen and (min-width: 1024px) {
+				width: 60%;
+			}
+		}
 	}
 }
 </style>

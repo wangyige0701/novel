@@ -131,6 +131,9 @@ function mergePagingChapters(
 					chaptersRefresh?.(data);
 				}
 				index++;
+				if (index === allPages) {
+					chaptersRefresh?.(true);
+				}
 				return true;
 			} else {
 				cache.set(indexVal, data);

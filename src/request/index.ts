@@ -7,7 +7,7 @@ import { downloadFile } from './method/downloadFile';
 
 export const request: RequestObject = {
 	// 缓存时间，单位ms
-	cacheTime: 1 * 60 * 1000,
+	cacheTime: 10 * 1000,
 
 	// 请求队列
 	requestList: {},

@@ -18,7 +18,7 @@ interface Props {
 }
 
 interface Emits {
-	(e: 'click', value: BookListClickType): void;
+	(e: 'select', value: BookListClickType): void;
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -35,7 +35,7 @@ const interactive = {
 	 * @param item
 	 */
 	onClick(item: BookListType) {
-		emit('click', {
+		emit('select', {
 			name: item.name,
 			href: item.href,
 		});
@@ -56,6 +56,8 @@ defineExpose({
 </script>
 
 <style scoped lang="scss">
+@import '../../static/scss/config/main.scss';
+
 .placeholder {
 	background-color: grey;
 }
@@ -64,9 +66,9 @@ defineExpose({
 	display: grid;
 	grid-template-columns: 1fr;
 	grid-auto-rows: 250rpx;
-	gap: 20rpx;
+	gap: $wyg-gap-base;
 	justify-items: center;
-	padding: 20rpx;
+	padding: $wyg-gap-base;
 }
 
 .book {

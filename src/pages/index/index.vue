@@ -4,7 +4,7 @@
 			<view class="content">
 				<view class="search-container"></view>
 				<view class="book-list">
-					<BookList v-if="showType === 'bookList'" :book-list="testData" @click="bookHomepage"></BookList>
+					<BookList v-if="showType === 'bookList'" :book-list="testData" @select="bookHomepage"></BookList>
 				</view>
 			</view>
 		</template>

@@ -16,7 +16,6 @@ onError(err => {
 
 <style lang="scss">
 @import './static/scss/config/main.scss';
-@import './static/scss/config/color.scss';
 
 /* #ifndef APP-NVUE */
 * {

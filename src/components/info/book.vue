@@ -1,7 +1,7 @@
 <template>
 	<view
 		v-if="!render.show.value"
-		class="book-info-no-render"
+		class="book-info-render-tip"
 		:class="
 			render.loading.value ? 'loading' : render.empty.value ? 'placeholder' : render.error.value ? 'error' : ''
 		"
@@ -30,6 +30,10 @@ interface Props {
 	bookName: string;
 }
 
+/** 渲染数据 */
+let renderData: HomePageExcludeChapter;
+
+/** 占位文本 */
 const PlaceholderText = {
 	loading: '加载中...',
 	placeholder: '暂无数据',
@@ -37,17 +41,21 @@ const PlaceholderText = {
 	system: '系统错误',
 };
 
+/** 页面渲染状态 */
 const render = pageRender();
-const placeholder = ref('');
 
-/** 渲染数据 */
-let renderData: HomePageExcludeChapter;
+/** 实际占位文字 */
+const placeholder = ref('');
 
 const props = withDefaults(defineProps<Props>(), {
 	bookId: '',
 	bookName: '',
 });
 
+/**
+ * 请求小说信息
+ * @param id
+ */
 function requestBookInfo(id: string) {
 	render.init();
 	if (!id) {
@@ -92,16 +100,14 @@ onBeforeUnmount(() => {
 
 <style scoped lang="scss">
 @import '../../static/scss/config/main.scss';
-@import '../../static/scss/config/color.scss';
 
 .book-info-container {
 	display: grid;
 	grid-template-columns: 250rpx 1fr;
 	grid-auto-rows: 100%;
 	background-color: #fff;
-	border-radius: 10rpx;
 	box-sizing: border-box;
-	padding: 20rpx;
+	padding: $wyg-gap-base;
 
 	.image {
 		display: flex;
@@ -131,7 +137,7 @@ onBeforeUnmount(() => {
 			line-height: var(--sub-title);
 			font-size: $wyg-font-size-subtitle;
 			color: $wyg-text-color-secondary;
-			margin-left: 20rpx;
+			margin-left: $wyg-spacing-row-base;
 		}
 
 		.introduction {
@@ -139,7 +145,7 @@ onBeforeUnmount(() => {
 			color: $wyg-text-color-normal;
 			line-height: calc($wyg-font-size-base + 10rpx);
 			text-indent: 2em;
-			margin-top: 10rpx;
+			margin-top: $wyg-spacing-col-sm;
 			overflow: scroll;
 		}
 	}

@@ -1,3 +1,5 @@
+@import "./color.scss";
+@import "./readStyle.scss";
 
 /* 文字尺寸 */
 $wyg-font-size-sm: 20rpx;
@@ -18,25 +20,31 @@ $wyg-img-size-base: 26px;
 $wyg-img-size-lg: 40px;
 
 /* Border Radius */
-$wyg-border-radius-sm: 3px;
-$wyg-border-radius-base: 4px;
-$wyg-border-radius-lg: 6px;
+$wyg-border-radius-sm: 6rpx;
+$wyg-border-radius-base: 8rpx;
+$wyg-border-radius-lg: 12rpx;
 $wyg-border-radius-circle: 50%;
 
 /* 水平间距 */
-$wyg-spacing-row-sm: 5px;
-$wyg-spacing-row-base: 10px;
-$wyg-spacing-row-lg: 15px;
+$wyg-spacing-row-sm: 10rpx;
+$wyg-spacing-row-base: 20rpx;
+$wyg-spacing-row-lg: 30rpx;
 
 /* 垂直间距 */
-$wyg-spacing-col-sm: 4px;
-$wyg-spacing-col-base: 8px;
-$wyg-spacing-col-lg: 12px;
+$wyg-spacing-col-sm: 8rpx;
+$wyg-spacing-col-base: 16rpx;
+$wyg-spacing-col-lg: 24rpx;
 
-/* 透明度 */
-$wyg-opacity-disabled: 0.3; // 组件禁用态的透明度
+/* 间隙距离 */
+$wyg-gap-base: 20rpx;
+
+/* 组件禁用态的透明度 */
+$wyg-opacity-disabled: 0.3;
 
 /* 导航栏高度 */
 $wyg-navigation-bar-height: 44px;
 
 $wyg-search-bar-height: 50px;
+
+/* 列表高度基准 */
+$wyg-list-height-base: 80rpx;

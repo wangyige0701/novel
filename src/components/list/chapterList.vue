@@ -1,28 +1,57 @@
 <template>
-	<view class="full-size chapter-list-container">
-		<view class="list-item"></view>
+	<view
+		v-if="!render.show.value"
+		class="chapter-list-render-tip"
+		:class="
+			render.loading.value ? 'loading' : render.empty.value ? 'placeholder' : render.error.value ? 'error' : ''
+		"
+		>{{ placeholder }}</view
+	>
+	<view v-else class="full-size chapter-list-container">
+		<view class="list-item" v-for="(item, index) in renderList" :key="'chapter-list-' + index">
+			<text class="text" :class="item.href ? '' : 'no-href'" @click="item.href ? clickChapter(item) : null">{{
+				item.name
+			}}</text>
+		</view>
 	</view>
 </template>
 
 <script setup lang="ts">
-import type { HomePageReturnVal, ChapterList } from '@/regular/@types/homepage';
+import type { ChapterList, ChapterListItem } from '@/regular/@types/homepage';
+import { pageRender } from '@/custom/ref/pageRender';
 import { chapterList } from '@/regular/index';
-import { homePageData as testData } from '@test/data/homepage.test';
+import { $_nextTick } from '@/utils/nextTick';
 
 interface Props {
 	bookId: string;
 	bookName: string;
 }
 
+interface Emits {
+	(id: 'select', value: ChapterListItem): void;
+}
+
+/** 占位文本 */
+const PlaceholderText = {
+	loading: '加载中...',
+	placeholder: '暂无数据',
+	noId: '书籍id未知',
+	system: '系统错误',
+};
+
+const render = pageRender();
+
 /** 渲染列表 */
 const renderList: ChapterList = shallowReactive<ChapterList>([]);
 
-const renderData = testData as HomePageReturnVal;
+const placeholder = ref('');
 
 const props = withDefaults(defineProps<Props>(), {
 	bookId: '',
 	bookName: '',
 });
+
+const emits = defineEmits<Emits>();
 
 const listRefresh = {
 	clear() {
@@ -36,17 +65,99 @@ const listRefresh = {
 	},
 };
 
-function requestChapterList(id: string) {}
+/**
+ * 请求章节列表
+ * @param id
+ */
+function requestChapterList(id: string) {
+	render.init();
+	listRefresh.clear();
+	if (!id) {
+		render.toEmpty();
+		return;
+	}
+	render.toLoad();
+	chapterList(
+		id,
+		value => {
+			if (value === true) {
+				if (renderList.length === 0) {
+					render.toEmpty();
+				}
+				return;
+			}
+			listRefresh.insert(value ?? []);
+		},
+		true,
+	)
+		.then(data => {
+			if (!data) {
+				render.toEmpty();
+				return;
+			}
+			$_nextTick(render.toRender);
+		})
+		.catch(err => {
+			render.toError();
+			throw new Error(err);
+		});
+}
+
+function clickChapter(item: ChapterListItem) {
+	emits('select', {
+		name: item.name,
+		href: item.href,
+	});
+}
+
+const stop = watchEffect(() => {
+	requestChapterList(props.bookId);
+	placeholder.value = render.loading
+		? PlaceholderText.loading
+		: render.empty
+			? props.bookId
+				? PlaceholderText.placeholder
+				: PlaceholderText.noId
+			: render.error
+				? PlaceholderText.system
+				: '';
+});
+
+onBeforeUnmount(() => {
+	stop?.();
+});
 </script>
 
 <style scoped lang="scss">
+@import '../../static/scss/config/main.scss';
+
 .chapter-list-container {
 	display: flex;
 	flex-direction: column;
 	flex-wrap: nowrap;
 
-	.list-item:not(:last-child) {
-		margin-bottom: 20rpx;
+	.list-item {
+		width: 100%;
+		height: $wyg-list-height-base;
+		line-height: $wyg-list-height-base;
+		font-size: $wyg-font-size-sm;
+		color: $wyg-text-color-normal;
+		box-sizing: border-box;
+		padding-left: $wyg-spacing-row-base;
+		border-radius: $wyg-border-radius-sm;
+		transition: background-color 0.3s;
+
+		&:has(.text:not(.no-href)):active {
+			background-color: $wyg-bg-color-hover;
+		}
+
+		.text.no-href {
+			color: $wyg-text-color-placeholder;
+		}
+
+		&:last-child {
+			margin-bottom: $wyg-spacing-col-base;
+		}
 	}
 }
 </style>

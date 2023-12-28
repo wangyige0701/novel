@@ -128,7 +128,7 @@ export default defineComponent({
 		width: 140rpx;
 		height: 170rpx;
 		background-color: red;
-		margin-left: 20rpx;
+		margin-left: $wyg-spacing-row-base;
 	}
 }
 
@@ -157,7 +157,7 @@ export default defineComponent({
 		flex-wrap: nowrap;
 		align-items: flex-start;
 		justify-content: space-evenly;
-		margin-left: 20rpx;
+		margin-left: $wyg-spacing-row-base;
 
 		> .book-name {
 			height: 60rpx;
@@ -173,7 +173,7 @@ export default defineComponent({
 			line-height: 40rpx;
 			font-size: $wyg-font-size-subtitle;
 			color: $wyg-color-subtitle;
-			padding-left: 10rpx;
+			padding-left: $wyg-spacing-row-sm;
 		}
 	}
 }

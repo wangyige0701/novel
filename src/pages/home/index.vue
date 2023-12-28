@@ -8,7 +8,7 @@
 					</view>
 					<view class="list">
 						<view class="no-scrollbar list-container">
-							<ChapterList :book-id="bookId" :book-name="bookName"></ChapterList>
+							<ChapterList :book-id="bookId" :book-name="bookName" @select="selectChapter"></ChapterList>
 						</view>
 					</view>
 				</view>
@@ -18,6 +18,7 @@
 </template>
 
 <script setup lang="ts">
+import type { ChapterListItem } from '@/regular/@types/homepage';
 import StatusBar from '@comp/statusBar/index.vue';
 import BookInfo from '@comp/info/book.vue';
 import ChapterList from '@comp/list/chapterList.vue';
@@ -33,9 +34,15 @@ onLoad(options => {
 	bookId.value = id;
 	bookName.value = name;
 });
+
+function selectChapter({ name, href }: ChapterListItem) {
+	console.log(name, href);
+}
 </script>
 
 <style scoped lang="scss">
+@import '../../static/scss/config/main.scss';
+
 .content {
 	width: 100%;
 	height: 100%;
@@ -75,7 +82,7 @@ onLoad(options => {
 			height: 100%;
 			margin: 0 auto;
 			box-sizing: border-box;
-			padding-top: 20rpx;
+			padding-top: $wyg-gap-base;
 			overflow: scroll;
 
 			@media screen and (min-width: 1024px) {

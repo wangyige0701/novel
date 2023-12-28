@@ -2,10 +2,9 @@
 	<StatusBar color="transparent" :full="true">
 		<template #statusBar="{ height }">
 			<view class="content">
-				<view class="placeholder" v-if="hasData === false"></view>
-				<view class="no-scrollbar container" v-else>
+				<view class="no-scrollbar container">
 					<view class="info">
-						<BookInfo :info="testData"></BookInfo>
+						<BookInfo :bookId="bookId"></BookInfo>
 					</view>
 					<view class="list">
 						<!-- 章节列表 -->
@@ -19,38 +18,16 @@
 <script setup lang="ts">
 import StatusBar from '@comp/statusBar/index.vue';
 import BookInfo from '@comp/info/book.vue';
-import { bookInfo } from '@/regular/index';
-import { homePageData as testData } from '@test/data/homepage.test';
 
-const hasData = ref(false);
+const bookId = ref('');
 
 onLoad(options => {
 	if (!options) {
 		return;
 	}
-	const { bookId } = options;
-	getBookHomeData(bookId);
+	const { bookId: id } = options;
+	bookId.value = id;
 });
-
-function getBookHomeData(id: string) {
-	settingDatas(testData);
-	// bookInfo(id)
-	// 	.then(data => {
-	// 		console.log(data);
-	// 	})
-	// 	.catch(err => {
-	// 		throw new Error(err);
-	// 	});
-}
-
-function settingDatas(datas: any) {
-	if (datas) {
-		hasData.value = true;
-	} else {
-		hasData.value = false;
-	}
-	console.log(datas);
-}
 </script>
 
 <style scoped lang="scss">

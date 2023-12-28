@@ -1,27 +1,86 @@
 <template>
-	<view class="full-size book-info-container">
+	<view v-if="!render" class="book-info-no-render" :class="noData === true ? 'placeholder' : 'locading'"></view>
+	<view v-else class="full-size book-info-container">
 		<view class="image">
 			<image src="" mode="scaleToFill" />
 		</view>
 		<view class="info">
-			<view class="text-ellipsis title">{{ props.info?.novelName ?? '' }}</view>
-			<view class="text-ellipsis author">作者：{{ props.info.author?.name ?? '' }}</view>
-			<view class="text-ellipsis type">类型：{{ props.info?.novelType ?? '' }}</view>
-			<view class="no-scrollbar introduction">{{ props.info?.introduction ?? '' }}</view>
+			<view class="text-ellipsis title">{{ renderData?.novelName ?? '' }}</view>
+			<view class="text-ellipsis author">作者：{{ renderData?.author?.name ?? '' }}</view>
+			<view class="text-ellipsis type">类型：{{ renderData?.novelType ?? '' }}</view>
+			<view class="no-scrollbar introduction">{{ renderData?.introduction ?? '' }}</view>
 		</view>
 	</view>
 </template>
 
 <script setup lang="ts">
 import type { HomePageExcludeChapter } from '@/regular/@types/homepage';
+import { homePageData as testData } from '@test/data/homepage.test';
+import { bookInfo } from '@/regular/index';
 
 interface Props {
-	info: HomePageExcludeChapter;
+	bookId: string;
 }
 
-const props = defineProps<Props>();
+const PlaceholderText = {
+	locading: '加载中...',
+	placeholder: '暂无数据',
+	noId: '书籍id未知',
+	system: '系统错误',
+};
 
-console.log(props.info);
+const render = ref(false);
+const noData = ref(false);
+const placeholder = ref(PlaceholderText.placeholder);
+
+/** 渲染数据 */
+// let renderData: HomePageExcludeChapter;
+let renderData: HomePageExcludeChapter = testData;
+
+const props = withDefaults(defineProps<Props>(), {
+	bookId: '',
+});
+
+function requestBookInfo(id: string) {
+	if (!id) {
+		render.value = false;
+		noData.value = true;
+		placeholder.value = PlaceholderText.noId;
+		return;
+	}
+	render.value = false;
+	noData.value = false;
+	placeholder.value = PlaceholderText.locading;
+	bookInfo(id)
+		.then(data => {
+			if (!data) {
+				noData.value = true;
+				placeholder.value = PlaceholderText.placeholder;
+				return;
+			}
+			renderData = data;
+			render.value = true;
+			noData.value = false;
+			placeholder.value = '';
+		})
+		.catch(err => {
+			render.value = true;
+			noData.value = true;
+			placeholder.value = PlaceholderText.system;
+			throw new Error(err);
+		});
+}
+
+watch(
+	() => props.bookId,
+	newVal => {
+		console.log(import.meta);
+		// requestBookInfo(newVal);
+	},
+	{
+		immediate: true,
+	},
+);
 </script>
 
 <style scoped lang="scss">

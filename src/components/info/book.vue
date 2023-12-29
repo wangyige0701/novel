@@ -1,10 +1,8 @@
 <template>
 	<view
-		v-if="!render.show.value"
+		v-if="!render.show"
 		class="book-info-render-tip"
-		:class="
-			render.loading.value ? 'loading' : render.empty.value ? 'placeholder' : render.error.value ? 'error' : ''
-		"
+		:class="render.loading ? 'loading' : render.empty ? 'placeholder' : render.error ? 'error' : ''"
 		>{{ placeholder }}</view
 	>
 	<view v-else class="full-size book-info-container">

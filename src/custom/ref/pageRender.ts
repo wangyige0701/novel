@@ -1,5 +1,6 @@
 import type { Ref } from 'vue';
 import { ref, watchEffect } from 'vue';
+import { explicitlyTriggerRef } from './getTrakTrigger';
 
 interface PageRenderType {
 	/** 状态改为加载 */
@@ -13,35 +14,52 @@ interface PageRenderType {
 	/** 数据初始化 */
 	init: Function;
 	/** 页面是否在加载 */
-	loading: Ref<boolean>;
+	loading: boolean;
 	/** 页面内容是否渲染 */
-	render: Ref<boolean>;
+	render: boolean;
 	/** 页面是否出错 */
-	error: Ref<boolean>;
+	error: boolean;
 	/** 页面数据是否为空 */
-	empty: Ref<boolean>;
+	empty: boolean;
 	/** 页面是否显示 */
-	show: Ref<boolean>;
+	show: boolean;
 }
 
-type InitializeOptions = PickRequireType<PageRenderType, Ref<boolean>>;
+/** 获取所有boolean类型 */
+type InitializeOptions = PickRequireType<PageRenderType, boolean>;
 
-type ChangeShowStateCallback = (options: InitializeOptions) => void;
+/** 修改show属性显示逻辑的回调 */
+type ChangeShowStateCallback = (options: PickChangeType<InitializeOptions, Ref<boolean>>) => void;
 
 /**
  * 页面渲染状态控制
  */
 export function pageRender(
-	initialize?: PickChangeType<Omit<InitializeOptions, 'show'>, boolean>,
+	initialize?: Omit<InitializeOptions, 'show'>,
 	changeShowState?: ChangeShowStateCallback,
 ): PageRenderType {
-	const render = ref(initialize?.render ?? false);
-	const loading = ref(initialize?.loading ?? false);
-	const error = ref(initialize?.error ?? false);
-	const empty = ref(initialize?.empty ?? false);
-	const show = ref(false);
+	const [render, _renderTrack, _renderTrigger] = explicitlyTriggerRef(initialize?.render ?? false);
+	const [loading, _loadingTrack, _loadingTrigger] = explicitlyTriggerRef(initialize?.loading ?? false);
+	const [error, _errorTrack, _errorTrigger] = explicitlyTriggerRef(initialize?.error ?? false);
+	const [empty, _emptyTrack, _emptyTrigger] = explicitlyTriggerRef(initialize?.empty ?? false);
+	const [show, _showTrack, _showTrigger] = explicitlyTriggerRef(false);
+	function _trigger() {
+		_renderTrigger();
+		_loadingTrigger();
+		_errorTrigger();
+		_emptyTrigger();
+		_showTrigger();
+	}
+	function _track() {
+		_renderTrack();
+		_loadingTrack();
+		_errorTrack();
+		_emptyTrack();
+		_showTrack();
+	}
 	watchEffect(() => {
 		const otherState = !loading.value && !error.value && !empty.value;
+		_track();
 		if (typeof changeShowState !== 'undefined' && typeof changeShowState === 'function') {
 			changeShowState({ render, loading, error, empty, show });
 		} else {
@@ -52,52 +70,64 @@ export function pageRender(
 				show.value = render.value;
 			}
 		}
+		_trigger();
 	});
+	_trigger();
 	return new (class {
 		get render() {
-			return render;
+			_renderTrack();
+			return render.value;
 		}
 		get loading() {
-			return loading;
+			_loadingTrack();
+			return loading.value;
 		}
 		get error() {
-			return error;
+			_errorTrack();
+			return error.value;
 		}
 		get empty() {
-			return empty;
+			_emptyTrack();
+			return empty.value;
 		}
 		get show() {
-			return show;
+			_showTrack();
+			return show.value;
 		}
 		toLoad() {
 			loading.value = true;
 			render.value = false;
 			error.value = false;
 			empty.value = false;
+			_trigger();
 		}
 		toRender() {
 			loading.value = false;
 			render.value = true;
 			error.value = false;
 			empty.value = false;
+			_trigger();
 		}
 		toError() {
 			loading.value = false;
 			render.value = false;
 			error.value = true;
 			empty.value = false;
+			_trigger();
 		}
 		toEmpty() {
 			loading.value = false;
 			render.value = false;
 			error.value = false;
 			empty.value = true;
+			_trigger();
 		}
 		init() {
 			loading.value = initialize?.loading ?? false;
 			render.value = initialize?.render ?? false;
 			error.value = initialize?.error ?? false;
 			empty.value = initialize?.empty ?? false;
+			_trigger();
 		}
 	})();
 }

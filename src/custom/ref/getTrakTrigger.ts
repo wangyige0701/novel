@@ -6,14 +6,15 @@ import { customRef } from 'vue';
  * @param value
  * @returns
  */
-export function explicitlyTriggerRef<T>(value: T): [Ref<T>, VoidFunc] {
+export function explicitlyTriggerRef<T>(value: T): [Ref<T>, VoidFunc, VoidFunc] {
 	let val = value;
+	let _track: VoidFunc;
 	let _trigger: VoidFunc;
 	const ref = customRef((track, trigger) => {
+		_track = track;
 		_trigger = trigger;
 		return {
 			get() {
-				track();
 				return val;
 			},
 			set(newValue) {
@@ -21,5 +22,5 @@ export function explicitlyTriggerRef<T>(value: T): [Ref<T>, VoidFunc] {
 			},
 		};
 	});
-	return [ref, _trigger!];
+	return [ref, _track!, _trigger!];
 }

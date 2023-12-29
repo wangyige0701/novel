@@ -6,7 +6,7 @@ import { customRef } from 'vue';
  * @param value
  * @returns
  */
-export function explicitlyTriggerRef<T>(value: T): [Ref<T>, VoidFunc, VoidFunc] {
+export function explicitlyControlRef<T>(value: T): [Ref<T>, VoidFunc, VoidFunc] {
 	let val = value;
 	let _track: VoidFunc;
 	let _trigger: VoidFunc;

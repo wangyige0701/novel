@@ -1,6 +1,6 @@
 import type { Ref } from 'vue';
-import { ref, watchEffect } from 'vue';
-import { explicitlyTriggerRef } from './getTrakTrigger';
+import { watchEffect } from 'vue';
+import { explicitlyControlRef } from './getTrakTrigger';
 
 interface PageRenderType {
 	/** 状态改为加载 */
@@ -38,11 +38,11 @@ export function pageRender(
 	initialize?: Omit<InitializeOptions, 'show'>,
 	changeShowState?: ChangeShowStateCallback,
 ): PageRenderType {
-	const [render, _renderTrack, _renderTrigger] = explicitlyTriggerRef(initialize?.render ?? false);
-	const [loading, _loadingTrack, _loadingTrigger] = explicitlyTriggerRef(initialize?.loading ?? false);
-	const [error, _errorTrack, _errorTrigger] = explicitlyTriggerRef(initialize?.error ?? false);
-	const [empty, _emptyTrack, _emptyTrigger] = explicitlyTriggerRef(initialize?.empty ?? false);
-	const [show, _showTrack, _showTrigger] = explicitlyTriggerRef(false);
+	const [render, _renderTrack, _renderTrigger] = explicitlyControlRef(initialize?.render ?? false);
+	const [loading, _loadingTrack, _loadingTrigger] = explicitlyControlRef(initialize?.loading ?? false);
+	const [error, _errorTrack, _errorTrigger] = explicitlyControlRef(initialize?.error ?? false);
+	const [empty, _emptyTrack, _emptyTrigger] = explicitlyControlRef(initialize?.empty ?? false);
+	const [show, _showTrack, _showTrigger] = explicitlyControlRef(false);
 	/** 除了show以外的所有trigger函数触发 */
 	function _trigger() {
 		_renderTrigger();

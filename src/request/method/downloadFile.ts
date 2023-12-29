@@ -1,4 +1,4 @@
-import { checkOptions, _request_cache } from '../config.js';
+import { checkOptions, _uni_request } from '../config.js';
 
 /**
  * 文件下载请求
@@ -11,9 +11,7 @@ export function downloadFile(
 	return new Promise((resolve, reject) => {
 		const settingOptions = checkOptions.call(this, options, resolve, reject, true); // 传参数据整理
 		if (settingOptions) {
-			type Func = (options: UniNamespace.DownloadFileOption) => UniNamespace.DownloadTask;
-			const obj: UniNamespace.DownloadTask = (uni.downloadFile as Func)(settingOptions); // requestTask对象
-			_request_cache.call(this, settingOptions, obj);
+			_uni_request.call(this, settingOptions, 'downloadFile');
 		}
 	});
 }

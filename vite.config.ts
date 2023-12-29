@@ -57,9 +57,10 @@ function createProxyConfig() {
 	const keys = Object.keys(ProxyConfig);
 	const result = keys.reduce((prev, curr) => {
 		prev[`/${curr}`] = {
-			target: `${ProxyConfig[curr]}/`,
+			// target: `${ProxyConfig[curr]}/`,
+			target: `http://127.0.0.1:7012/${curr}`, // nginx代理
 			changeOrigin: true,
-			rewrite: path => path.replace(new RegExp(`^/${curr}`), ''),
+			rewrite: (path: string) => path.replace(new RegExp(`^/${curr}`), ''),
 		};
 		return prev;
 	}, {});
@@ -74,9 +75,12 @@ export default defineConfig({
 		},
 	},
 	server: {
-		proxy: {
-			...createProxyConfig(),
-		},
+		proxy:
+			process.env.UNI_PLATFORM === 'h5'
+				? {
+						...createProxyConfig(),
+					}
+				: {},
 	},
 	build: {
 		rollupOptions: {

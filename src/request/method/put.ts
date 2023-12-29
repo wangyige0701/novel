@@ -1,4 +1,4 @@
-import { checkOptions, _uni_request, _request_cache } from '../config.js';
+import { checkOptions, _uni_request } from '../config.js';
 
 /**
  * put请求
@@ -12,8 +12,7 @@ export function putRequest(
 		const settingOptions = checkOptions.call(this, options, resolve, reject); // 传参数据整理
 		if (settingOptions) {
 			settingOptions.method = 'PUT';
-			const obj = _uni_request(settingOptions); // requestTask对象
-			_request_cache.call(this, settingOptions, obj);
+			_uni_request.call(this, settingOptions, 'default');
 		}
 	});
 }

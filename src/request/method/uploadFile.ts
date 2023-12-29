@@ -1,4 +1,4 @@
-import { checkOptions, _request_cache } from '../config.js';
+import { checkOptions, _uni_request } from '../config.js';
 
 /**
  * 文件上传请求
@@ -15,9 +15,7 @@ export function uploadFile(
 			throw new Error('Request object needs fileType value');
 		}
 		if (settingOptions) {
-			type Func = (options: UniNamespace.UploadFileOption) => UniNamespace.UploadTask;
-			const obj = (uni.uploadFile as Func)(settingOptions); // requestTask对象
-			_request_cache.call(this, settingOptions, obj);
+			_uni_request.call(this, settingOptions, 'uploadFile');
 		}
 	});
 }

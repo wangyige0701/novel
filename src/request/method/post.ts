@@ -1,4 +1,4 @@
-import { checkOptions, _uni_request, _request_cache } from '../config.js';
+import { checkOptions, _uni_request } from '../config.js';
 
 /**
  * post请求
@@ -12,8 +12,7 @@ export function postRequest(
 		const settintOptions = checkOptions.call(this, options, resolve, reject); // 传参数据整理
 		if (settintOptions) {
 			settintOptions.method = 'POST';
-			const obj: UniNamespace.RequestTask = _uni_request(settintOptions); // requestTask对象
-			_request_cache.call(this, settintOptions, obj);
+			_uni_request.call(this, settintOptions, 'default');
 		}
 	});
 }

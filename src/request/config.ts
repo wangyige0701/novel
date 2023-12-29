@@ -2,6 +2,7 @@ import { getInterfaceDataDefault } from '@/config';
 
 // #ifdef H5
 import ProxyConfig from './proxy';
+import { isArray, isBoolean } from '@/utils/types';
 
 const DomainMap = Object.keys(ProxyConfig).reduce(
 	(prev, curr) => {
@@ -24,6 +25,19 @@ const HEADER = {
  **/
 const GLOBAL_URL = getInterfaceDataDefault('domain');
 
+/** uni的请求方法 */
+const _uni_request_funcs = {
+	default: uni.request,
+	uploadFile: uni.uploadFile,
+	downloadFile: uni.downloadFile,
+} as const;
+
+type UniRequestKey = keyof typeof _uni_request_funcs;
+
+type UniRequestType<T extends UniRequestKey> = (typeof _uni_request_funcs)[T];
+
+type UniRequestReturn<T extends UniRequestKey> = ReturnType<UniRequestType<T>>;
+
 /**
  * header请求头的返回值整理
  */
@@ -40,6 +54,10 @@ function returnHeadreValue(header: any) {
 		}
 		return header;
 	}
+}
+
+function checkBoolean(data: object, property: string) {
+	return property in data && isBoolean(data[property as keyof typeof data]);
 }
 
 /**
@@ -86,22 +104,44 @@ export function checkOptions(
 	}
 	// #endif
 
+	if (!checkBoolean(data, 'cache')) {
+		data.cache = true;
+	}
+	if (!checkBoolean(data, 'single')) {
+		data.single = false;
+	}
+	if (!checkBoolean(data, 'sync')) {
+		data.sync = false;
+	}
+	if (!('cacheTime' in data) || typeof data.cacheTime !== 'number' || data.cacheTime < 0) {
+		data.cacheTime = this.cacheTime;
+	}
+
 	const url = data.url;
-	// 检查缓存
-	if (!isFile && data.cache !== false && url in this.cacheList && this.cacheList[url] && this.cacheList[url].data) {
-		resolve(this.cacheList[url].data);
-		if (this.cacheList[url].timeid) {
-			clearTimeout(this.cacheList[url].timeid);
-		}
-		this.cacheList[url].timeid = setTimeout(() => {
+	if (!isFile && data.cache && url in this.cacheList) {
+		// 检查缓存
+		if (this.cacheList[url] && this.cacheList[url].data) {
+			// 非文件上传且没有配置cache属性为false，则进行缓存的获取
+			resolve(this.cacheList[url].data);
+			if (this.cacheList[url].timeid) {
+				clearTimeout(this.cacheList[url].timeid);
+			}
+			this.cacheList[url].timeid = setTimeout(() => {
+				delete this.cacheList[url];
+			}, data.cacheTime);
+			return;
+		} else {
 			delete this.cacheList[url];
-		}, this.cacheTime);
-		return;
+		}
+	}
+
+	if (data.sync && !(url in this.syncList)) {
+		// 同步执行队列
+		this.syncList[url] = [];
 	}
 
 	if (!isFile) {
 		data['header'] = returnHeadreValue(data['header']); // 请求头数据
-
 		// 请求头
 		if (data['content-type']) {
 			data['header']['content-type'] = data['content-type'];
@@ -130,12 +170,13 @@ export function checkOptions(
 	data.success = (res: UniApp.RequestSuccessCallbackResult) => {
 		if (res.statusCode === 200) {
 			resolve(res.data);
-			if (!isFile && data.cache !== false) {
+			if (!isFile && data.cache) {
+				// 缓存数据
 				this.cacheList[url] = {
 					data: res.data,
 					timeid: setTimeout(() => {
 						delete this.cacheList[url];
-					}, this.cacheTime),
+					}, data.cacheTime),
 				};
 			}
 		} else {
@@ -146,32 +187,69 @@ export function checkOptions(
 		reject(err);
 	};
 	data.complete = () => {
-		if (url && this.requestList.hasOwnProperty(url)) {
+		if (url && this.singleList.hasOwnProperty(url)) {
 			// 请求结束后删除队列中此次请求的记录
-			delete this.requestList[url];
+			delete this.singleList[url];
+		}
+		if (data.sync && url in this.syncList) {
+			// 同步队列执行
+			if (this.syncList[url].length > 0) {
+				const func = this.syncList[url].shift();
+				func?.();
+			} else {
+				delete this.syncList[url];
+			}
 		}
 	};
 	return data;
 }
 
-export function _uni_request(options: UniNamespace.RequestOptions) {
-	return (uni.request as (options: UniNamespace.RequestOptions) => UniNamespace.RequestTask)(options);
+/**
+ * 执行uni请求
+ * @param this
+ * @param options
+ * @param type
+ */
+export function _uni_request<T extends UniRequestKey>(this: RequestObject, options: RequestOptions, type: T) {
+	function _u(this: RequestObject) {
+		// @ts-ignore
+		const obj: UniRequestReturn<T> = _uni_request_funcs[type](options);
+		_request_abort.call(this, options, obj);
+	}
+	const url = options.url;
+	if (options.sync) {
+		if (url in this.syncList && isArray(this.syncList[url])) {
+			// 判断同步队列是否已开启
+			this.syncList[url].push(_u.bind(this));
+		} else {
+			this.syncList[url] = [];
+			_u.call(this);
+		}
+	} else {
+		_u.call(this);
+	}
 }
 
-export function _request_cache(
+/**
+ * 判断是否需要取消请求
+ * @param this
+ * @param options
+ * @param obj
+ */
+function _request_abort(
 	this: RequestObject,
 	options: RequestOptions,
 	obj: UniNamespace.RequestTask | UniNamespace.DownloadTask | UniNamespace.UploadTask,
 ) {
 	if (options.url) {
 		const url = options.url;
-		if (options.asyn === true) {
+		if (options.single) {
 			// 判断同一个接口得请求是否结束，同一个接口的前一个请求未结束则终止前一个请求
-			if (url in this.requestList && this.requestList[url] !== obj) {
-				this.requestList[url]?.abort(); // 终止请求
-				this.requestList[url] = obj; // 队列中的请求覆盖为此次请求
+			if (url in this.singleList && this.singleList[url] !== obj) {
+				this.singleList[url]?.abort(); // 终止请求
+				this.singleList[url] = obj; // 队列中的请求覆盖为此次请求
 			} else {
-				this.requestList[url] = obj;
+				this.singleList[url] = obj;
 			}
 		}
 	}

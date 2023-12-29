@@ -43,12 +43,12 @@ export function pageRender(
 	const [error, _errorTrack, _errorTrigger] = explicitlyTriggerRef(initialize?.error ?? false);
 	const [empty, _emptyTrack, _emptyTrigger] = explicitlyTriggerRef(initialize?.empty ?? false);
 	const [show, _showTrack, _showTrigger] = explicitlyTriggerRef(false);
+	/** 除了show以外的所有trigger函数触发 */
 	function _trigger() {
 		_renderTrigger();
 		_loadingTrigger();
 		_errorTrigger();
 		_emptyTrigger();
-		_showTrigger();
 	}
 	function _track() {
 		_renderTrack();
@@ -58,8 +58,8 @@ export function pageRender(
 		_showTrack();
 	}
 	watchEffect(() => {
-		const otherState = !loading.value && !error.value && !empty.value;
 		_track();
+		const otherState = !loading.value && !error.value && !empty.value;
 		if (typeof changeShowState !== 'undefined' && typeof changeShowState === 'function') {
 			changeShowState({ render, loading, error, empty, show });
 		} else {
@@ -71,8 +71,8 @@ export function pageRender(
 			}
 		}
 		_trigger();
+		_showTrigger();
 	});
-	_trigger();
 	return new (class {
 		get render() {
 			_renderTrack();

@@ -19,6 +19,12 @@ setTimeout(() => {
 	render.toRender();
 	setTimeout(() => {
 		render.toEmpty();
+		setTimeout(() => {
+			render.toError();
+			setTimeout(() => {
+				render.toRender();
+			}, 1000);
+		}, 1000);
 	}, 1000);
 }, 1000);
 </script>

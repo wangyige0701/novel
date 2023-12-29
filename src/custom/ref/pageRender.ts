@@ -57,21 +57,31 @@ export function pageRender(
 		_emptyTrack();
 		_showTrack();
 	}
+	const _watch = (() => {
+		if (typeof changeShowState !== 'undefined' && typeof changeShowState === 'function') {
+			return () => {
+				changeShowState({ render, loading, error, empty, show });
+				_trigger();
+				_showTrigger();
+			};
+		} else {
+			// 默认情况下只派发show的更新
+			return () => {
+				const otherState = !loading.value && !error.value && !empty.value;
+				if (!show.value && render.value && otherState) {
+					// 默认状态下show属性的侦听
+					show.value = render.value;
+					_showTrigger();
+				} else if (show.value && !render.value && !otherState) {
+					show.value = render.value;
+					_showTrigger();
+				}
+			};
+		}
+	})();
 	watchEffect(() => {
 		_track();
-		const otherState = !loading.value && !error.value && !empty.value;
-		if (typeof changeShowState !== 'undefined' && typeof changeShowState === 'function') {
-			changeShowState({ render, loading, error, empty, show });
-		} else {
-			if (!show.value && render.value && otherState) {
-				// 默认状态下show属性的侦听
-				show.value = render.value;
-			} else if (show.value && !render.value && !otherState) {
-				show.value = render.value;
-			}
-		}
-		_trigger();
-		_showTrigger();
+		_watch();
 	});
 	return new (class {
 		get render() {

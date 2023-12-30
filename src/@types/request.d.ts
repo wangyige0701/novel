@@ -1,4 +1,4 @@
-type RequestMethod = UniNamespace.RequestOptions.method;
+type RequestMethod = UniNamespace.RequestOptions['method'];
 
 interface RequestOptions {
 	url: string;
@@ -15,6 +15,12 @@ interface RequestOptions {
 	cacheTime?: number;
 	/** 请求是否同步进行，即只有上一个请求完成才能继续下一个请求，默认false */
 	sync?: boolean;
+	/** 是否检测频繁请求，默认为true */
+	frequent?: boolean;
+	/** 频繁请求次数上限，默认为10次 */
+	frequentLimit?: number;
+	/** 检测频繁请求的时间间隔，默认为1000ms */
+	frequentCheckTime?: number;
 }
 
 type RequestOptionsUsed = Omit<RequestOptions, 'method'>;
@@ -44,6 +50,10 @@ type SyncList = {
 type RequestFunc = (options: RequestOptionsUsed) => Promise<string | AnyObject | ArrayBuffer>;
 
 type RequestObject = {
+	/** 请求频率限制 */
+	frequentLimit: number;
+	/** 检测频率的时间间隔 */
+	frequentCheckTime: number;
 	/** 缓存时间 */
 	cacheTime: number;
 	/** 单一请求，即当前请求会取消上一次未完成的相同请求 */

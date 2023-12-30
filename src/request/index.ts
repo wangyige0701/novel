@@ -6,7 +6,13 @@ import { uploadFile } from './method/uploadFile';
 import { downloadFile } from './method/downloadFile';
 
 export const request: RequestObject = {
-	/** 缓存时间，单位ms */
+	/** 请求频率限制，默认10次 */
+	frequentLimit: 10,
+
+	/** 请求频率检测间隔，默认500毫秒 */
+	frequentCheckTime: 500,
+
+	/** 缓存时间，默认5000毫秒 */
 	cacheTime: 5 * 1000,
 
 	/** 单一请求管理队列 */

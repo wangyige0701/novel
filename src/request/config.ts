@@ -61,32 +61,50 @@ function checkBoolean(data: object, property: string) {
 	return property in data && isBoolean(data[property as keyof typeof data]);
 }
 
-let requestFrequently = false;
+type FrequentRecord = {
+	[key: string]: {
+		timer: number;
+		lastTime: number;
+		timeout?: NodeJS.Timeout;
+		requestFrequently: boolean;
+	};
+};
 
 /** 检测请求是否过于频繁 */
 const checkFrequently = (() => {
-	let timer: number = 0;
-	let lastTime = performance.now();
-	let timeout: NodeJS.Timeout;
-	function _delayClean() {
-		if (timeout) {
-			clearTimeout(timeout);
+	const record: FrequentRecord = {};
+	function _delayClean(data: FrequentRecord[string], timeoutTime: number) {
+		if (!data) {
+			return;
 		}
-		timeout = setTimeout(() => {
-			requestFrequently = false;
-			timer = 0;
-		}, 5000);
+		if (data.timeout) {
+			clearTimeout(data.timeout);
+		}
+		data.timeout = setTimeout(() => {
+			data.requestFrequently = false;
+			data.timer = 0;
+		}, timeoutTime);
 	}
-	return function () {
+	return function (url: string, limit: number, checkTime: number) {
+		if (!(url in record)) {
+			record[url] = {
+				timer: 0,
+				lastTime: performance.now(),
+				timeout: undefined,
+				requestFrequently: false,
+			};
+		}
+		const target = record[url];
 		const nowTime = performance.now();
-		if (nowTime - lastTime < 500) {
-			timer++;
+		if (nowTime - target.lastTime < checkTime) {
+			target.timer++;
 		}
-		lastTime = nowTime;
-		if (timer >= 10) {
-			requestFrequently = true;
-			_delayClean();
+		target.lastTime = nowTime;
+		if (target.timer >= limit) {
+			target.requestFrequently = true;
+			_delayClean(target, limit * checkTime);
 		}
+		return target.requestFrequently;
 	};
 })();
 
@@ -104,12 +122,7 @@ export function checkOptions(
 	reject: RejectFunc,
 	isFile?: boolean,
 ): RequestOptions | undefined {
-	checkFrequently();
-	if (requestFrequently) {
-		throw new Error('Request too frequently');
-	}
-
-	if (typeof isFile === 'undefined') {
+	if (!isBoolean(isFile)) {
 		// 默认不是文件传输
 		isFile = false;
 	}
@@ -139,6 +152,20 @@ export function checkOptions(
 	}
 	// #endif
 
+	const url = data.url;
+
+	if (!checkBoolean(data, 'frequent')) {
+		data.frequent = true;
+	}
+	const requestFrequently = checkFrequently(
+		url,
+		data.frequentLimit ?? this.frequentLimit,
+		data.frequentCheckTime ?? this.frequentCheckTime,
+	);
+	if (requestFrequently) {
+		throw new Error('Request too frequently');
+	}
+
 	if (!checkBoolean(data, 'cache')) {
 		data.cache = true;
 	}
@@ -152,7 +179,6 @@ export function checkOptions(
 		data.cacheTime = this.cacheTime;
 	}
 
-	const url = data.url;
 	if (!isFile && data.cache && url in this.cacheList) {
 		const nowTime = performance.now();
 		if (this.cacheList[url]) {

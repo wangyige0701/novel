@@ -87,7 +87,7 @@ function getChaptersData(chaptersData: HTMLParseTag[]) {
  */
 function getPagesDataAndParse(path: string) {
 	return new Promise<ChapterList>((resolve, reject) => {
-		suffixWithPathParam(path)
+		suffixWithPathParam(path, { frequentLimit: 1000 })
 			.then(data => {
 				resolve(
 					getChaptersData(
@@ -238,13 +238,17 @@ export function getBookHomeData(
 	containFirst?: boolean,
 ): Promise<HomePageReturnVal | HomePageExcludeChapter> {
 	return new Promise((resolve, reject) => {
-		suffixWithPathParam(homeId)
+		suffixWithPathParam(homeId, { sync: true })
 			.then(data => {
+				if (chaptersRefresh === 'noChapter') {
+					// 顶点小说查看小说信息且不返回章节数据只需要查看主页就行
+					return handleHomePageHTML(String(data), 'noChapter');
+				}
 				return getAllChapters(String(data));
 			})
 			.then(data => {
 				if (chaptersRefresh === 'noChapter') {
-					return handleHomePageHTML(String(data), 'noChapter');
+					return data as HomePageExcludeChapter;
 				}
 				return handleHomePageHTML(String(data), chaptersRefresh, containFirst);
 			})

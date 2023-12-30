@@ -14,6 +14,10 @@ type PickRequireType<T extends object, K extends any> = {
 	[P in keyof T as T[P] extends K ? P : never]: T[P];
 };
 
+type PickRequireTypes<T extends object, K extends Array<any>> = K extends [infer X, ...infer R]
+	? PickRequireType<T, X> & PickRequireTypes<T, R>
+	: {};
+
 type PickChangeType<T extends object, K extends any> = {
 	[P in keyof T]: K;
 };

@@ -35,7 +35,7 @@ function globalClick() {
 }
 
 path.navigateTo({
-	url: '/pages/home/index',
+	url: '/pages/article/index',
 	params: {
 		bookName: '斗破苍穹',
 		bookId: '/b5738/',

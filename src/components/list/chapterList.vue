@@ -6,10 +6,13 @@
 		>{{ placeholder }}</view
 	>
 	<view v-else class="full-size chapter-list-container">
-		<view class="list-item" v-for="(item, index) in renderList" :key="'chapter-list-' + index">
-			<text class="text" :class="item.href ? '' : 'no-href'" @click="item.href ? clickChapter(item) : null">{{
-				item.name
-			}}</text>
+		<view
+			class="text-ellipsis list-item"
+			v-for="(item, index) in renderList"
+			:key="'chapter-list-' + index"
+			@click="item.href ? clickChapter(item) : null"
+		>
+			<text class="text" :class="item.href ? '' : 'no-href'">{{ item.name }}</text>
 		</view>
 	</view>
 </template>

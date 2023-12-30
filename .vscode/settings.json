@@ -5,7 +5,7 @@
     "search.exclude": {
         "dist": true
     },
-    "[vue][vuex][javascript][json][markdown][css][typescript]": {
+    "[vue][vuex][javascript][json][markdown][css][typescript][scss]": {
         "editor.defaultFormatter": "esbenp.prettier-vscode",
         "editor.formatOnSave": true
     },

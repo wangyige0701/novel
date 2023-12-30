@@ -24,7 +24,6 @@ function req() {
 }
 
 watchEffect(() => {
-	req();
 	test.value;
 });
 </script>

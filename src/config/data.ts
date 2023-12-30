@@ -14,6 +14,6 @@ export const ConfigTarget = {
 export const ConfigSelect: {
 	TARGET: keyof typeof ConfigTarget;
 } = {
-	// TARGET: 'dingdian',
-	TARGET: 'test',
+	TARGET: 'dingdian',
+	// TARGET: 'test',
 };

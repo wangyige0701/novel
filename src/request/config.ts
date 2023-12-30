@@ -2,7 +2,7 @@ import { getInterfaceDataDefault } from '@/config';
 
 // #ifdef H5
 import ProxyConfig from './proxy';
-import { isArray, isBoolean } from '@/utils/types';
+import { isBoolean } from '@/utils/types';
 
 const DomainMap = Object.keys(ProxyConfig).reduce(
 	(prev, curr) => {
@@ -179,11 +179,6 @@ export function checkOptions(
 		}
 	}
 
-	if (data.sync && !(url in this.syncList)) {
-		// 同步执行队列
-		this.syncList[url] = [];
-	}
-
 	if (!isFile) {
 		data['header'] = returnHeadreValue(data['header']); // 请求头数据
 		// 请求头
@@ -237,9 +232,11 @@ export function checkOptions(
 			delete this.singleList[url];
 		}
 		if (data.sync && url in this.syncList) {
+			const target = this.syncList[url];
+			target.running = false;
 			// 同步队列执行
-			if (this.syncList[url].length > 0) {
-				const func = this.syncList[url].shift();
+			if (target.list.length > 0) {
+				const func = target.list.shift();
 				func?.();
 			} else {
 				delete this.syncList[url];
@@ -281,18 +278,24 @@ function _request_abort(
  * @param type
  */
 export function _uni_request<T extends UniRequestKey>(this: RequestObject, options: RequestOptions, type: T) {
+	const url = options.url;
 	function _u(this: RequestObject) {
+		if (options.sync) {
+			this.syncList[url].running = true;
+		}
 		// @ts-ignore
 		const obj: UniRequestReturn<T> = _uni_request_funcs[type](options);
 		_request_abort.call(this, options, obj);
 	}
-	const url = options.url;
 	if (options.sync) {
-		if (url in this.syncList && isArray(this.syncList[url])) {
+		if (url in this.syncList) {
 			// 判断同步队列是否已开启
-			this.syncList[url].push(_u.bind(this));
+			this.syncList[url].list.push(_u.bind(this));
 		} else {
-			this.syncList[url] = [];
+			this.syncList[url] = {
+				running: true,
+				list: [],
+			};
 			_u.call(this);
 		}
 	} else {

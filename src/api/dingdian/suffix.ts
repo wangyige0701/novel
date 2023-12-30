@@ -9,5 +9,6 @@ import { mergeWithDomainDefault } from '@/config';
 export function suffixWithPathParam(params: string) {
 	return request.Post({
 		url: mergeWithDomainDefault(params),
+		sync: true,
 	});
 }

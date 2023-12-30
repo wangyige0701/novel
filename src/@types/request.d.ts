@@ -35,15 +35,22 @@ type CacheList = {
 };
 
 type SyncList = {
-	[key: string]: Function[];
+	[key: string]: {
+		running: boolean;
+		list: Function[];
+	};
 };
 
 type RequestFunc = (options: RequestOptionsUsed) => Promise<string | AnyObject | ArrayBuffer>;
 
 type RequestObject = {
+	/** 缓存时间 */
 	cacheTime: number;
+	/** 单一请求，即当前请求会取消上一次未完成的相同请求 */
 	singleList: SingleList;
+	/** 是否通过缓存获取 */
 	cacheList: CacheList;
+	/** 请求是否同步进行 */
 	syncList: SyncList;
 } & {
 	[K in keyof AllRequestFunc as AllRequestFunc[K] & string]: RequestFunc;

@@ -1,7 +1,7 @@
 <template>
 	<view
 		id="statusBar"
-		:style="{ '--status-bar-height': props.fullScreen ? 0 : statusBarHeight + 'px' }"
+		:style="{ '--status-bar-height': (props.fullScreen ? 0 : statusBarHeight) + 'px' }"
 		:class="isNeedFull ? 'full-screen flex-child' : ''"
 		@click="isNeedFull ? onClick() : null"
 	>
@@ -35,8 +35,6 @@ interface Emits {
 
 /** 状态栏高度 */
 const statusBarHeight = GlobalStore.data.statusBarHeight;
-/** 容器是否需要撑满 */
-const isNeedFull = computed(() => props.full === true || props.fullScreen === true);
 
 const props = withDefaults(defineProps<Props>(), {
 	color: '#fff',
@@ -46,6 +44,8 @@ const props = withDefaults(defineProps<Props>(), {
 
 const emits = defineEmits<Emits>();
 
+/** 容器是否需要撑满 */
+const isNeedFull = computed(() => props.full === true || props.fullScreen === true);
 /** 当前全屏展示情况 */
 let fullScreenState: boolean = props.fullScreen;
 

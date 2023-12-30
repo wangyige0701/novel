@@ -1,14 +1,17 @@
 import type { ChapterCallback } from './@types/homepage';
 import { ConfigSelect } from '@/config';
+import { testRequest } from './__test/testReq';
 import { getArticleData, getBookHomeData, getListData } from './dingdian';
 
 /** 搜索方法映射 */
 const SEARCH_FUN = {
+	test: testRequest,
 	dingdian: getListData,
 };
 
 /** 主页信息方法映射 */
 const BOOK_INFO_FUN = {
+	test: testRequest,
 	dingdian: function (id: string) {
 		return getBookHomeData(id, 'noChapter');
 	},
@@ -16,6 +19,7 @@ const BOOK_INFO_FUN = {
 
 /** 图书章节列表方法映射 */
 const CHAPTER_LIST_FUN = {
+	test: testRequest,
 	dingdian: function (id: string, callback?: ChapterCallback, containFirst?: boolean) {
 		return getBookHomeData(id, callback, containFirst);
 	},
@@ -23,6 +27,7 @@ const CHAPTER_LIST_FUN = {
 
 /** 小说章节内容方法映射 */
 const CONTENT_FUN = {
+	test: testRequest,
 	dingdian: getArticleData,
 };
 

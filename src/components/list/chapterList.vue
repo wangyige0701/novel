@@ -29,6 +29,11 @@ interface Emits {
 	(id: 'select', value: ChapterListItem): void;
 }
 
+onBeforeUnmount(() => {
+	watchStop?.();
+	watchEffectStop?.();
+});
+
 /** 占位文本 */
 const PlaceholderText = {
 	loading: '加载中...',
@@ -128,11 +133,6 @@ const watchEffectStop = watchEffect(() => {
 			: render.error
 				? PlaceholderText.system
 				: '';
-});
-
-onBeforeUnmount(() => {
-	watchStop?.();
-	watchEffectStop?.();
 });
 </script>
 

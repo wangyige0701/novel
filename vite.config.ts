@@ -59,6 +59,7 @@ function createProxyConfig() {
 		prev[`/${curr}`] = {
 			target: `${ProxyConfig[curr]}/`,
 			// target: `http://127.0.0.1:7012/${curr}`, // nginx代理
+			// target: `http://127.0.0.1:9999/${curr}`, // 本地测试服务
 			changeOrigin: true,
 			rewrite: (path: string) => path.replace(new RegExp(`^/${curr}`), ''),
 		};

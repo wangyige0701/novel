@@ -28,6 +28,11 @@ interface Props {
 	bookName: string;
 }
 
+onBeforeUnmount(() => {
+	watchStop?.();
+	watchEffectStop?.();
+});
+
 /** 渲染数据 */
 let renderData: HomePageExcludeChapter;
 
@@ -97,11 +102,6 @@ const watchEffectStop = watchEffect(() => {
 			: render.error
 				? PlaceholderText.system
 				: '';
-});
-
-onBeforeUnmount(() => {
-	watchStop?.();
-	watchEffectStop?.();
 });
 </script>
 

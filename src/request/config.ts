@@ -240,6 +240,31 @@ export function checkOptions(
 }
 
 /**
+ * 判断是否需要取消请求
+ * @param this
+ * @param options
+ * @param obj
+ */
+function _request_abort(
+	this: RequestObject,
+	options: RequestOptions,
+	obj: UniNamespace.RequestTask | UniNamespace.DownloadTask | UniNamespace.UploadTask,
+) {
+	if (options.url) {
+		const url = options.url;
+		if (options.single) {
+			// 判断同一个接口得请求是否结束，同一个接口的前一个请求未结束则终止前一个请求
+			if (url in this.singleList && this.singleList[url] !== obj) {
+				this.singleList[url]?.abort(); // 终止请求
+				this.singleList[url] = obj; // 队列中的请求覆盖为此次请求
+			} else {
+				this.singleList[url] = obj;
+			}
+		}
+	}
+}
+
+/**
  * 执行uni请求
  * @param this
  * @param options
@@ -262,30 +287,5 @@ export function _uni_request<T extends UniRequestKey>(this: RequestObject, optio
 		}
 	} else {
 		_u.call(this);
-	}
-}
-
-/**
- * 判断是否需要取消请求
- * @param this
- * @param options
- * @param obj
- */
-function _request_abort(
-	this: RequestObject,
-	options: RequestOptions,
-	obj: UniNamespace.RequestTask | UniNamespace.DownloadTask | UniNamespace.UploadTask,
-) {
-	if (options.url) {
-		const url = options.url;
-		if (options.single) {
-			// 判断同一个接口得请求是否结束，同一个接口的前一个请求未结束则终止前一个请求
-			if (url in this.singleList && this.singleList[url] !== obj) {
-				this.singleList[url]?.abort(); // 终止请求
-				this.singleList[url] = obj; // 队列中的请求覆盖为此次请求
-			} else {
-				this.singleList[url] = obj;
-			}
-		}
 	}
 }

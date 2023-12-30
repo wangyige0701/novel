@@ -11,7 +11,8 @@
       "@test/*": ["./src/test/*"],
       "@storage/*": ["./src/storage/*"],
       "@path/*": ["./src/path/*"],
-      "@store": ["src/utils/staticStore.ts"]
+      "@store": ["src/store/static/index.ts"],
+      "@vuex": ["src/store/vuex/index.ts"]
     },
     "lib": ["esnext", "dom"],
     "typeRoots": [

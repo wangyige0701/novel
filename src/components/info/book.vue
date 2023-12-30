@@ -28,14 +28,6 @@ interface Props {
 	bookName: string;
 }
 
-onBeforeUnmount(() => {
-	watchStop?.();
-	watchEffectStop?.();
-});
-
-/** 渲染数据 */
-let renderData: HomePageExcludeChapter;
-
 /** 占位文本 */
 const PlaceholderText = {
 	loading: '加载中...',
@@ -43,12 +35,17 @@ const PlaceholderText = {
 	noId: '书籍id未知',
 	system: '系统错误',
 };
-
+/** 渲染数据 */
+let renderData: HomePageExcludeChapter;
 /** 页面渲染状态 */
 const render = pageRender();
-
 /** 实际占位文字 */
 const placeholder = ref('');
+
+onBeforeUnmount(() => {
+	watchStop?.();
+	watchEffectStop?.();
+});
 
 const props = withDefaults(defineProps<Props>(), {
 	bookId: '',

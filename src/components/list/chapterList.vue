@@ -29,11 +29,6 @@ interface Emits {
 	(id: 'select', value: ChapterListItem): void;
 }
 
-onBeforeUnmount(() => {
-	watchStop?.();
-	watchEffectStop?.();
-});
-
 /** 占位文本 */
 const PlaceholderText = {
 	loading: '加载中...',
@@ -41,21 +36,9 @@ const PlaceholderText = {
 	noId: '书籍id未知',
 	system: '系统错误',
 };
-
-const render = pageRender();
-
 /** 渲染列表 */
 const renderList: ChapterList = shallowReactive<ChapterList>([]);
-
-const placeholder = ref('');
-
-const props = withDefaults(defineProps<Props>(), {
-	bookId: '',
-	bookName: '',
-});
-
-const emits = defineEmits<Emits>();
-
+/** 列表数据操作 */
 const listRefresh = {
 	clear() {
 		renderList.splice(0, renderList.length);
@@ -67,6 +50,22 @@ const listRefresh = {
 		}
 	},
 };
+/** 页面渲染逻辑判断 */
+const render = pageRender();
+/** 实际占位文字 */
+const placeholder = ref('');
+
+onBeforeUnmount(() => {
+	watchStop?.();
+	watchEffectStop?.();
+});
+
+const props = withDefaults(defineProps<Props>(), {
+	bookId: '',
+	bookName: '',
+});
+
+const emits = defineEmits<Emits>();
 
 /**
  * 请求章节列表

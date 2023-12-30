@@ -56,9 +56,39 @@ function returnHeadreValue(header: any) {
 	}
 }
 
+/** 布朗参数检测 */
 function checkBoolean(data: object, property: string) {
 	return property in data && isBoolean(data[property as keyof typeof data]);
 }
+
+let requestFrequently = false;
+
+/** 检测请求是否过于频繁 */
+const checkFrequently = (() => {
+	let timer: number = 0;
+	let lastTime = performance.now();
+	let timeout: NodeJS.Timeout;
+	function _delayClean() {
+		if (timeout) {
+			clearTimeout(timeout);
+		}
+		timeout = setTimeout(() => {
+			requestFrequently = false;
+			timer = 0;
+		}, 5000);
+	}
+	return function () {
+		const nowTime = performance.now();
+		if (nowTime - lastTime < 500) {
+			timer++;
+		}
+		lastTime = nowTime;
+		if (timer >= 10) {
+			requestFrequently = true;
+			_delayClean();
+		}
+	};
+})();
 
 /**
  * 请求参数处理
@@ -74,6 +104,11 @@ export function checkOptions(
 	reject: RejectFunc,
 	isFile?: boolean,
 ): RequestOptions | undefined {
+	checkFrequently();
+	if (requestFrequently) {
+		throw new Error('Request too frequently');
+	}
+
 	if (typeof isFile === 'undefined') {
 		// 默认不是文件传输
 		isFile = false;

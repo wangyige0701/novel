@@ -11,7 +11,7 @@
       "@test/*": ["./src/test/*"],
       "@storage/*": ["./src/storage/*"],
       "@path/*": ["./src/path/*"],
-      "@store": ["./src/config/store.ts"]
+      "@store": ["src/utils/staticStore.ts"]
     },
     "lib": ["esnext", "dom"],
     "typeRoots": [

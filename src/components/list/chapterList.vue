@@ -108,8 +108,17 @@ function clickChapter(item: ChapterListItem) {
 	});
 }
 
-const stop = watchEffect(() => {
-	requestChapterList(props.bookId);
+const watchStop = watch(
+	() => props.bookId,
+	newId => {
+		requestChapterList(newId);
+	},
+	{
+		immediate: true,
+	},
+);
+
+const watchEffectStop = watchEffect(() => {
 	placeholder.value = render.loading
 		? PlaceholderText.loading
 		: render.empty
@@ -122,7 +131,8 @@ const stop = watchEffect(() => {
 });
 
 onBeforeUnmount(() => {
-	stop?.();
+	watchStop?.();
+	watchEffectStop?.();
 });
 </script>
 

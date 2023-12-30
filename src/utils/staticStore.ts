@@ -5,7 +5,7 @@ interface GlobalStoreData extends Omit<UniappDeciceInfo, 'model' | 'brand'> {
 	statusBarHeight: number;
 }
 
-/** 注册全局储存数据 */
+/** 全局静态数据储存仓库，不同于vuex的store，没有响应式 */
 export class GlobalStore {
 	private static Store = new Map<keyof GlobalStoreData, GlobalStoreData>();
 
@@ -23,5 +23,9 @@ export class GlobalStore {
 	static commit<T extends keyof GlobalStoreData>(key: T, value: GlobalStoreData[T]) {
 		// @ts-ignore
 		this.Store.set(key, value);
+	}
+
+	constructor() {
+		return new Error(`This class<GlobalStore> is a store for static datas, and it's not allowed to instantiate`);
 	}
 }

@@ -1,5 +1,5 @@
 import { createSSRApp } from 'vue';
-import { GlobalStore } from '@/config/store';
+import { GlobalStore } from '@store';
 import App from './App.vue';
 
 export function createApp() {

@@ -76,9 +76,17 @@ function requestBookInfo(id: string) {
 		});
 }
 
-const stop = watchEffect(() => {
-	// 请求数据
-	requestBookInfo(props.bookId);
+const watchStop = watch(
+	() => props.bookId,
+	newId => {
+		requestBookInfo(newId);
+	},
+	{
+		immediate: true,
+	},
+);
+
+const watchEffectStop = watchEffect(() => {
 	// 占位文字调整
 	placeholder.value = render.loading
 		? PlaceholderText.loading
@@ -92,7 +100,8 @@ const stop = watchEffect(() => {
 });
 
 onBeforeUnmount(() => {
-	stop?.();
+	watchStop?.();
+	watchEffectStop?.();
 });
 </script>
 

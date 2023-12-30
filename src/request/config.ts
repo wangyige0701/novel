@@ -154,17 +154,26 @@ export function checkOptions(
 
 	const url = data.url;
 	if (!isFile && data.cache && url in this.cacheList) {
-		// 检查缓存
-		if (this.cacheList[url] && this.cacheList[url].data) {
-			// 非文件上传且没有配置cache属性为false，则进行缓存的获取
-			resolve(this.cacheList[url].data);
-			if (this.cacheList[url].timeid) {
-				clearTimeout(this.cacheList[url].timeid);
+		const nowTime = performance.now();
+		if (this.cacheList[url]) {
+			const target = this.cacheList[url];
+			if (target.timeid) {
+				clearTimeout(target.timeid);
 			}
-			this.cacheList[url].timeid = setTimeout(() => {
+			// 检查缓存
+			if (nowTime - target.lastTime > data.cacheTime) {
+				// 缓存过期
 				delete this.cacheList[url];
-			}, data.cacheTime);
-			return;
+			} else if (target.data) {
+				// 非文件上传且没有配置cache属性为false，则进行缓存的获取
+				resolve(target.data);
+				target.timeid = setTimeout(() => {
+					delete this.cacheList[url];
+				}, data.cacheTime);
+				return;
+			} else {
+				delete this.cacheList[url];
+			}
 		} else {
 			delete this.cacheList[url];
 		}
@@ -209,6 +218,7 @@ export function checkOptions(
 				// 缓存数据
 				this.cacheList[url] = {
 					data: res.data,
+					lastTime: performance.now(),
 					timeid: setTimeout(() => {
 						delete this.cacheList[url];
 					}, data.cacheTime),

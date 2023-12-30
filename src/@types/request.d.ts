@@ -27,6 +27,8 @@ type SingleList = {
 
 type CacheList = {
 	[key: string]: {
+		/** 记录上一次更新数据的时间，如果超过了时间则放开请求更新数据 */
+		lastTime: number;
 		timeid: NodeJS.Timeout;
 		data: any;
 	};

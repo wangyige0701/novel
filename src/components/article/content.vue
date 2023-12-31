@@ -4,6 +4,7 @@
 		<view class="content">
 			<p v-for="(item, index) in contentList" :key="'article-content' + index">{{ item }}</p>
 		</view>
+		<slot name="operate" :prev="hrefs[0]" :next="hrefs[1]"></slot>
 	</view>
 </template>
 
@@ -32,7 +33,7 @@ const contentList = shallowReactive<string[]>([]);
 
 /** 设置文本内容 */
 function settingContent(list: ArticleReturnVal['content']) {
-	contentList.splice(0, contentList.length);
+	contentList.length = 0;
 	list.forEach(item => {
 		contentList.push(item.toString());
 	});
@@ -60,27 +61,30 @@ defineExpose({
 	color: inherit;
 
 	.title {
-		height: calc(var(--height-size) * $wyg-font-size-title);
-		line-height: calc(var(--height-size) * $wyg-font-size-title);
-		text-align: center;
+		min-height: calc(var(--height-size) * $wyg-font-size-title);
+		display: flex;
+		justify-content: center;
+		align-items: center;
 		font-size: $wyg-font-size-title;
 		font-weight: bold;
 		margin-top: $wyg-spacing-col-lg;
 		color: inherit;
+		box-sizing: border-box;
+		padding: 0 $wyg-spacing-row-base;
 	}
 
 	.content {
 		flex-shrink: 0;
-		margin-top: $wyg-spacing-col-base;
+		margin-top: calc(2 * $wyg-spacing-col-base);
 		padding-bottom: $wyg-spacing-col-lg;
 		color: inherit;
 
 		p {
 			font-size: $wyg-font-size-paragraph;
-			line-height: calc(var(--height-size) / 2 * $wyg-font-size-paragraph);
+			line-height: calc(var(--height-size) / 1.6 * $wyg-font-size-paragraph);
 			text-indent: 2em;
-			margin: $wyg-spacing-col-base 0;
 			color: inherit;
+			margin-bottom: calc(2 * $wyg-spacing-col-base);
 		}
 	}
 }

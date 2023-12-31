@@ -1,6 +1,11 @@
 <template>
-	<view id="novel_content" class="full-size article-container" :class="[selectConfig, direction ?? 'vertical']">
-		<ArticleContent :data="testData"></ArticleContent>
+	<view
+		id="novel_content"
+		class="no-scrollbar full-size article-container"
+		:class="[selectConfig, direction ?? 'vertical']"
+	>
+		<!-- <ArticleContent :data="testData"></ArticleContent> -->
+		<view v-for="(item, index) in renderList.value" :key="'test' + index">{{ item.toString() }}</view>
 	</view>
 </template>
 
@@ -8,6 +13,7 @@
 import type { ArticleReturnVal } from '@/regular/@types/article';
 import { type ReadStyleConfig, readStyleConfig, readStyleConfigList } from './data/readStyle';
 import ArticleContent from './content.vue';
+import { SettingAtricleCaches } from './data/articlesCache';
 import { articleContent as testData } from '@test/data/article.test';
 
 interface Props {
@@ -15,8 +21,7 @@ interface Props {
 	bookName: string;
 }
 
-/** 缓存前后章节的列表 */
-const cacheArticleContents: ArticleReturnVal[] = [];
+const renderList = new SettingAtricleCaches();
 /** 选择的配置 */
 const selectConfig = ref<ReadStyleConfig>('baixue');
 /** 翻看方向 */

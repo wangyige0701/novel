@@ -1,4 +1,4 @@
-import type { ListReturnVal, ListTarget } from '../@types/search';
+import type { ListReturnVal, ListTarget, MergeListReturnVal } from '../@types/search';
 import { search } from '@/api/dingdian/search';
 import { parseHTML, query, queryAttr, queryText } from '@/core';
 
@@ -53,7 +53,7 @@ function getHTMLText(data: ListTarget) {
  * @param sort desc - 降序；  asc - 升序
  * @returns
  */
-function mergeByAuthor(list: ListReturnVal[], sort: 'desc' | 'asc' | undefined = void 0) {
+function mergeByAuthor(list: ListReturnVal[], sort: 'desc' | 'asc' | undefined = void 0): MergeListReturnVal[] {
 	const nameList: string[] = [];
 	const result = list.reduce(
 		(prev, curr) => {
@@ -87,10 +87,7 @@ function mergeByAuthor(list: ListReturnVal[], sort: 'desc' | 'asc' | undefined =
  * - asc 升序
  * @returns
  */
-export function getListData(
-	searchContent: string,
-	merge: true | 'desc' | 'asc',
-): Promise<ReturnType<typeof mergeByAuthor>>;
+export function getListData(searchContent: string, merge: true | 'desc' | 'asc'): Promise<MergeListReturnVal[]>;
 export function getListData(searchContent: string, merge?: undefined): Promise<ListReturnVal[]>;
 export function getListData(searchContent: string, merge: true | 'desc' | 'asc' | undefined = void 0) {
 	return new Promise((resolve, reject) => {

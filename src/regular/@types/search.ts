@@ -14,3 +14,8 @@ export type ListTarget = {
 export type ListReturnVal = {
 	[K in keyof ListTarget]: ListTarget[K];
 };
+
+export type MergeListReturnVal = {
+	author: string;
+	value: ListReturnVal[];
+};

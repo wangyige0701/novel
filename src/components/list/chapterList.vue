@@ -19,7 +19,7 @@
 
 <script setup lang="ts">
 import type { ChapterList, ChapterListItem } from '@/regular/@types/homepage';
-import { pageRender } from '@/custom/reactive/pageRender';
+import { pageRender } from '@/custom/pageRender';
 import { chapterList } from '@/regular/index';
 import { $_nextTick } from '@/utils/nextTick';
 
@@ -44,7 +44,7 @@ const renderList: ChapterList = shallowReactive<ChapterList>([]);
 /** 列表数据操作 */
 const listRefresh = {
 	clear() {
-		renderList.splice(0, renderList.length);
+		renderList.length = 0;
 	},
 
 	insert(val: ChapterList) {

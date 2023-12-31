@@ -2,7 +2,7 @@ import type { Ref } from 'vue';
 import { customRef } from 'vue';
 
 /**
- * 显示定义ref，获取对应的trigger函数
+ * 显示定义ref，获取对应的track、trigger函数
  * @param value
  * @returns
  */

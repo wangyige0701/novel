@@ -8,7 +8,7 @@
 					</view>
 					<view class="list">
 						<view class="no-scrollbar list-container">
-							<ChapterList :book-id="bookId" :book-name="bookName" @select="selectChapter"></ChapterList>
+							<!-- <ChapterList :book-id="bookId" :book-name="bookName" @select="selectChapter"></ChapterList> -->
 						</view>
 					</view>
 				</view>

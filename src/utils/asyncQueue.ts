@@ -12,7 +12,7 @@ export class AsyncQueue<T> {
 	private emptyUseList: Array<() => void> = [];
 
 	/**
-	 * @param num 一次最多同时执行的请求数量
+	 * @param num 一次最多同时执行的请求数量，默认3
 	 */
 	constructor(num: number = 3) {
 		this.totalNum = num;

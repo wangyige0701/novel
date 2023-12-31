@@ -22,7 +22,7 @@
 <script setup lang="ts">
 import type { HomePageExcludeChapter } from '@/regular/@types/homepage';
 import { bookInfo } from '@/regular/index';
-import { pageRender } from '@/custom/reactive/pageRender';
+import { pageRender } from '@/custom/pageRender';
 
 interface Props {
 	bookId: string;

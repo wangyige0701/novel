@@ -1,5 +1,5 @@
-@import "./color.scss";
-@import "./readStyle.scss";
+@import './color.scss';
+@import './readStyle.scss';
 
 /* 文字尺寸 */
 $wyg-font-size-sm: 20rpx;
@@ -10,9 +10,9 @@ $wyg-font-size-lg: 28rpx;
 $wyg-color-title: #303133; // 文章标题颜色
 $wyg-font-size-title: 32rpx;
 $wyg-color-subtitle: #909399; // 二级标题颜色
-$wyg-font-size-subtitle: 26rpx;
+$wyg-font-size-subtitle: 22rpx;
 $wyg-color-paragraph: #606266; // 文章段落颜色
-$wyg-font-size-paragraph: 24rpx;
+$wyg-font-size-paragraph: 26rpx;
 
 /* 图片尺寸 */
 $wyg-img-size-sm: 20px;

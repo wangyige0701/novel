@@ -1,14 +1,13 @@
 <template>
-	<view
-		id="novel_content"
-		class="full-size article-content-container"
-		:class="[selectConfig ?? readStyleConfig.baixue.value, direction ?? 'vertical']"
-	></view>
+	<view id="novel_content" class="full-size article-container" :class="[selectConfig, direction ?? 'vertical']">
+		<ArticleContent :data="testData"></ArticleContent>
+	</view>
 </template>
 
 <script setup lang="ts">
 import type { ArticleReturnVal } from '@/regular/@types/article';
 import { type ReadStyleConfig, readStyleConfig, readStyleConfigList } from './data/readStyle';
+import ArticleContent from './content.vue';
 import { articleContent as testData } from '@test/data/article.test';
 
 interface Props {
@@ -29,8 +28,9 @@ const props = defineProps<Props>();
 <style scoped lang="scss">
 @import '../../static/scss/reading.scss';
 
-.article-content-container {
+#novel_content.article-container {
 	display: flex;
+	overflow: scroll;
 
 	&.vertical {
 		flex-direction: column;

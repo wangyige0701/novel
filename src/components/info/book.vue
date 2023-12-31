@@ -3,8 +3,9 @@
 		v-if="!render.show"
 		class="book-info-render-tip"
 		:class="render.loading ? 'loading' : render.empty ? 'placeholder' : render.error ? 'error' : ''"
-		>{{ placeholder }}</view
 	>
+		{{ placeholder }}
+	</view>
 	<view v-else class="full-size book-info-container">
 		<view class="image">
 			<image src="" mode="scaleToFill" />
@@ -21,7 +22,7 @@
 <script setup lang="ts">
 import type { HomePageExcludeChapter } from '@/regular/@types/homepage';
 import { bookInfo } from '@/regular/index';
-import { pageRender } from '@/custom/ref/pageRender';
+import { pageRender } from '@/custom/reactive/pageRender';
 
 interface Props {
 	bookId: string;
@@ -155,3 +156,4 @@ const watchEffectStop = watchEffect(() => {
 	}
 }
 </style>
+@/custom/reactive/pageRender

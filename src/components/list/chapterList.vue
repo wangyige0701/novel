@@ -19,7 +19,7 @@
 
 <script setup lang="ts">
 import type { ChapterList, ChapterListItem } from '@/regular/@types/homepage';
-import { pageRender } from '@/custom/ref/pageRender';
+import { pageRender } from '@/custom/reactive/pageRender';
 import { chapterList } from '@/regular/index';
 import { $_nextTick } from '@/utils/nextTick';
 
@@ -171,3 +171,4 @@ const watchEffectStop = watchEffect(() => {
 	}
 }
 </style>
+@/custom/reactive/pageRender

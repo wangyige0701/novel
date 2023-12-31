@@ -4,23 +4,26 @@
 		class="no-scrollbar full-size article-container"
 		:class="[selectConfig, direction ?? 'vertical']"
 	>
-		<!-- <ArticleContent :data="testData"></ArticleContent> -->
-		<view v-for="(item, index) in renderList.value" :key="'test' + index">{{ item.toString() }}</view>
+		<template v-for="(item, index) in renderList.value" :key="'chapter-content-key-' + item.__key">
+			<ArticleContent :data="item">
+				<template #operate></template>
+			</ArticleContent>
+		</template>
 	</view>
 </template>
 
 <script setup lang="ts">
-import type { ArticleReturnVal } from '@/regular/@types/article';
 import { type ReadStyleConfig, readStyleConfig, readStyleConfigList } from './data/readStyle';
 import ArticleContent from './content.vue';
 import { SettingAtricleCaches } from './data/articlesCache';
-import { articleContent as testData } from '@test/data/article.test';
+// import { articleContent as testData } from '@test/data/article.test';
 
 interface Props {
-	bookId: string;
-	bookName: string;
+	chapterId: string;
+	chapterName: string;
 }
 
+/** 渲染列表 */
 const renderList = new SettingAtricleCaches();
 /** 选择的配置 */
 const selectConfig = ref<ReadStyleConfig>('baixue');
@@ -28,6 +31,20 @@ const selectConfig = ref<ReadStyleConfig>('baixue');
 const direction = ref<'vertical' | 'horizontal'>('vertical');
 
 const props = defineProps<Props>();
+
+onBeforeUnmount(() => {
+	renderList.stop();
+});
+
+watch(
+	() => props.chapterId,
+	newID => {
+		renderList.init(newID);
+	},
+	{
+		immediate: true,
+	},
+);
 </script>
 
 <style scoped lang="scss">
@@ -36,6 +53,7 @@ const props = defineProps<Props>();
 #novel_content.article-container {
 	display: flex;
 	overflow: scroll;
+	overflow-anchor: auto;
 
 	&.vertical {
 		flex-direction: column;

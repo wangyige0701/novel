@@ -37,8 +37,8 @@ function globalClick() {
 path.navigateTo({
 	url: '/pages/article/index',
 	params: {
-		bookName: '斗破苍穹',
-		bookId: '/b5738/',
+		bookName: '第二章 斗气大陆',
+		bookId: '/b5738/6006718.html',
 	},
 });
 </script>

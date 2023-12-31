@@ -77,6 +77,8 @@ defineExpose({
 		flex-shrink: 0;
 		margin-top: calc(2 * $wyg-spacing-col-base);
 		padding-bottom: $wyg-spacing-col-lg;
+		padding-left: $wyg-spacing-row-base;
+		padding-right: $wyg-spacing-row-base;
 		color: inherit;
 
 		p {

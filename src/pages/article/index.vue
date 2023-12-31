@@ -1,7 +1,7 @@
 <template>
 	<StatusBar :full-screen="true">
 		<template #statusBar>
-			<ArticleContainer :book-id="bookId" :book-name="bookName"></ArticleContainer>
+			<ArticleContainer :chapter-id="chapterId" :chapter-name="chapterName"></ArticleContainer>
 		</template>
 	</StatusBar>
 </template>
@@ -10,16 +10,16 @@
 import StatusBar from '@comp/statusBar/index.vue';
 import ArticleContainer from '@comp/article/container.vue';
 
-const bookId = ref('');
-const bookName = ref('');
+const chapterId = ref('');
+const chapterName = ref('');
 
 onLoad(options => {
 	if (!options) {
 		return;
 	}
 	const { bookId: id, bookName: name } = options;
-	bookId.value = id;
-	bookName.value = name;
+	chapterId.value = id;
+	chapterName.value = name;
 });
 </script>
 

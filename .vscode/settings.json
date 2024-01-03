@@ -16,5 +16,8 @@
         "manifest.json": "jsonc",
         "pages.json": "jsonc",
         "*.nvue": "vue"
-    }
+    },
+    "Scss2css.autoPrefixer": false,
+    "Scss2css.output": "expanded",
+    "Scss2css.indentWidth": 4
 }

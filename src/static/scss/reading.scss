@@ -1,38 +1,27 @@
-@import "./config/main.scss";
-@import "./config/readStyle.scss";
-
-#novel_content {
-    color: $wyg-font-default;
-	font-size: $wyg-font-size-base;
-}
+@use './config/readStyle.scss' as R;
 
 // 阅读样式，背景色和字色
-@each $key, $value in $colors {
-    $bgColor: map-get($value, bgColor);
-    $textColor: map-get($value, textColor);
-    #novel_content, .novel_controls {
-        &.#{$key} {
-            background-color: $bgColor;
-            color: $textColor;
-        }
-    }
+@mixin backgroundColor() {
+	@each $key, $value in R.$colors {
+		$bgColor: map-get($value, bgColor);
+		$textColor: map-get($value, textColor);
+		&.#{$key} {
+			background-color: $bgColor;
+			color: $textColor;
+		}
+	}
 }
 
-#novel_content,
-.novel_controls * {
-	&.f_reduce1 {
-		font-size: 12px;
-	}
-	&.f_reduce2 {
-		font-size: 10px;
-	}
-	&.f_increase1 {
-		font-size: 16px;
-	}
-	&.f_increase2 {
-		font-size: 18px;
-	}
-	&.f_increase3 {
-		font-size: 20px;
+// 阅读样式，字号
+@mixin fontSize() {
+	$title: map-get(R.$sizes, titleSize);
+	$subtitle: map-get(R.$sizes, subtitleSize);
+	$pargraph: map-get(R.$sizes, paragraphSize);
+	@each $multiKey, $multiVal in R.$size-multiples {
+		&.#{$multiKey} {
+			--title: #{$multiVal * $title};
+			--subtitle: #{$multiVal * $subtitle};
+			--paragraph: #{$multiVal * $pargraph};
+		}
 	}
 }

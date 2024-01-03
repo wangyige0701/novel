@@ -23,4 +23,4 @@ dist
 pnpm-lock.yaml
 **/@types/auto-import.d.ts
 test
-.sass_cache
+.scss_cache

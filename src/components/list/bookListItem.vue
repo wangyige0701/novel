@@ -75,13 +75,13 @@ export default defineComponent({
 			// #endif
 		},
 		observeScroll() {
-			this.getTargetSize((left: number) => {
-				observer = uni.createIntersectionObserver(this);
-				observer.relativeTo('.book-list-item-container', { left: -1 * left }).observe('.delete', res => {
-					console.log(res);
-				});
-				console.log(left);
-			});
+			// this.getTargetSize((left: number) => {
+			// 	observer = uni.createIntersectionObserver(this);
+			// 	observer.relativeTo('.book-list-item-container', { left: -1 * left }).observe('.delete', res => {
+			// 		console.log(res);
+			// 	});
+			// 	console.log(left);
+			// });
 		},
 	},
 });

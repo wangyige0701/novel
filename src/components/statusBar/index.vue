@@ -1,16 +1,18 @@
 <template>
 	<view
 		id="statusBar"
+		class="status-bar-container"
 		:style="{ '--status-bar-height': (props.fullScreen ? 0 : statusBarHeight) + 'px' }"
-		:class="isNeedFull ? 'full-screen flex-child' : ''"
-		@click="isNeedFull ? onClick() : null"
+		:class="[isNeedFull ? 'full-screen flex-child' : '', props.autoHeight ? 'auto-height' : '']"
+		@click="isNeedFull ? useFuncs.onClick() : null"
 	>
 		<view
 			v-if="!props.fullScreen"
 			class="status-bar-heigth"
+			:class="props.autoHeight ? 'auto-height' : ''"
 			:style="{ 'background-color': props.color ?? '#fff' }"
 		></view>
-		<view v-if="isNeedFull" class="no-scrollbar slot-container">
+		<view v-if="isNeedFull" class="no-scrollbar slot-container" :class="props.autoHeight ? 'auto-height' : ''">
 			<slot name="statusBar" :height="statusBarHeight"></slot>
 		</view>
 		<slot v-else name="statusBar" :height="statusBarHeight"></slot>
@@ -27,6 +29,8 @@ interface Props {
 	full?: boolean;
 	/** 应用是否全屏展示 */
 	fullScreen?: boolean;
+	/** 容器内容高度是否自适应，非全屏状态下默认自适应，全屏状态下最小高度是屏幕高度 */
+	autoHeight?: boolean;
 }
 
 interface Emits {
@@ -40,33 +44,32 @@ const props = withDefaults(defineProps<Props>(), {
 	color: '#fff',
 	full: false,
 	fullScreen: false,
+	autoHeight: false,
 });
 
 const emits = defineEmits<Emits>();
 
 /** 容器是否需要撑满 */
 const isNeedFull = computed(() => props.full === true || props.fullScreen === true);
-/** 当前全屏展示情况 */
-let fullScreenState: boolean = props.fullScreen;
 
-/** 全屏状态设置 */
-function fullScreen(state: boolean = false) {
-	//#ifdef APP-PLUS
-	plus.navigator.setFullscreen(state);
-	//#endif
-}
+/** 使用的方法对象 */
+const useFuncs = {
+	/** 全屏状态设置 */
+	fullScreen(state: boolean = false) {
+		//#ifdef APP-PLUS
+		plus.navigator.setFullscreen(state);
+		//#endif
+	},
 
-function onClick() {
-	emits('click', true);
-}
+	onClick() {
+		emits('click', true);
+	},
+};
 
 watch(
 	() => props.fullScreen,
 	newValue => {
-		if (newValue !== fullScreenState) {
-			fullScreenState = newValue;
-			fullScreen(newValue);
-		}
+		useFuncs.fullScreen(newValue);
 	},
 	{
 		immediate: true,
@@ -75,6 +78,16 @@ watch(
 </script>
 
 <style scoped lang="scss">
+#statusBar .status-bar-heigth {
+	width: 100%;
+	height: var(--status-bar-height);
+
+	&.auto-height {
+		position: sticky;
+		top: 0;
+	}
+}
+
 #statusBar {
 	width: 100%;
 	display: flex;
@@ -82,6 +95,10 @@ watch(
 	flex-wrap: nowrap;
 	position: sticky;
 	top: 0;
+
+	&.status-bar-container.auto-height {
+		height: auto;
+	}
 
 	&.flex-child {
 		height: 100vh;
@@ -91,12 +108,12 @@ watch(
 			height: calc(100vh - var(--status-bar-height));
 			position: relative;
 			overflow: scroll;
+
+			&.auto-height {
+				min-height: calc(100vh - var(--status-bar-height));
+				height: auto;
+			}
 		}
 	}
-}
-
-.status-bar-heigth {
-	width: 100%;
-	height: var(--status-bar-height);
 }
 </style>

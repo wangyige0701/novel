@@ -1,10 +1,11 @@
 <template>
 	<view class="article-content-container">
+		<slot name="pageStart" :prev="hrefs[0]" :next="hrefs[1]"></slot>
 		<view class="title">{{ title }}</view>
 		<view class="content">
 			<p v-for="(item, index) in contentList" :key="'article-content' + index">{{ item }}</p>
 		</view>
-		<slot name="operate" :prev="hrefs[0]" :next="hrefs[1]"></slot>
+		<slot name="pageEnd" :prev="hrefs[0]" :next="hrefs[1]"></slot>
 	</view>
 </template>
 
@@ -61,11 +62,11 @@ defineExpose({
 	color: inherit;
 
 	.title {
-		min-height: calc(var(--height-size) * $wyg-font-size-title);
+		min-height: calc(var(--height-size) * var(--title));
 		display: flex;
 		justify-content: center;
 		align-items: center;
-		font-size: $wyg-font-size-title;
+		font-size: var(--title);
 		font-weight: bold;
 		margin-top: $wyg-spacing-col-lg;
 		color: inherit;
@@ -82,8 +83,8 @@ defineExpose({
 		color: inherit;
 
 		p {
-			font-size: $wyg-font-size-paragraph;
-			line-height: calc(var(--height-size) / 1.6 * $wyg-font-size-paragraph);
+			font-size: var(--paragraph);
+			line-height: calc(var(--height-size) / 1.6 * var(--paragraph));
 			text-indent: 2em;
 			color: inherit;
 			margin-bottom: calc(2 * $wyg-spacing-col-base);

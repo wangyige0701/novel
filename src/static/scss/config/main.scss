@@ -1,5 +1,4 @@
 @import './color.scss';
-@import './readStyle.scss';
 
 /* 文字尺寸 */
 $wyg-font-size-sm: 20rpx;
@@ -15,9 +14,9 @@ $wyg-color-paragraph: #606266; // 文章段落颜色
 $wyg-font-size-paragraph: 26rpx;
 
 /* 图片尺寸 */
-$wyg-img-size-sm: 20px;
-$wyg-img-size-base: 26px;
-$wyg-img-size-lg: 40px;
+$wyg-img-size-sm: 40rpx;
+$wyg-img-size-base: 52rpx;
+$wyg-img-size-lg: 80rpx;
 
 /* Border Radius */
 $wyg-border-radius-sm: 6rpx;
@@ -44,7 +43,12 @@ $wyg-opacity-disabled: 0.3;
 /* 导航栏高度 */
 $wyg-navigation-bar-height: 44px;
 
-$wyg-search-bar-height: 50px;
+$wyg-search-bar-height: 100rpx;
 
 /* 列表高度基准 */
 $wyg-list-height-base: 80rpx;
+
+/* 拼接单位 */
+@function setUnit($num, $unit: rpx) {
+	@return #{$num}#{$unit};
+}

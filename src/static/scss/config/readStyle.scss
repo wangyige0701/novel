@@ -1,86 +1,126 @@
+@use 'sass:math';
+@use './main.scss' as M;
 
-$wyg-font-default: #000;
+$wyg-fontcolor-default: #000;
+$wyg-fontsize-num: 24;
+$wyg-fontsize-default: M.setUnit($wyg-fontsize-num);
+// 标题倍数
+$wyg-title-multiple: math.div(M.$wyg-font-size-title, $wyg-fontsize-num);
+// 副标题倍数
+$wyg-subtitle-multiple: math.div(M.$wyg-font-size-subtitle, $wyg-fontsize-num);
+// 段落文字倍数
+$wyg-paragraph-multiple: math.div(M.$wyg-font-size-paragraph, $wyg-fontsize-num);
 
 $colors: (
-    // 白雪
-    baixue: (
-        bgColor: #fff,
-        textColor: $wyg-font-default,
-    ),
-    // 灰绿
-    huilv: (
-        bgColor: #d8e7eb,
-        textColor: $wyg-font-default
-    ),
-    // 浅蓝
-    qianlan: (
-        bgColor: #e9faff,
-        textColor: $wyg-font-default
-    ),
-    // 明黄
-    minghuang: (
-        bgColor: #ffffed,
-        textColor: $wyg-font-default
-    ),
-    // 淡绿
-    danlv: (
-        bgColor: #eefaee,
-        textColor: $wyg-font-default
-    ),
-    // 草绿
-    caolv: (
-        bgColor: #cce8cf,
-        textColor: $wyg-font-default
-    ),
-    // 红粉
-    hongfen: (
-        bgColor: #fcefff,
-        textColor: $wyg-font-default
-    ),
-    // 仿墨水屏
-    fangmoshui: (
-        bgColor: #c0d3d7,
-        textColor: #111
-    ),
-    // 米黄
-    mihuang: (
-        bgColor: #f5f5dc,
-        textColor: $wyg-font-default
-    ),
-    // 茶色
-    cha: (
-        bgColor: #d2b48c,
-        textColor: $wyg-font-default
-    ),
-    // 银色
-    yin: (
-        bgColor: #c0c0c0,
-        textColor: $wyg-font-default
-    ),
-    // 黑绿
-    heilv: (
-        bgColor: #000,
-        textColor: #00B800
-    ),
-    // 浅黄
-    qianhuang: (
-        bgColor: #f5f1e8,
-        textColor: $wyg-font-default
-    ),
-    // 午夜
-    wuye: (
-        bgColor: #002b36,
-        textColor: #839496
-    ),
-    // 浅灰
-    qianhui: (
-        bgColor: #d9e0e8,
-        textColor: $wyg-font-default
-    ),
-    // 漆黑
-    qihei: (
-        bgColor: #000,
-        textColor: #555
-    ),
+	// 白雪
+	baixue:
+		(
+			bgColor: #fff,
+			textColor: $wyg-fontcolor-default,
+		),
+	// 灰绿
+	huilv:
+		(
+			bgColor: #d8e7eb,
+			textColor: $wyg-fontcolor-default,
+		),
+	// 浅蓝
+	qianlan:
+		(
+			bgColor: #e9faff,
+			textColor: $wyg-fontcolor-default,
+		),
+	// 明黄
+	minghuang:
+		(
+			bgColor: #ffffed,
+			textColor: $wyg-fontcolor-default,
+		),
+	// 淡绿
+	danlv:
+		(
+			bgColor: #eefaee,
+			textColor: $wyg-fontcolor-default,
+		),
+	// 草绿
+	caolv:
+		(
+			bgColor: #cce8cf,
+			textColor: $wyg-fontcolor-default,
+		),
+	// 红粉
+	hongfen:
+		(
+			bgColor: #fcefff,
+			textColor: $wyg-fontcolor-default,
+		),
+	// 仿墨水屏
+	fangmoshui:
+		(
+			bgColor: #c0d3d7,
+			textColor: #111,
+		),
+	// 米黄
+	mihuang:
+		(
+			bgColor: #f5f5dc,
+			textColor: $wyg-fontcolor-default,
+		),
+	// 茶色
+	cha:
+		(
+			bgColor: #d2b48c,
+			textColor: $wyg-fontcolor-default,
+		),
+	// 银色
+	yin:
+		(
+			bgColor: #c0c0c0,
+			textColor: $wyg-fontcolor-default,
+		),
+	// 黑绿
+	heilv:
+		(
+			bgColor: #000,
+			textColor: #00b800,
+		),
+	// 浅黄
+	qianhuang:
+		(
+			bgColor: #f5f1e8,
+			textColor: $wyg-fontcolor-default,
+		),
+	// 午夜
+	wuye:
+		(
+			bgColor: #002b36,
+			textColor: #839496,
+		),
+	// 浅灰
+	qianhui:
+		(
+			bgColor: #d9e0e8,
+			textColor: $wyg-fontcolor-default,
+		),
+	// 漆黑
+	qihei:
+		(
+			bgColor: #000,
+			textColor: #555,
+		)
 );
 
+$sizes: (
+	fontSize: $wyg-fontsize-default,
+	titleSize: $wyg-title-multiple * $wyg-fontsize-num,
+	subtitleSize: $wyg-subtitle-multiple * $wyg-fontsize-num,
+	paragraphSize: $wyg-paragraph-multiple * $wyg-fontsize-num,
+);
+
+$size-multiples: (
+	base: 1,
+	sm: 0.95,
+	xs: 0.9,
+	lg: 1.05,
+	xl: 1.1,
+);

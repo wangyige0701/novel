@@ -1,4 +1,4 @@
-const obj = {
+const colors = {
 	baixue: {
 		name: '白雪',
 		value: 'baixue',
@@ -65,8 +65,39 @@ const obj = {
 	},
 } as const;
 
-export type ReadStyleConfig = keyof typeof obj;
+const sizes = {
+	base: {
+		name: '基础',
+		value: 'base',
+	},
+	sm: {
+		name: '较小',
+		value: 'sm',
+	},
+	xs: {
+		name: '最小',
+		value: 'xs',
+	},
+	lg: {
+		name: '较大',
+		value: 'lg',
+	},
+	xl: {
+		name: '最大',
+		value: 'xl',
+	},
+} as const;
 
-export const readStyleConfig = Object.freeze(obj);
+// 背景色配置
+export type ArticlebackgroundConfig = keyof typeof colors;
 
-export const readStyleConfigList = Object.keys(obj);
+export const articlebackgroundConfig = Object.freeze(colors);
+
+export const articlebackgroundConfigList = Object.keys(colors);
+
+// 文字尺寸配置
+export type ArticleSizeConfig = keyof typeof sizes;
+
+export const articleSizeConfig = Object.freeze(sizes);
+
+export const articleSizeConfigList = Object.keys(sizes);

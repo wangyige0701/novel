@@ -1,3 +1,5 @@
+import log from '@/log';
+
 /** 前缀校验正则 */
 export const prefixCheckRegexp = /(?:uni\-|uni\_|dcloud\-|dcloud\_).*/;
 
@@ -7,7 +9,13 @@ export const prefixCheckRegexp = /(?:uni\-|uni\_|dcloud\-|dcloud\_).*/;
  * @returns
  */
 export function prefixCheck(key: string) {
-	return prefixCheckRegexp.test(key);
+	const result = prefixCheckRegexp.test(key);
+	if (process.env.NODE_ENV !== 'production') {
+		if (result) {
+			log.warn(`${key} 存在系统缓存前缀，可能会导致冲突，请检查！`);
+		}
+	}
+	return result;
 }
 
 /**

@@ -12,10 +12,11 @@
 </template>
 
 <script setup lang="ts">
-import StatusBar from '@comp/statusBar/index.vue';
-import BookList from '@comp/list/bookList.vue';
 import { data as testData } from '@test/data/bookList.test';
 import { path } from '@path/index';
+
+import StatusBar from '@comp/statusBar/index.vue';
+import BookList from '@comp/list/bookList.vue';
 
 const showType = ref<'bookList' | 'searchList'>('bookList');
 

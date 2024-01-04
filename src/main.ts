@@ -1,9 +1,12 @@
 import { createSSRApp } from 'vue';
-import { GlobalStore } from '@store';
+import { GlobalStore } from '@store/static';
+import { store, key } from '@/store/vuex';
 import App from './App.vue';
 
 export function createApp() {
 	const app = createSSRApp(App);
+
+	app.use(store, key);
 
 	// 注册状态栏高度数据
 	let statusBarHeight = 0;

@@ -20,7 +20,7 @@
 </template>
 
 <script setup lang="ts">
-import { GlobalStore } from '@store';
+import { GlobalStore } from '@store/static';
 
 interface Props {
 	/** 状态栏高度区域的背景色，默认白色 */

@@ -39,18 +39,12 @@
 </template>
 
 <script setup lang="ts">
-import {
-	type ArticlebackgroundConfig,
-	type ArticleSizeConfig,
-	articlebackgroundConfig,
-	articlebackgroundConfigList,
-	articleSizeConfig,
-	articleSizeConfigList,
-} from './data/readStyle';
-import ArticleContent from './content.vue';
+import type { ArticlebackgroundConfig, ArticleSizeConfig } from './data/readStyle';
+import type { ArticleReturnVal } from '@/regular/@types/article';
 import { SettingAtricleCaches } from './data/articlesCache';
 import { $_nextTick } from '@/utils/nextTick';
-import type { ArticleReturnVal } from '@/regular/@types/article';
+
+import ArticleContent from './content.vue';
 
 interface Props {
 	chapterId: string;
@@ -77,7 +71,7 @@ onBeforeUnmount(() => {
 watch(
 	() => props.chapterId,
 	newID => {
-		renderList.init(newID);
+		// renderList.init(newID);
 	},
 	{
 		immediate: true,
@@ -89,9 +83,14 @@ renderList.onReadingChange = function (val: ArticleReturnVal & { __key: string }
 	$_nextTick(() => {
 		if (val && firstRender.value) {
 			firstRender.value = false;
+			renderList.onReadingChange = void 0;
 		}
 	});
 };
+import { useStore } from '@/store/vuex';
+const store = useStore();
+console.log(store);
+store.commit('reading/__STORAGE__', 1);
 </script>
 
 <style scoped lang="scss">

@@ -127,6 +127,19 @@ export class SettingAtricleCaches {
 		});
 	}
 
+	/** 重置缓存长度 */
+	resetCacheLength(num: number) {
+		this.cacheLength = num;
+		if (this.beforeList.length < num) {
+			const { prev_href } = this.beforeList[0];
+			this.get_prev(prev_href, true);
+		}
+		if (this.afterList.length < num) {
+			const { next_href } = this.afterList[this.afterList.length - 1];
+			this.get_next(next_href, true);
+		}
+	}
+
 	/** 终止当前递归的请求 */
 	stop() {
 		const target = SettingAtricleCaches.stopSign[this._Instance_Key];

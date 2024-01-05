@@ -56,7 +56,7 @@ defineExpose({
 </script>
 
 <style scoped lang="scss">
-@import '../../static/scss/config/main.scss';
+@import '../../style/scss/config/main.scss';
 
 .placeholder {
 	background-color: grey;

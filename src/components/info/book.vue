@@ -20,9 +20,9 @@
 </template>
 
 <script setup lang="ts">
-import type { HomePageExcludeChapter } from '@/regular/@types/homepage';
-import { bookInfo } from '@/regular/index';
-import { pageRender } from '@/custom/pageRender';
+import type { HomePageExcludeChapter } from '@common/regular/@types/homepage';
+import { bookInfo } from '@common/regular/index';
+import { pageRender } from '@common/reactive/pageRender';
 
 interface Props {
 	bookId: string;
@@ -104,7 +104,7 @@ const watchEffectStop = watchEffect(() => {
 </script>
 
 <style scoped lang="scss">
-@import '../../static/scss/config/main.scss';
+@import '../../style/scss/config/main.scss';
 
 .book-info-container {
 	display: grid;
@@ -156,4 +156,3 @@ const watchEffectStop = watchEffect(() => {
 	}
 }
 </style>
-@/custom/reactive/pageRender

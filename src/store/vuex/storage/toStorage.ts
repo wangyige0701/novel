@@ -1,6 +1,6 @@
 import type { RefreshStateDatas } from '../@types';
-import { storage } from '@/storage';
-import { isObject, isString } from '@/utils/types';
+import { storage } from '@common/storage';
+import { isObject, isString } from '@common/utils/types';
 import { __STORAGE_KEY__ } from './datas';
 
 let storageCache: object;

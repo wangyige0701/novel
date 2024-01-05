@@ -1,4 +1,4 @@
-import { randomString } from '@/utils/random';
+import { randomString } from '@common/utils/random';
 
 export const __ROOT_NAME__ = 'root/';
 

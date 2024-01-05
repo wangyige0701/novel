@@ -10,7 +10,7 @@
 </template>
 
 <script setup lang="ts">
-import type { ArticleReturnVal } from '@/regular/@types/article';
+import type { ArticleReturnVal } from '@common/regular/@types/article';
 
 interface Props {
 	/** 文章数据对象 */
@@ -52,7 +52,7 @@ defineExpose({
 </script>
 
 <style scoped lang="scss">
-@import '../../static/scss/config/main.scss';
+@import '../../style/scss/config/main.scss';
 
 .article-content-container {
 	--height-size: 3;

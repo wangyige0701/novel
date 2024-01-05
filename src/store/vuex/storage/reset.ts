@@ -1,9 +1,9 @@
 import type { StoreOptions } from 'vuex';
 import type { State } from '@/store';
 import type { ResetStoreOptions, ResetModule, SettingStorageCallback, PathMapValue } from '../@types';
-import { isArray, isObject } from '@/utils/types';
-import { hasProperty } from '@/utils/simples';
-import { deepClone } from '@/utils/clone';
+import { isArray, isObject } from '@common/utils/types';
+import { hasProperty } from '@common/utils/simples';
+import { deepClone } from '@common/utils/clone';
 import { __STORAGE__, __ROOT_NAME__ } from './datas';
 import { storage } from './plugin';
 import { getVuexStorageData, removeVuexFromStorage } from './toStorage';

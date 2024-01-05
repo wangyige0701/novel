@@ -40,9 +40,9 @@
 
 <script setup lang="ts">
 import type { ArticlebackgroundConfig, ArticleSizeConfig } from './data/readStyle';
-import type { ArticleReturnVal } from '@/regular/@types/article';
+import type { ArticleReturnVal } from '@common/regular/@types/article';
 import { SettingAtricleCaches } from './data/articlesCache';
-import { $_nextTick } from '@/utils/nextTick';
+import { $_nextTick } from '@common/utils/nextTick';
 
 import ArticleContent from './content.vue';
 
@@ -90,7 +90,7 @@ renderList.onReadingChange = function (val: ArticleReturnVal & { __key: string }
 </script>
 
 <style scoped lang="scss">
-@use '../../static/scss/reading.scss' as R;
+@use '../../style/scss/reading.scss' as R;
 
 #novel_content.article-container {
 	// 注入背景色

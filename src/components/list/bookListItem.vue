@@ -88,7 +88,7 @@ export default defineComponent({
 </script>
 
 <style scoped lang="scss">
-@import '../../static/scss/config/main.scss';
+@import '../../style/scss/config/main.scss';
 
 /* #ifdef H5 */
 .book-list-item-container::-webkit-scrollbar {

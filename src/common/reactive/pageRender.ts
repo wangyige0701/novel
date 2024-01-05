@@ -31,7 +31,7 @@ type InitializeOptions = PickRequireType<PageRenderType, boolean>;
 type ChangeShowStateCallback = (options: PickChangeType<InitializeOptions, Ref<boolean>>) => void;
 
 /**
- * 页面渲染状态控制
+ * 页面渲染状态控制，自定义ref控制依赖收集
  */
 export function pageRender(
 	initialize?: Omit<InitializeOptions, 'show'>,

@@ -15,7 +15,7 @@ onError(err => {
 </script>
 
 <style lang="scss">
-@import './static/scss/config/main.scss';
+@import './style/scss/config/main.scss';
 
 /* #ifndef APP-NVUE */
 * {

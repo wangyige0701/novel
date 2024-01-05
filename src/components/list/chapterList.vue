@@ -18,10 +18,10 @@
 </template>
 
 <script setup lang="ts">
-import type { ChapterList, ChapterListItem } from '@/regular/@types/homepage';
-import { pageRender } from '@/custom/pageRender';
-import { chapterList } from '@/regular/index';
-import { $_nextTick } from '@/utils/nextTick';
+import type { ChapterList, ChapterListItem } from '@common/regular/@types/homepage';
+import { pageRender } from '@common/reactive/pageRender';
+import { chapterList } from '@common/regular/index';
+import { $_nextTick } from '@common/utils/nextTick';
 
 interface Props {
 	bookId: string;
@@ -139,7 +139,7 @@ const watchEffectStop = watchEffect(() => {
 </script>
 
 <style scoped lang="scss">
-@import '../../static/scss/config/main.scss';
+@import '../../style/scss/config/main.scss';
 
 .chapter-list-container {
 	display: flex;
@@ -171,4 +171,3 @@ const watchEffectStop = watchEffect(() => {
 	}
 }
 </style>
-@/custom/reactive/pageRender

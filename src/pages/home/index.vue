@@ -18,7 +18,7 @@
 </template>
 
 <script setup lang="ts">
-import type { ChapterListItem } from '@/regular/@types/homepage';
+import type { ChapterListItem } from '@common/regular/@types/homepage';
 import StatusBar from '@comp/statusBar/index.vue';
 import BookInfo from '@comp/info/book.vue';
 import ChapterList from '@comp/list/chapterList.vue';
@@ -41,7 +41,7 @@ function selectChapter({ name, href }: ChapterListItem) {
 </script>
 
 <style scoped lang="scss">
-@import '../../static/scss/config/main.scss';
+@import '../../style/scss/config/main.scss';
 
 .content {
 	width: 100%;

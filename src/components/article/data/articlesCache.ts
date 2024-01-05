@@ -1,11 +1,11 @@
-import type { ArticleReturnVal } from '@/regular/@types/article';
+import type { ArticleReturnVal } from '@common/regular/@types/article';
 import type { ShallowReactive, ComputedRef, Ref } from 'vue';
 import { shallowReactive, computed, watch } from 'vue';
-import { AsyncQueue } from '@/utils/asyncQueue';
-import { article } from '@/regular';
-import { voidFunc } from '@/utils/simples';
-import { $_nextTick } from '@/utils/nextTick';
-import { randomString } from '@/utils/random';
+import { AsyncQueue } from '@common/utils/asyncQueue';
+import { article } from '@common/regular';
+import { voidFunc } from '@common/utils/simples';
+import { $_nextTick } from '@common/utils/nextTick';
+import { randomString } from '@common/utils/random';
 
 type ArticleReturnValHasKey = ArticleReturnVal & { __key: string };
 

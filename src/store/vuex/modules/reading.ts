@@ -1,4 +1,4 @@
-import type { ResetModule } from '../@types/resetOptions';
+import type { ResetModule } from '../@types';
 import type { State, ReadingState } from '@/store';
 
 export const reading: ResetModule<ReadingState, State> = {
@@ -8,5 +8,10 @@ export const reading: ResetModule<ReadingState, State> = {
 		chapterCacheLength: 5,
 		readingTheme: 'baixue',
 		readingFontSize: 'base',
+	},
+	mutations: {
+		test(state) {
+			state.chapterCacheLength = 10;
+		},
 	},
 };

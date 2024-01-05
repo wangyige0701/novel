@@ -11,6 +11,7 @@ export interface ReadingState {
 }
 
 export interface State {
+	// 阅读器配置
 	reading: ReadingState;
 }
 

@@ -87,10 +87,6 @@ renderList.onReadingChange = function (val: ArticleReturnVal & { __key: string }
 		}
 	});
 };
-import { useStore } from '@/store/vuex';
-const store = useStore();
-console.log(store);
-store.commit('reading/__STORAGE__', 1);
 </script>
 
 <style scoped lang="scss">

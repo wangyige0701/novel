@@ -9,11 +9,13 @@ import { randomString } from '@/utils/random';
 
 type ArticleReturnValHasKey = ArticleReturnVal & { __key: string };
 
+const getRandomString = randomString();
+
 /** 请求队列 */
 const RequestQueue = new AsyncQueue<ArticleReturnVal>(3);
 
 function createKey(data: ArticleReturnVal): ArticleReturnValHasKey {
-	return Object.assign(data, { __key: randomString() });
+	return Object.assign(data, { __key: getRandomString() });
 }
 
 function request(articleId: string) {
@@ -47,7 +49,7 @@ export class SettingAtricleCaches {
 	public onReadingChange?: (article: ArticleReturnValHasKey) => any;
 
 	private createOverSign() {
-		const key = randomString();
+		const key = getRandomString();
 		SettingAtricleCaches.stopSign[this._Instance_Key][key] = true;
 		const target = SettingAtricleCaches.stopSign[this._Instance_Key];
 		return {
@@ -66,7 +68,7 @@ export class SettingAtricleCaches {
 	 * @param cacheLength 缓存的长度
 	 */
 	constructor(cacheLength: number = 5) {
-		this._Instance_Key = randomString();
+		this._Instance_Key = getRandomString();
 		SettingAtricleCaches.stopSign[this._Instance_Key] = {};
 		this.cacheLength = cacheLength;
 		this.beforeList = shallowReactive<ArticleReturnValHasKey[]>([]);

@@ -1,27 +1,29 @@
 import type { StoreOptions } from 'vuex';
 import type { State } from '@/store';
-import type { ResetStoreOptions, ResetModule } from '../@types/resetOptions';
+import type { ResetStoreOptions, ResetModule, SettingStorageCallback, PathMapValue } from '../@types';
 import { isArray, isObject } from '@/utils/types';
 import { hasProperty } from '@/utils/simples';
 import { deepClone } from '@/utils/clone';
-import { __STORAGE__ } from './datas';
+import { __STORAGE__, __ROOT_NAME__ } from './datas';
 import { storage } from './plugin';
-import { getVuexStorageData } from './toStorage';
+import { getVuexStorageData, removeVuexFromStorage } from './toStorage';
 
 type UseTarget = ResetModule<any, any> | ResetStoreOptions<any>;
 
 /** 路径和缓存键值映射 */
-const pathMap: Map<string, string[]> = new Map();
+let pathMap: Map<string, PathMapValue> = new Map();
 
 /** 缓存赋值 */
 function cacheValue(target: UseTarget, path: string) {
 	const cache = getVuexStorageData();
-	const filter = pathMap.get(path);
-	if (filter && isObject(cache)) {
+	const { filter } = pathMap.get(path) ?? {};
+	if (path && filter && isObject(cache)) {
 		const cacheDatas = cache[path];
 		if (isObject(cacheDatas)) {
 			for (const keyVal in cacheDatas) {
 				if (!filter.includes(keyVal)) {
+					// 移除不再需要的state中的属性
+					removeVuexFromStorage(path, keyVal);
 					continue;
 				}
 				if (keyVal in target.state) {
@@ -32,8 +34,8 @@ function cacheValue(target: UseTarget, path: string) {
 	}
 }
 
-/** 创建`mutations`属性 */
-function createMutation(target: UseTarget, path: string, filter: string[]) {
+/** 更新map映射 */
+function updateMap(target: UseTarget, path: string, filter: string[]) {
 	if (!hasProperty(target, 'state')) {
 		return;
 	}
@@ -41,20 +43,27 @@ function createMutation(target: UseTarget, path: string, filter: string[]) {
 	if (filter.length === 0) {
 		return;
 	}
-	if (!hasProperty(target, 'mutations')) {
-		target.mutations = {};
+	if (!hasProperty(target, 'getters')) {
+		target.getters = {};
 	}
-	const mutations = target.mutations;
+	const getters = target.getters;
 	// @ts-ignore
-	mutations[__STORAGE__] = (state: State, payload: Partial<State>) => {
-		console.log(state, payload);
+	getters[__STORAGE__] = (state: State) => {
+		return filter.reduce((prev, curr) => {
+			// @ts-ignore
+			prev[curr] = state[curr];
+			return prev;
+		}, {});
 	};
-	pathMap.set(path, filter);
+	pathMap.set(path, {
+		filter,
+		getterPath: path.slice(__ROOT_NAME__.length) + __STORAGE__,
+	});
 	cacheValue(target, path);
 }
 
 /** 重置配置项处理 */
-function resetOptions(options: UseTarget, path: string = 'root/') {
+function resetOptions(options: UseTarget, path: string) {
 	if (!options) {
 		return;
 	}
@@ -62,21 +71,25 @@ function resetOptions(options: UseTarget, path: string = 'root/') {
 		const _storage = options._storage;
 		if (_storage === true) {
 			// 所有属性
-			createMutation(options, path, Object.keys(options.state ?? {}));
+			updateMap(options, path, Object.keys(options.state ?? {}));
 		} else if (isArray(_storage)) {
 			// 指定属性
-			createMutation(options, path, _storage);
+			updateMap(options, path, _storage);
 		}
 		delete options._storage;
+		if (path !== __ROOT_NAME__) {
+			// 根元素下不需要设置namespaced
+			if (!hasProperty(options, 'namespaced') || (options as ResetModule<any, any>).namespaced !== true) {
+				// 设置了_storage属性namespaced自动置为true
+				(options as ResetModule<any, any>).namespaced = true;
+			}
+		}
 	}
 	if (hasProperty(options, 'modules')) {
 		const modules = options.modules;
 		for (const key in modules) {
 			const module = modules[key];
 			if (isObject(module)) {
-				if (path === 'root/') {
-					path = '';
-				}
 				resetOptions(module, path + key + '/');
 			}
 		}
@@ -84,17 +97,40 @@ function resetOptions(options: UseTarget, path: string = 'root/') {
 }
 
 /** 重置`createStore`配置项，允许添加`_storage`属性 */
-export function StorageOptions(options: ResetStoreOptions<State>): StoreOptions<State> {
+export function StorageOptions(
+	options: ResetStoreOptions<State>,
+	settingStorage?: SettingStorageCallback,
+	delayTime?: number,
+): StoreOptions<State> {
 	if (!options) {
 		return {};
 	}
 	options = deepClone(options);
-	resetOptions(options);
+	resetOptions(options, __ROOT_NAME__);
+	// 判断是否需要移除模块级别的缓存数据
+	const nowCacheDatas = getVuexStorageData();
+	const cacheModules = Object.keys(nowCacheDatas);
+	for (const moduleKey of cacheModules) {
+		if (!pathMap.has(moduleKey)) {
+			removeVuexFromStorage(moduleKey, true);
+		}
+	}
+	if (!settingStorage) {
+		return options;
+	}
 	if (!hasProperty(options, 'plugins')) {
 		options.plugins = [];
 	}
-	options.plugins!.unshift(storage);
-	console.log(options);
-	console.log(pathMap);
+	options.plugins!.unshift(
+		storage(
+			pathMap,
+			() => {
+				pathMap.clear();
+				(pathMap as unknown) = null;
+			},
+			settingStorage,
+			delayTime,
+		),
+	);
 	return options;
 }

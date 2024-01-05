@@ -1,7 +1,7 @@
-import type { HTMLParse } from '@/core/@types/parse';
+import type { HTMLParse } from '@common/document/@types/parse';
 import type { ArticleReturnVal } from '../@types/article';
 import { suffixWithPathParam } from '@/api/dingdian/suffix';
-import { parseHTML, query, queryAttr, queryText } from '@/core';
+import { parseHTML, query, queryAttr, queryText } from '@common/document';
 
 enum URLType {
 	/** 改变页数 */

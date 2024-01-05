@@ -1,4 +1,4 @@
-import type { HTMLParseTag } from '@/core/@types/parse';
+import type { HTMLParseTag } from '@common/document/@types/parse';
 
 /**
  * 文章接口处理返回数据

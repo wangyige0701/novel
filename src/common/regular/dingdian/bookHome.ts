@@ -1,7 +1,7 @@
-import type { HTMLParseTag } from '@/core/@types/parse';
+import type { HTMLParseTag } from '@common/document/@types/parse';
 import type { HomePageReturnVal, ChapterCallback, ChapterList, HomePageExcludeChapter } from '../@types/homepage';
 import { suffixWithPathParam } from '@/api/dingdian/suffix';
-import { parseHTML, query, queryAttr, queryText } from '@/core';
+import { parseHTML, query, queryAttr, queryText } from '@common/document';
 import { AsyncQueue } from '@common/utils/asyncQueue';
 
 /** 信息容器定位 */

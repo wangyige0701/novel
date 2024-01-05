@@ -1,6 +1,6 @@
 import type { ListReturnVal, ListTarget, MergeListReturnVal } from '../@types/search';
 import { search } from '@/api/dingdian/search';
-import { parseHTML, query, queryAttr, queryText } from '@/core';
+import { parseHTML, query, queryAttr, queryText } from '@common/document';
 
 /** 获取小说类型数据 */
 const getTypeContent = /(?:^\[?([^\[\]]*)\]?$)|(?:^(.*)$)/;

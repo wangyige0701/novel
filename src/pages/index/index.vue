@@ -13,7 +13,7 @@
 
 <script setup lang="ts">
 import { data as testData } from '@test/data/bookList.test';
-import { path } from '@path/index';
+import { path } from '@common/path';
 
 import StatusBar from '@comp/statusBar/index.vue';
 import BookList from '@comp/list/bookList.vue';

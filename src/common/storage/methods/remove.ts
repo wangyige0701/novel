@@ -1,6 +1,6 @@
-import { AsyncQueue } from '@/utils/asyncQueue';
-import { isArray, isFunction } from '@/utils/types';
-import { createProm, prefixCheck } from './main';
+import { AsyncQueue } from '@common/utils/asyncQueue';
+import { isArray, isFunction } from '@common/utils/types';
+import { createProm, prefixCheck } from '../main';
 
 /**
  * 移除本地缓存数据

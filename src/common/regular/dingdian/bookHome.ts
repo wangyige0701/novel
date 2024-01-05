@@ -2,7 +2,7 @@ import type { HTMLParseTag } from '@/core/@types/parse';
 import type { HomePageReturnVal, ChapterCallback, ChapterList, HomePageExcludeChapter } from '../@types/homepage';
 import { suffixWithPathParam } from '@/api/dingdian/suffix';
 import { parseHTML, query, queryAttr, queryText } from '@/core';
-import { AsyncQueue } from '@/utils/asyncQueue';
+import { AsyncQueue } from '@common/utils/asyncQueue';
 
 /** 信息容器定位 */
 const messageBoxSelector = 'div.container > div.row.row-detail > div.layout.layout-col1 > div.detail-box > div.info';

@@ -1,6 +1,6 @@
-import { isArray, isFunction, isUndefined } from '@/utils/types';
-import { createProm, prefixCheckRegexp } from './main';
-import { AsyncQueue } from '@/utils/asyncQueue';
+import { isArray, isFunction, isUndefined } from '@common/utils/types';
+import { createProm, prefixCheckRegexp } from '../main';
+import { AsyncQueue } from '@common/utils/asyncQueue';
 
 /**
  * 排除系统前缀缓存

@@ -3,7 +3,7 @@ import { defineConfig } from 'vite';
 import path from 'path';
 import uniPlugin from '@dcloudio/vite-plugin-uni';
 import AutoImport from 'unplugin-auto-import/vite';
-import ProxyConfig from './src/request/proxy';
+import ProxyConfig from './src/common/request/main/proxy';
 
 function createPages() {
 	return <Plugin>{

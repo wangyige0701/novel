@@ -1,4 +1,4 @@
-import { request } from '@/request';
+import { request } from '@common/request';
 import { getInterfaceData } from '@/config';
 
 export function testReq(any: any) {

@@ -1,4 +1,4 @@
-import { request } from '@/request';
+import { request } from '@common/request';
 import { mergeWithDomainDefault } from '@/config';
 
 type Options = PickRequireTypes<RequestOptions, [boolean | undefined, number | undefined]>;

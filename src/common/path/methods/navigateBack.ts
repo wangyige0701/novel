@@ -1,4 +1,4 @@
-import { optionsArrange } from './main';
+import { optionsArrange } from '../main';
 
 /**
  * 关闭当前页面，返回一或多级页面

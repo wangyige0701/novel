@@ -30,7 +30,7 @@
         "test",
         "**/parseHtml.ts",
         "src/core",
-        "src/storage",
-        "src/request"
+        "src/common/storage",
+        "src/common/request"
     ]
 }

@@ -2,7 +2,7 @@ import { getInterfaceDataDefault } from '@/config';
 
 // #ifdef H5
 import ProxyConfig from './proxy';
-import { isBoolean } from '@/utils/types';
+import { isBoolean } from '@common/utils/types';
 
 const DomainMap = Object.keys(ProxyConfig).reduce(
 	(prev, curr) => {

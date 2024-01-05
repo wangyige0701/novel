@@ -1,4 +1,4 @@
-import { checkOptions, _uni_request } from '../config.js';
+import { checkOptions, _uni_request } from '../main/config.js';
 
 /**
  * get请求

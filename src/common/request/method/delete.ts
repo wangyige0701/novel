@@ -1,4 +1,4 @@
-import { checkOptions, _uni_request } from '../config';
+import { checkOptions, _uni_request } from '../main/config';
 
 /**
  * delete请求

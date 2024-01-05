@@ -1,4 +1,4 @@
-import { ConfigTarget } from '../config/data';
+import { ConfigTarget } from '@/config/data';
 
 export default {
 	test: ConfigTarget.test.domain,

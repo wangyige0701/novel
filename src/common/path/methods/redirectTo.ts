@@ -1,5 +1,5 @@
-import type { OptionsParams } from './main';
-import { optionsArrange } from './main';
+import type { OptionsParams } from '../main';
+import { optionsArrange } from '../main';
 
 /**
  * 关闭当前页面，跳转到应用内的某个页面

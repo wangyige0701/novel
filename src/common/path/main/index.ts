@@ -1,4 +1,4 @@
-import { isObject } from '@/utils/types';
+import { isObject } from '@common/utils/types';
 
 type ParamsType = {
 	[key: string]: number | boolean | string;

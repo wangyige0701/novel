@@ -3,7 +3,7 @@ import type { StoreOptions, Module } from 'vuex';
 interface Storage {
 	/**
 	 * 自定义vuex配置项，判断是否将此层级下的state数据写入缓存，如果传入字符串数组，则只写入数组内的属性，
-	 * 如果配置了`_storage`，则namespaced属性会被自动设置为true
+	 * 如果配置了`_storage`，则`namespaced`属性会被自动设置为true
 	 */
 	_storage?: boolean | string[];
 }

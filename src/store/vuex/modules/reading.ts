@@ -1,5 +1,6 @@
 import type { ResetModule } from '../@types';
 import type { State, ReadingState } from '@/store';
+import { Reading } from '../variables/mutations';
 
 export const reading: ResetModule<ReadingState, State> = {
 	_storage: true,
@@ -10,8 +11,14 @@ export const reading: ResetModule<ReadingState, State> = {
 		readingFontSize: 'base',
 	},
 	mutations: {
-		test(state) {
-			state.chapterCacheLength = 10;
+		[Reading.ChapterCacheLength](state, payload) {
+			state.chapterCacheLength = payload;
+		},
+		[Reading.ReadingTheme](state, payload) {
+			state.readingTheme = payload;
+		},
+		[Reading.ReadingFontSize](state, payload) {
+			state.readingFontSize = payload;
 		},
 	},
 };

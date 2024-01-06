@@ -32,42 +32,214 @@ function request(articleId: string) {
 	});
 }
 
+function createOverSign(Instance_Key: string) {
+	const key = getRandomString();
+	SettingAtricleCaches.stopSign[Instance_Key][key] = true;
+	const target = SettingAtricleCaches.stopSign[Instance_Key];
+	return {
+		get value() {
+			if (target[key] === true) {
+				return true;
+			} else {
+				delete target[key];
+				return false;
+			}
+		},
+	};
+}
+
+class DataRequest {
+	public list: ShallowReactive<ArticleReturnValHasKey[]>;
+	private _loading: Ref<boolean>;
+	private _error: Ref<boolean>;
+	private cacheLength: number;
+	private state: 'after' | 'before';
+	private _state: number;
+	private _href: 'next_href' | 'prev_href';
+	private _Instance_Key: string;
+	private errorCallback: Function;
+
+	constructor(
+		Instance_Key: string,
+		cacheLength: number,
+		state: 'after' | 'before',
+		errorCallback: (err: any) => any,
+	) {
+		this._Instance_Key = Instance_Key;
+		this.cacheLength = cacheLength;
+		this.state = state;
+		this._state = Number(this.state === 'after'); // 1为after、0为before
+		this._href = this._state === 1 ? 'next_href' : 'prev_href';
+		this.list = shallowReactive<ArticleReturnValHasKey[]>([]);
+		this._loading = ref(false);
+		this._error = ref(false);
+		this.errorCallback = errorCallback;
+	}
+
+	/**
+	 * 获取指定位置的数据
+	 * @param posi `end`：末端数据，before的第一个数据，after的最后一个数据，即离中心数据最远的数据；`start`：近端数据，离中心最近的数据
+	 * @returns
+	 */
+	getData(posi: 'end' | 'start') {
+		const _posi = Number(posi === 'end'); // 1为end、0为start
+		if ((_posi ^ this._state) === 1) {
+			return this.list[this.list.length - 1];
+		}
+		return this.list[0];
+	}
+
+	/** 重置列表长度 */
+	reset() {
+		this.list.length = 0;
+	}
+
+	/** 重置缓存长度 */
+	resetCacheLength(num: number) {
+		this.cacheLength = num;
+		if (this.list.length < num) {
+		}
+	}
+
+	/** 根据数据实例状态插入一条数据，after在最后插入，before在最前方插入 */
+	insert(data: ArticleReturnValHasKey) {
+		if (this._state === 1) {
+			return this.list.push(data);
+		}
+		return this.list.unshift(data);
+	}
+
+	/** 根据回调函数获取指定数据的索引，before状态的列表会反向 */
+	findIndex(callback: (item: ArticleReturnValHasKey) => boolean) {
+		const index = this.list.findIndex(callback);
+		if (this._state === 1) {
+			return index;
+		}
+		if (index < 0) {
+			return index;
+		}
+		return -1 * index + this.cacheLength - 1;
+	}
+
+	/** 获取列表数据 */
+	get(index: number) {
+		if (index < 0 || index >= this.list.length) {
+			return;
+		}
+		if (this._state === 1) {
+			return this.list[index];
+		}
+		return this.list[-1 * index + this.cacheLength - 1];
+	}
+
+	/** 检查缓存列表完整性，如果未填满列表则继续请求数据 */
+	checkFull(noneData: ArticleReturnValHasKey) {
+		if (this.list.length < this.cacheLength) {
+			const target = this.getData('end') || noneData;
+			if (target && target[this._href]) {
+				this.requestData(target[this._href], true);
+			}
+		}
+	}
+
+	/** 获取邻接数据 */
+	adjoinId(callback: (id: string) => any) {
+		const end = this.getData('end');
+		if (!end) {
+			return;
+		}
+		const { id } = this.getData('start');
+		callback(id);
+	}
+
+	/** 根据状态请求数据并插入 */
+	requestData(id: string, recursive: boolean = false, _sign?: ReturnType<typeof createOverSign>) {
+		if (!id) {
+			return;
+		}
+		if (!_sign) {
+			_sign = createOverSign(this._Instance_Key);
+		}
+		if (!_sign.value) {
+			return;
+		}
+		if (recursive) {
+			// 判断是否到达边界，如果未抵达列表已有数据中的最远端，则指针继续移动
+			const index = this.findIndex(item => item.id === id);
+			if (index > -1 && index < this.list.length - 1) {
+				this.requestData(this.get(index + 1)!.id, true, _sign);
+				return;
+			}
+		}
+		if (this.list.length <= 1) {
+			this._loading.value = true;
+		}
+		this._error.value = false;
+		request(id)
+			.then(data => {
+				if (!_sign!.value) {
+					return;
+				}
+				if (!data) {
+					return;
+				}
+				let number = this.list.length;
+				if (number >= this.cacheLength) {
+					return;
+				}
+				number = this.insert(data);
+				if (recursive && number < this.cacheLength) {
+					// 递归调用
+					this.requestData(data[this._href], true, _sign);
+				}
+			})
+			.catch(err => {
+				this._error.value = true;
+				this.errorCallback(err);
+			})
+			.finally(() => {
+				this._loading.value = false;
+			});
+	}
+
+	get loading() {
+		return this._loading.value;
+	}
+
+	get error() {
+		return this._error.value;
+	}
+
+	get tip() {
+		return this.loading || this.error;
+	}
+
+	get info() {
+		if (this.loading) {
+			return '加载中...';
+		}
+		if (this.error) {
+			return '加载失败';
+		}
+		return;
+	}
+}
+
 export class SettingAtricleCaches {
-	private static stopSign: { [key: string]: { [key: string]: boolean } } = {};
+	public static stopSign: { [key: string]: { [key: string]: boolean } } = {};
 
 	private _Instance_Key: string;
 
-	/** 前面章节的数据列表 */
-	private beforeList: ShallowReactive<ArticleReturnValHasKey[]>;
-	/** 后面章节的数据列表 */
-	private afterList: ShallowReactive<ArticleReturnValHasKey[]>;
+	private before: DataRequest;
+	private after: DataRequest;
+
 	private reading: ShallowReactive<[] | [ArticleReturnValHasKey]>;
 	private readingKey: Ref<string>;
-	private prev_loading: Ref<boolean>;
-	private prev_error: Ref<boolean>;
-	private next_loading: Ref<boolean>;
-	private next_error: Ref<boolean>;
 	private result: ComputedRef<ArticleReturnValHasKey[]>;
 	private cacheLength: number;
 
 	public onError?: (reason: any) => any;
 	public onReadingChange?: (article: ArticleReturnValHasKey) => any;
-
-	private createOverSign() {
-		const key = getRandomString();
-		SettingAtricleCaches.stopSign[this._Instance_Key][key] = true;
-		const target = SettingAtricleCaches.stopSign[this._Instance_Key];
-		return {
-			get value() {
-				if (target[key] === true) {
-					return true;
-				} else {
-					delete target[key];
-					return false;
-				}
-			},
-		};
-	}
 
 	/**
 	 * @param cacheLength 缓存的长度
@@ -76,15 +248,13 @@ export class SettingAtricleCaches {
 		this._Instance_Key = getRandomString();
 		SettingAtricleCaches.stopSign[this._Instance_Key] = {};
 		this.cacheLength = cacheLength;
-		this.beforeList = shallowReactive<ArticleReturnValHasKey[]>([]);
-		this.afterList = shallowReactive<ArticleReturnValHasKey[]>([]);
+
+		this.before = new DataRequest(this._Instance_Key, this.cacheLength, 'before', err => this.onError);
+		this.after = new DataRequest(this._Instance_Key, this.cacheLength, 'after', err => this.onError);
+
 		this.reading = shallowReactive<[ArticleReturnValHasKey] | []>([]);
 		this.readingKey = ref('');
-		this.prev_loading = ref(false);
-		this.prev_error = ref(false);
-		this.next_loading = ref(false);
-		this.next_error = ref(false);
-		this.result = computed(() => [...this.beforeList, ...this.reading, ...this.afterList]);
+		this.result = computed(() => [...this.before.list, ...this.reading, ...this.after.list]);
 		watch(
 			() => this.reading[0],
 			newValue => {
@@ -98,72 +268,13 @@ export class SettingAtricleCaches {
 		);
 	}
 
-	/** 渲染列表 */
-	get value() {
-		return this.result.value;
-	}
-
-	/** 获取正在阅读的对象 */
-	get nowRead() {
-		return this.reading[0];
-	}
-
-	get nowReadKey() {
-		return this.readingKey.value;
-	}
-
-	get prevLoading() {
-		return this.prev_loading.value;
-	}
-
-	get prevError() {
-		return this.prev_error.value;
-	}
-
-	get nextLoading() {
-		return this.next_loading.value;
-	}
-
-	get nextError() {
-		return this.next_error.value;
-	}
-
-	/** 是否需要显示提示文字 */
-	get prevTip() {
-		return this.prevLoading || this.prevError;
-	}
-
-	/** 是否需要显示提示文字 */
-	get nextTip() {
-		return this.nextLoading || this.nextError;
-	}
-
-	get prevInfo() {
-		if (this.prev_loading.value) {
-			return '加载中...';
-		}
-		if (this.prev_error.value) {
-			return '加载失败';
-		}
-		return;
-	}
-
-	get nextInfo() {
-		if (this.next_loading.value) {
-			return '加载中...';
-		}
-		if (this.next_error.value) {
-			return '加载失败';
-		}
-		return;
-	}
-
+	/** 初始化 */
 	init(id: string) {
 		this.stop();
-		const _sign = this.createOverSign();
+		const _sign = createOverSign(this._Instance_Key);
 		$_nextTick(() => {
-			this.beforeList.length = 0;
-			this.afterList.length = 0;
+			this.before.reset();
+			this.after.reset();
 			this.reading.length = 0;
 			request(id)
 				.then(data => {
@@ -175,8 +286,8 @@ export class SettingAtricleCaches {
 					}
 					this.reading.splice(0, 1, data);
 					const { prev_href, next_href } = data;
-					this.get_prev(prev_href, true);
-					this.get_next(next_href, true);
+					this.before.requestData(prev_href, true);
+					this.after.requestData(next_href, true);
 				})
 				.catch(this.onError ?? voidFunc);
 		});
@@ -184,15 +295,9 @@ export class SettingAtricleCaches {
 
 	/** 重置缓存长度 */
 	resetCacheLength(num: number) {
-		this.cacheLength = num;
-		if (this.beforeList.length < num) {
-			const { prev_href } = this.beforeList[0];
-			this.get_prev(prev_href, true);
-		}
-		if (this.afterList.length < num) {
-			const { next_href } = this.afterList[this.afterList.length - 1];
-			this.get_next(next_href, true);
-		}
+		this.cacheLength = num < 1 ? 1 : num;
+		this.before.resetCacheLength(this.cacheLength);
+		this.after.resetCacheLength(this.cacheLength);
 	}
 
 	/** 终止当前递归的请求 */
@@ -217,141 +322,85 @@ export class SettingAtricleCaches {
 		const _before = this.result.value.slice(0, index);
 		const _after = this.result.value.slice(index + 1);
 		const _reading = this.result.value.slice(index, index + 1);
-		this.beforeList.splice(
+		this.before.list.splice(
 			0,
-			this.beforeList.length,
+			this.before.list.length,
 			..._before.slice(_before.length - this.cacheLength < 0 ? 0 : _before.length - this.cacheLength),
 		);
-		this.afterList.splice(0, this.afterList.length, ..._after.slice(0, this.cacheLength));
+		this.after.list.splice(0, this.after.list.length, ..._after.slice(0, this.cacheLength));
 		this.reading.splice(0, this.reading.length, ..._reading);
 		$_nextTick(() => {
-			if (this.beforeList.length < this.cacheLength) {
-				const target = this.beforeList[0] || this.reading[0];
-				if (target) {
-					this.get_prev(target.prev_href, true);
-				}
-			}
-			if (this.afterList.length < this.cacheLength) {
-				const target = this.afterList[this.afterList.length - 1] || this.reading[0];
-				if (target) {
-					this.get_next(target.next_href, true);
-				}
-			}
+			const nodeData = this.reading[0];
+			this.before.checkFull(nodeData);
+			this.after.checkFull(nodeData);
 		});
 	}
 
 	/** 上一个 */
 	prev() {
-		const first = this.beforeList[0];
+		const first = this.before.getData('end');
 		if (!first) {
 			return;
 		}
-		const { id } = this.beforeList[this.beforeList.length - 1];
+		const { id } = this.before.getData('start');
 		this.jump(id);
 	}
 
 	/** 下一个 */
 	next() {
-		const last = this.afterList[this.afterList.length - 1];
+		const last = this.after.getData('end');
 		if (!last) {
 			return;
 		}
-		const { id } = this.afterList[0];
+		const { id } = this.after.getData('start');
 		this.jump(id);
 	}
 
-	private get_prev(id: string, recursive: boolean = false, _sign?: ReturnType<typeof this.createOverSign>) {
-		if (!id) {
-			return;
-		}
-		if (!_sign) {
-			_sign = this.createOverSign();
-		}
-		if (!_sign!.value) {
-			return;
-		}
-		if (recursive) {
-			const index = this.beforeList.findIndex(item => item.id === id);
-			if (index > 0) {
-				this.get_prev(this.beforeList[index - 1].id, true, _sign);
-				return;
-			}
-		}
-		if (this.beforeList.length <= 1) {
-			this.prev_loading.value = true;
-		}
-		this.prev_error.value = false;
-		request(id)
-			.then(data => {
-				if (!_sign!.value) {
-					// 如果请求已经取消，则不执行后续逻辑
-					return;
-				}
-				if (!data) {
-					return;
-				}
-				let number = this.beforeList.length;
-				if (number >= this.cacheLength) {
-					return;
-				}
-				number = this.beforeList.unshift(data);
-				if (recursive && number < this.cacheLength) {
-					this.get_prev(data.prev_href, true, _sign);
-				}
-			})
-			.catch(err => {
-				this.prev_error.value = true;
-				this.onError?.(err);
-			})
-			.finally(() => {
-				this.prev_loading.value = false;
-			});
+	/** 渲染列表 */
+	get value() {
+		return this.result.value;
 	}
 
-	private get_next(id: string, recursive: boolean = false, _sign?: ReturnType<typeof this.createOverSign>) {
-		if (!id) {
-			return;
-		}
-		if (!_sign) {
-			_sign = this.createOverSign();
-		}
-		if (!_sign!.value) {
-			return;
-		}
-		if (recursive) {
-			const index = this.afterList.findIndex(item => item.id === id);
-			if (index > -1 && index < this.cacheLength - 1) {
-				this.get_next(this.afterList[index + 1].id, true, _sign);
-				return;
-			}
-		}
-		if (this.afterList.length <= 1) {
-			this.next_loading.value = true;
-		}
-		this.next_error.value = false;
-		request(id)
-			.then(data => {
-				if (!_sign!.value) {
-					return;
-				}
-				if (!data) {
-					return;
-				}
-				let number = this.afterList.length;
-				if (number >= this.cacheLength) {
-					return;
-				}
-				number = this.afterList.push(data);
-				if (recursive && number < this.cacheLength) {
-					this.get_next(data.next_href, true, _sign);
-				}
-			})
-			.catch(err => {
-				this.next_error.value = true;
-				this.onError?.(err);
-			})
-			.finally(() => {
-				this.next_loading.value = false;
-			});
+	/** 获取正在阅读的对象 */
+	get nowRead() {
+		return this.reading[0];
+	}
+
+	get nowReadKey() {
+		return this.readingKey.value;
+	}
+
+	get prevLoading() {
+		return this.before.loading;
+	}
+
+	get prevError() {
+		return this.before.error;
+	}
+
+	get nextLoading() {
+		return this.after.loading;
+	}
+
+	get nextError() {
+		return this.after.error;
+	}
+
+	/** 是否需要显示提示文字 */
+	get prevTip() {
+		return this.before.tip;
+	}
+
+	/** 是否需要显示提示文字 */
+	get nextTip() {
+		return this.after.tip;
+	}
+
+	get prevInfo() {
+		return this.before.info;
+	}
+
+	get nextInfo() {
+		return this.after.info;
 	}
 }

@@ -1,6 +1,13 @@
+export const MutationsPositon = Symbol('MutationsPositon');
+
+class Base {
+	[MutationsPositon]() {}
+}
+
 /** reading模块state属性 */
-export const Reading = {
-	ChapterCacheLength: 'chapterCacheLength',
-	ReadingTheme: 'readingTheme',
-	ReadingFontSize: 'readingFontSize',
-};
+export class Reading extends Base {
+	static ChapterCacheLength = 'chapterCacheLength';
+	static ReadingTheme = 'readingTheme';
+	static ReadingFontSize = 'readingFontSize';
+	static ReadingDirection = 'readingDirection';
+}

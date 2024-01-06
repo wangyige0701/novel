@@ -156,6 +156,9 @@ export class SettingAtricleCaches {
 		if (!first) {
 			return;
 		}
+		const lastReading = this.reading.splice(0, 1, ...this.beforeList.splice(this.beforeList.length - 1, 1));
+		this.afterList.pop();
+		this.afterList.unshift(...lastReading);
 		const { prev_href } = first;
 		this.get_prev(prev_href);
 	}
@@ -166,6 +169,9 @@ export class SettingAtricleCaches {
 		if (!last) {
 			return;
 		}
+		const lastReading = this.reading.splice(0, 1, ...this.afterList.splice(0, 1));
+		this.beforeList.shift();
+		this.beforeList.push(...lastReading);
 		const { next_href } = last;
 		this.get_next(next_href);
 	}
@@ -188,10 +194,6 @@ export class SettingAtricleCaches {
 				}
 				if (!data) {
 					return;
-				}
-				if (!recursive) {
-					// 不遍历，则进行列表数据替换
-					this.reading.splice(0, 1, ...this.beforeList.splice(this.beforeList.length - 1, 1));
 				}
 				let number = this.beforeList.length;
 				if (number >= this.cacheLength) {
@@ -222,9 +224,6 @@ export class SettingAtricleCaches {
 				}
 				if (!data) {
 					return;
-				}
-				if (!recursive) {
-					this.reading.splice(0, 1, ...this.afterList.splice(0, 1));
 				}
 				let number = this.afterList.length;
 				if (number >= this.cacheLength) {

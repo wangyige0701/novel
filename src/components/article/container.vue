@@ -6,24 +6,31 @@
 	>
 		<template v-if="direction === 'horizontal'">
 			<!-- 横向切页 -->
-			<view class="full-size">
-				<ArticleContent></ArticleContent>
-			</view>
+			<scroll-view
+				class="full-size overflow-compatiable-horizontal"
+				scroll-y
+				:scroll-anchoring="false"
+				:scroll-top="scrollViewTop"
+			>
+				<view class="full-size" :id="'chapter-content-horizontal-' + renderList.nowReadKey">
+					<ArticleContent :data="renderList.nowRead"></ArticleContent>
+				</view>
+			</scroll-view>
 		</template>
 		<template v-else>
 			<!-- 竖向滚动 -->
 			<scroll-view
-				class="full-size overflow-compatiable"
+				class="full-size overflow-compatiable-vertical"
 				scroll-y
 				:scroll-anchoring="true"
 				:scroll-top="firstRender ? 0 : 10"
 			>
 				<template v-for="(item, index) in renderList.value" :key="'chapter-content-key-' + item.__key">
-					<view class="contetn-vertical" :id="'chapter-content-key-' + item.__key">
+					<view class="contetn-vertical" :id="'chapter-content-vertical-' + item.__key">
 						<ArticleContent :data="item">
 							<template #pageStart>
 								<view class="position-to-top"></view>
-								<view :id="'chapter-content-child-key-' + item.__key">
+								<view :id="'chapter-content-vertical-child-' + item.__key">
 									<!-- 定位元素 -->
 								</view>
 							</template>
@@ -41,8 +48,11 @@
 <script setup lang="ts">
 import type { ArticlebackgroundConfig, ArticleSizeConfig } from './data/readStyle';
 import type { ArticleReturnVal } from '@common/regular/@types/article';
+import type { ReadingDirectionVariables } from '@/store';
 import { SettingAtricleCaches } from './data/articlesCache';
 import { $_nextTick } from '@common/utils/nextTick';
+import { useStore } from '@store/vuex';
+import { immediate } from '@/config/watch';
 
 import ArticleContent from './content.vue';
 
@@ -51,18 +61,33 @@ interface Props {
 	chapterName: string;
 }
 
+const store = useStore();
+const { chapterCacheLength, readingTheme, readingFontSize, readingDirection } = store.state.reading;
+
 /** 渲染列表 */
-const renderList = new SettingAtricleCaches(1);
+const renderList = new SettingAtricleCaches(/* chapterCacheLength */ 1);
 /** 判断是否是首次加载，用于进行初始数据加载完成后的滚动条偏移 */
 const firstRender = ref(true);
+/** `scroll view`容器滚动高度 */
+const scrollViewTop = ref(0);
 /** 背景色的配置 */
-const backgroundConfig = ref<ArticlebackgroundConfig>('baixue');
+const backgroundConfig = ref<ArticlebackgroundConfig>(readingTheme);
 /** 字号的配置 */
-const fontSizeConfig = ref<ArticleSizeConfig>('base');
+const fontSizeConfig = ref<ArticleSizeConfig>(readingFontSize);
 /** 翻看方向 */
-const direction = ref<'vertical' | 'horizontal'>('vertical');
+const direction = ref<ReadingDirectionVariables>(/* readingDirection */ 'horizontal');
 
 const props = defineProps<Props>();
+
+renderList.onReadingChange = function (val: ArticleReturnVal & { __key: string }) {
+	// 页面初始加载时滚动一次，防止滚动条移位
+	$_nextTick(() => {
+		if (direction.value === 'vertical' && val && firstRender.value) {
+			firstRender.value = false;
+			renderList.onReadingChange = void 0;
+		}
+	});
+};
 
 onBeforeUnmount(() => {
 	renderList.stop();
@@ -73,20 +98,25 @@ watch(
 	newID => {
 		// renderList.init(newID);
 	},
-	{
-		immediate: true,
-	},
+	immediate,
 );
 
-renderList.onReadingChange = function (val: ArticleReturnVal & { __key: string }) {
-	// 页面初始加载时滚动一次，防止滚动条移位
-	$_nextTick(() => {
-		if (val && firstRender.value) {
-			firstRender.value = false;
+watch(
+	() => direction.value,
+	newVal => {
+		if (newVal === 'horizontal') {
+			renderList.onReadingChange = function (val: ArticleReturnVal & { __key: string }) {
+				scrollViewTop.value = 10;
+				$_nextTick(() => {
+					scrollViewTop.value = 0;
+				});
+			};
+		} else if (!firstRender.value) {
 			renderList.onReadingChange = void 0;
 		}
-	});
-};
+	},
+	immediate,
+);
 </script>
 
 <style scoped lang="scss">
@@ -99,14 +129,18 @@ renderList.onReadingChange = function (val: ArticleReturnVal & { __key: string }
 	@include R.fontSize();
 
 	// 兼容overflow-anchor
-	.overflow-compatiable {
+	.overflow-compatiable-vertical {
 		overflow-anchor: auto;
+	}
+
+	.overflow-compatiable-horizontal {
+		overflow-anchor: none;
 	}
 }
 
 #novel_content.article-container {
-	.contetn-vertical[id*=' chapter-content-key-'],
-	.contetn-vertical[id^='chapter-content-key-'] {
+	.contetn-vertical[id*=' chapter-content-vertical-'],
+	.contetn-vertical[id^='chapter-content-vertical-'] {
 		width: 100%;
 		height: auto;
 

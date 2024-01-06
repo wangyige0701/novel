@@ -6,6 +6,7 @@ import { article } from '@common/regular';
 import { voidFunc } from '@common/utils/simples';
 import { $_nextTick } from '@common/utils/nextTick';
 import { randomString } from '@common/utils/random';
+import { immediate } from '@/config/watch';
 
 type ArticleReturnValHasKey = ArticleReturnVal & { __key: string };
 
@@ -85,9 +86,7 @@ export class SettingAtricleCaches {
 					this.readingKey.value = __key;
 				}
 			},
-			{
-				immediate: true,
-			},
+			immediate,
 		);
 	}
 

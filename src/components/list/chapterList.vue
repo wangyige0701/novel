@@ -22,6 +22,7 @@ import type { ChapterList, ChapterListItem } from '@common/regular/@types/homepa
 import { pageRender } from '@common/reactive/pageRender';
 import { chapterList } from '@common/regular/index';
 import { $_nextTick } from '@common/utils/nextTick';
+import { immediate } from '@/config/watch';
 
 interface Props {
 	bookId: string;
@@ -120,9 +121,7 @@ const watchStop = watch(
 	newId => {
 		requestChapterList(newId);
 	},
-	{
-		immediate: true,
-	},
+	immediate,
 );
 
 const watchEffectStop = watchEffect(() => {

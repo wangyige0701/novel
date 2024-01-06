@@ -23,6 +23,7 @@
 import type { HomePageExcludeChapter } from '@common/regular/@types/homepage';
 import { bookInfo } from '@common/regular/index';
 import { pageRender } from '@common/reactive/pageRender';
+import { immediate } from '@/config/watch';
 
 interface Props {
 	bookId: string;
@@ -84,9 +85,7 @@ const watchStop = watch(
 	newId => {
 		requestBookInfo(newId);
 	},
-	{
-		immediate: true,
-	},
+	immediate,
 );
 
 const watchEffectStop = watchEffect(() => {

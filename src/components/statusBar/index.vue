@@ -20,6 +20,7 @@
 </template>
 
 <script setup lang="ts">
+import { immediate } from '@/config/watch';
 import { GlobalStore } from '@store/static';
 
 interface Props {
@@ -71,9 +72,7 @@ watch(
 	newValue => {
 		useFuncs.fullScreen(newValue);
 	},
-	{
-		immediate: true,
-	},
+	immediate,
 );
 </script>
 

@@ -10,13 +10,16 @@ export interface ReadingState {
 	readingFontSize: ArticleSizeConfig;
 }
 
-export interface State {
+export interface State {}
+
+/** 包含所有模块类型的类型接口 */
+export interface ModulesState extends State {
 	// 阅读器配置
 	reading: ReadingState;
 }
 
 declare module '@vue/runtime-core' {
 	interface ComponentCustomProperties {
-		$store: Store<State>;
+		$store: Store<ModulesState>;
 	}
 }

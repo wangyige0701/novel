@@ -1,5 +1,6 @@
 import type { ResetModule } from '../@types';
 import type { State, ReadingState } from '@/store';
+import type { ArticlebackgroundConfig, ArticleSizeConfig } from '@comp/article/data/readStyle';
 import { Reading } from '../variables/mutations';
 
 export const reading: ResetModule<ReadingState, State> = {
@@ -11,13 +12,13 @@ export const reading: ResetModule<ReadingState, State> = {
 		readingFontSize: 'base',
 	},
 	mutations: {
-		[Reading.ChapterCacheLength](state, payload) {
+		[Reading.ChapterCacheLength](state, payload: number) {
 			state.chapterCacheLength = payload;
 		},
-		[Reading.ReadingTheme](state, payload) {
+		[Reading.ReadingTheme](state, payload: ArticlebackgroundConfig) {
 			state.readingTheme = payload;
 		},
-		[Reading.ReadingFontSize](state, payload) {
+		[Reading.ReadingFontSize](state, payload: ArticleSizeConfig) {
 			state.readingFontSize = payload;
 		},
 	},

@@ -43,6 +43,10 @@ export class SettingAtricleCaches {
 	private afterList: ShallowReactive<ArticleReturnValHasKey[]>;
 	private reading: ShallowReactive<[] | [ArticleReturnValHasKey]>;
 	private readingKey: Ref<string>;
+	private prev_loading: Ref<boolean>;
+	private prev_error: Ref<boolean>;
+	private next_loading: Ref<boolean>;
+	private next_error: Ref<boolean>;
 	private result: ComputedRef<ArticleReturnValHasKey[]>;
 	private cacheLength: number;
 
@@ -76,6 +80,10 @@ export class SettingAtricleCaches {
 		this.afterList = shallowReactive<ArticleReturnValHasKey[]>([]);
 		this.reading = shallowReactive<[ArticleReturnValHasKey] | []>([]);
 		this.readingKey = ref('');
+		this.prev_loading = ref(false);
+		this.prev_error = ref(false);
+		this.next_loading = ref(false);
+		this.next_error = ref(false);
 		this.result = computed(() => [...this.beforeList, ...this.reading, ...this.afterList]);
 		watch(
 			() => this.reading[0],
@@ -102,6 +110,52 @@ export class SettingAtricleCaches {
 
 	get nowReadKey() {
 		return this.readingKey.value;
+	}
+
+	get prevLoading() {
+		return this.prev_loading.value;
+	}
+
+	get prevError() {
+		return this.prev_error.value;
+	}
+
+	get nextLoading() {
+		return this.next_loading.value;
+	}
+
+	get nextError() {
+		return this.next_error.value;
+	}
+
+	/** 是否需要显示提示文字 */
+	get prevTip() {
+		return this.prevLoading || this.prevError;
+	}
+
+	/** 是否需要显示提示文字 */
+	get nextTip() {
+		return this.nextLoading || this.nextError;
+	}
+
+	get prevInfo() {
+		if (this.prev_loading.value) {
+			return '加载中...';
+		}
+		if (this.prev_error.value) {
+			return '加载失败';
+		}
+		return;
+	}
+
+	get nextInfo() {
+		if (this.next_loading.value) {
+			return '加载中...';
+		}
+		if (this.next_error.value) {
+			return '加载失败';
+		}
+		return;
 	}
 
 	init(id: string) {
@@ -149,17 +203,51 @@ export class SettingAtricleCaches {
 		}
 	}
 
+	/** 跳转到指定id章节处 */
+	jump(id: string) {
+		const index = this.result.value.findIndex(item => item.id === id);
+		if (index === -1) {
+			this.init(id);
+			return;
+		}
+		const readingIndex = this.result.value.findIndex(item => item.__key === this.readingKey.value);
+		if (readingIndex === index) {
+			return;
+		}
+		const _before = this.result.value.slice(0, index);
+		const _after = this.result.value.slice(index + 1);
+		const _reading = this.result.value.slice(index, index + 1);
+		this.beforeList.splice(
+			0,
+			this.beforeList.length,
+			..._before.slice(_before.length - this.cacheLength < 0 ? 0 : _before.length - this.cacheLength),
+		);
+		this.afterList.splice(0, this.afterList.length, ..._after.slice(0, this.cacheLength));
+		this.reading.splice(0, this.reading.length, ..._reading);
+		$_nextTick(() => {
+			if (this.beforeList.length < this.cacheLength) {
+				const target = this.beforeList[0] || this.reading[0];
+				if (target) {
+					this.get_prev(target.prev_href, true);
+				}
+			}
+			if (this.afterList.length < this.cacheLength) {
+				const target = this.afterList[this.afterList.length - 1] || this.reading[0];
+				if (target) {
+					this.get_next(target.next_href, true);
+				}
+			}
+		});
+	}
+
 	/** 上一个 */
-	previous() {
+	prev() {
 		const first = this.beforeList[0];
 		if (!first) {
 			return;
 		}
-		const lastReading = this.reading.splice(0, 1, ...this.beforeList.splice(this.beforeList.length - 1, 1));
-		this.afterList.pop();
-		this.afterList.unshift(...lastReading);
-		const { prev_href } = first;
-		this.get_prev(prev_href);
+		const { id } = this.beforeList[this.beforeList.length - 1];
+		this.jump(id);
 	}
 
 	/** 下一个 */
@@ -168,11 +256,8 @@ export class SettingAtricleCaches {
 		if (!last) {
 			return;
 		}
-		const lastReading = this.reading.splice(0, 1, ...this.afterList.splice(0, 1));
-		this.beforeList.shift();
-		this.beforeList.push(...lastReading);
-		const { next_href } = last;
-		this.get_next(next_href);
+		const { id } = this.afterList[0];
+		this.jump(id);
 	}
 
 	private get_prev(id: string, recursive: boolean = false, _sign?: ReturnType<typeof this.createOverSign>) {
@@ -185,6 +270,17 @@ export class SettingAtricleCaches {
 		if (!_sign!.value) {
 			return;
 		}
+		if (recursive) {
+			const index = this.beforeList.findIndex(item => item.id === id);
+			if (index > 0) {
+				this.get_prev(this.beforeList[index - 1].id, true, _sign);
+				return;
+			}
+		}
+		if (this.beforeList.length <= 1) {
+			this.prev_loading.value = true;
+		}
+		this.prev_error.value = false;
 		request(id)
 			.then(data => {
 				if (!_sign!.value) {
@@ -203,7 +299,13 @@ export class SettingAtricleCaches {
 					this.get_prev(data.prev_href, true, _sign);
 				}
 			})
-			.catch(this.onError ?? voidFunc);
+			.catch(err => {
+				this.prev_error.value = true;
+				this.onError?.(err);
+			})
+			.finally(() => {
+				this.prev_loading.value = false;
+			});
 	}
 
 	private get_next(id: string, recursive: boolean = false, _sign?: ReturnType<typeof this.createOverSign>) {
@@ -216,6 +318,17 @@ export class SettingAtricleCaches {
 		if (!_sign!.value) {
 			return;
 		}
+		if (recursive) {
+			const index = this.afterList.findIndex(item => item.id === id);
+			if (index > -1 && index < this.cacheLength - 1) {
+				this.get_next(this.afterList[index + 1].id, true, _sign);
+				return;
+			}
+		}
+		if (this.afterList.length <= 1) {
+			this.next_loading.value = true;
+		}
+		this.next_error.value = false;
 		request(id)
 			.then(data => {
 				if (!_sign!.value) {
@@ -233,6 +346,12 @@ export class SettingAtricleCaches {
 					this.get_next(data.next_href, true, _sign);
 				}
 			})
-			.catch(this.onError ?? voidFunc);
+			.catch(err => {
+				this.next_error.value = true;
+				this.onError?.(err);
+			})
+			.finally(() => {
+				this.next_loading.value = false;
+			});
 	}
 }

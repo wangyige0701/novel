@@ -10,6 +10,11 @@ import { SettingAtricleCaches } from './data/articlesCache';
 import { $_nextTick } from '@common/utils/nextTick';
 import { useStore } from '@store/vuex';
 import { immediate } from '@/config/watch';
+import { articleContent1, articleContent2, articleContent3 } from '@test/data/article.test';
+const TestData = shallowReactive<Array<ArticleReturnVal & { __key: string }>>([]);
+TestData.push(articleContent1);
+TestData.push(articleContent2);
+TestData.push(articleContent3);
 
 import ArticleContent from './content.vue';
 
@@ -105,17 +110,17 @@ const directionValWatch = watch(
 								<view class="buttons-of-horizontal">
 									<button
 										class="operate-horizontal-prev"
-										:class="prev ? '' : 'disabled'"
-										@click="prev ? renderList.previous() : void 0"
+										:class="prev && !renderList.prevTip ? '' : 'disabled'"
+										@click="prev && !renderList.prevTip ? renderList.prev() : void 0"
 									>
-										{{ prev ? '上一章' : '到顶了' }}
+										{{ renderList.prevTip ? renderList.prevInfo : prev ? '上一章' : '到顶了' }}
 									</button>
 									<button
 										class="operate-horizontal-next"
-										:class="next ? '' : 'disabled'"
-										@click="next ? renderList.next() : void 0"
+										:class="next && !renderList.nextTip ? '' : 'disabled'"
+										@click="next && !renderList.nextTip ? renderList.next() : void 0"
 									>
-										{{ next ? '下一章' : '到底了' }}
+										{{ renderList.nextTip ? renderList.nextInfo : next ? '下一章' : '到底了' }}
 									</button>
 								</view>
 							</view>
@@ -133,7 +138,7 @@ const directionValWatch = watch(
 				:scroll-top="firstRender ? 0 : 10"
 				:show-scrollbar="false"
 			>
-				<template v-for="(item, index) in renderList.value" :key="'chapter-content-key-' + item.__key">
+				<template v-for="(item, index) in TestData" :key="'chapter-content-key-' + item.__key">
 					<view class="article-content-outer content-vertical" :id="'chapter-content-vertical-' + item.__key">
 						<ArticleContent :data="item">
 							<template #pageStart>

@@ -128,6 +128,7 @@ async function parseHTMLString(html: string, nowId: string): Promise<ArticleRetu
 	const prev_end = handleEnd(prev_href);
 	const next_end = handleEnd(next_href);
 	return {
+		id: nowId,
 		title: removePageInTitle(title),
 		next_href: next_end ? '' : next_href,
 		prev_href: prev_end ? '' : prev_href,
@@ -146,7 +147,7 @@ export function getArticleData(articlePath: string): Promise<ArticleReturnVal> {
 		const [_, articleId] = match || [];
 		suffixWithPathParam(articlePath)
 			.then(data => {
-				return parseHTMLString(String(data), articleId);
+				return parseHTMLString(String(data), articleId ?? '');
 			})
 			.then(res => {
 				resolve(res);

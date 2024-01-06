@@ -1,50 +1,7 @@
-<template>
-	<view
-		id="novel_content"
-		class="no-scrollbar full-size article-container"
-		:class="[backgroundConfig, fontSizeConfig, direction]"
-	>
-		<template v-if="direction === 'horizontal'">
-			<!-- 横向切页 -->
-			<scroll-view
-				class="full-size overflow-compatiable-horizontal"
-				scroll-y
-				:scroll-anchoring="false"
-				:scroll-top="scrollViewTop"
-			>
-				<view class="full-size" :id="'chapter-content-horizontal-' + renderList.nowReadKey">
-					<ArticleContent :data="renderList.nowRead"></ArticleContent>
-				</view>
-			</scroll-view>
-		</template>
-		<template v-else>
-			<!-- 竖向滚动 -->
-			<scroll-view
-				class="full-size overflow-compatiable-vertical"
-				scroll-y
-				:scroll-anchoring="true"
-				:scroll-top="firstRender ? 0 : 10"
-			>
-				<template v-for="(item, index) in renderList.value" :key="'chapter-content-key-' + item.__key">
-					<view class="contetn-vertical" :id="'chapter-content-vertical-' + item.__key">
-						<ArticleContent :data="item">
-							<template #pageStart>
-								<view class="position-to-top"></view>
-								<view :id="'chapter-content-vertical-child-' + item.__key">
-									<!-- 定位元素 -->
-								</view>
-							</template>
-							<template #pageEnd="{ prev, next }">
-								<view class="position-to-bottom" :class="'operate-' + direction"></view>
-							</template>
-						</ArticleContent>
-					</view>
-				</template>
-			</scroll-view>
-		</template>
-	</view>
-</template>
-
+<script lang="ts">
+/** 文章内容容器 */
+export default { name: 'ArticleContainer' };
+</script>
 <script setup lang="ts">
 import type { ArticlebackgroundConfig, ArticleSizeConfig } from './data/readStyle';
 import type { ArticleReturnVal } from '@common/regular/@types/article';
@@ -75,7 +32,7 @@ const backgroundConfig = ref<ArticlebackgroundConfig>(readingTheme);
 /** 字号的配置 */
 const fontSizeConfig = ref<ArticleSizeConfig>(readingFontSize);
 /** 翻看方向 */
-const direction = ref<ReadingDirectionVariables>(/* readingDirection */ 'horizontal');
+const direction = ref<ReadingDirectionVariables>(readingDirection);
 
 const props = defineProps<Props>();
 
@@ -91,9 +48,11 @@ renderList.onReadingChange = function (val: ArticleReturnVal & { __key: string }
 
 onBeforeUnmount(() => {
 	renderList.stop();
+	chapterIdWatch?.();
+	directionValWatch?.();
 });
 
-watch(
+const chapterIdWatch = watch(
 	() => props.chapterId,
 	newID => {
 		// renderList.init(newID);
@@ -101,11 +60,12 @@ watch(
 	immediate,
 );
 
-watch(
+const directionValWatch = watch(
 	() => direction.value,
 	newVal => {
+		// 横向滚动需要在当前章节加载完成后再进行滚动条偏移
 		if (newVal === 'horizontal') {
-			renderList.onReadingChange = function (val: ArticleReturnVal & { __key: string }) {
+			renderList.onReadingChange = function () {
 				scrollViewTop.value = 10;
 				$_nextTick(() => {
 					scrollViewTop.value = 0;
@@ -119,14 +79,105 @@ watch(
 );
 </script>
 
+<template>
+	<view
+		id="novel_content"
+		class="no-scrollbar full-size article-container"
+		:class="[backgroundConfig, fontSizeConfig, direction]"
+	>
+		<template v-if="direction === 'horizontal'">
+			<!-- 横向切页 -->
+			<scroll-view
+				class="full-size article-container-scroll-view overflow-compatiable-horizontal"
+				scroll-y
+				:scroll-anchoring="false"
+				:scroll-top="scrollViewTop"
+				:show-scrollbar="false"
+			>
+				<view
+					v-if="renderList.nowRead"
+					class="article-content-outer content-horizontal"
+					:id="'chapter-content-horizontal-' + renderList.nowReadKey"
+				>
+					<ArticleContent :data="renderList.nowRead">
+						<template #pageEnd="{ prev, next }">
+							<view class="position-to-bottom operate-horizontal">
+								<view class="buttons-of-horizontal">
+									<button
+										class="operate-horizontal-prev"
+										:class="prev ? '' : 'disabled'"
+										@click="prev ? renderList.previous() : void 0"
+									>
+										{{ prev ? '上一章' : '到顶了' }}
+									</button>
+									<button
+										class="operate-horizontal-next"
+										:class="next ? '' : 'disabled'"
+										@click="next ? renderList.next() : void 0"
+									>
+										{{ next ? '下一章' : '到底了' }}
+									</button>
+								</view>
+							</view>
+						</template>
+					</ArticleContent>
+				</view>
+			</scroll-view>
+		</template>
+		<template v-else>
+			<!-- 竖向滚动 -->
+			<scroll-view
+				class="full-size article-container-scroll-view overflow-compatiable-vertical"
+				scroll-y
+				:scroll-anchoring="true"
+				:scroll-top="firstRender ? 0 : 10"
+				:show-scrollbar="false"
+			>
+				<template v-for="(item, index) in renderList.value" :key="'chapter-content-key-' + item.__key">
+					<view class="article-content-outer content-vertical" :id="'chapter-content-vertical-' + item.__key">
+						<ArticleContent :data="item">
+							<template #pageStart>
+								<view class="position-to-top"></view>
+								<view :id="'chapter-content-vertical-child-' + item.__key"><!-- 定位元素 --></view>
+							</template>
+							<template #pageEnd="{ prev, next }">
+								<view class="position-to-bottom operate-vertical"></view>
+							</template>
+						</ArticleContent>
+					</view>
+				</template>
+			</scroll-view>
+		</template>
+	</view>
+</template>
+
 <style scoped lang="scss">
 @use '../../style/scss/reading.scss' as R;
+@import '../../style/scss/config/main.scss';
 
 #novel_content.article-container {
 	// 注入背景色
 	@include R.backgroundColor();
 	// 注入字体大小
 	@include R.fontSize();
+
+	.article-container-scroll-view {
+		// 插槽
+		.position-to-top {
+			width: 100%;
+			height: 10px;
+		}
+
+		.position-to-bottom {
+			width: 100%;
+			height: 200rpx;
+		}
+	}
+
+	.article-content-outer {
+		width: 100%;
+		height: auto;
+	}
 
 	// 兼容overflow-anchor
 	.overflow-compatiable-vertical {
@@ -139,24 +190,39 @@ watch(
 }
 
 #novel_content.article-container {
-	.contetn-vertical[id*=' chapter-content-vertical-'],
-	.contetn-vertical[id^='chapter-content-vertical-'] {
-		width: 100%;
-		height: auto;
+	.content-horizontal .operate-horizontal {
+		display: flex;
+		flex-direction: row;
+		justify-content: center;
+		align-items: center;
+		margin-bottom: $wyg-spacing-col-lg;
 
-		&.hidden {
-			display: none;
-		}
+		.buttons-of-horizontal {
+			width: 70%;
+			height: 75rpx;
+			display: grid;
+			grid-template-columns: repeat(2, min(40%, 400rpx));
+			justify-content: space-around;
 
-		// 插槽
-		.position-to-top {
-			width: 100%;
-			height: 10px;
-		}
+			button {
+				width: 100%;
+				height: 100%;
+				line-height: 75rpx;
+				padding: 0;
+				background-color: $wyg-color-primary;
+				color: $wyg-text-color-inverse;
+				font-size: var(--paragraph);
 
-		.position-to-bottom {
-			width: 100%;
-			height: 200rpx;
+				&:not(.disabled):active,
+				&:not(.disabled).hover {
+					background-color: $wyg-color-primary-hover;
+				}
+
+				&.operate-horizontal-prev.disabled,
+				&.operate-horizontal-next.disabled {
+					background-color: $wyg-color-primary-disabled;
+				}
+			}
 		}
 	}
 }

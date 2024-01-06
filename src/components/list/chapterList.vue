@@ -1,22 +1,7 @@
-<template>
-	<view
-		v-if="!render.show"
-		class="chapter-list-render-tip"
-		:class="render.loading ? 'loading' : render.empty ? 'placeholder' : render.error ? 'error' : ''"
-		>{{ placeholder }}</view
-	>
-	<view v-else class="full-size chapter-list-container">
-		<view
-			class="text-ellipsis list-item"
-			v-for="(item, index) in renderList"
-			:key="'chapter-list-' + index"
-			@click="item.href ? clickChapter(item) : null"
-		>
-			<text class="text" :class="item.href ? '' : 'no-href'">{{ item.name }}</text>
-		</view>
-	</view>
-</template>
-
+<script lang="ts">
+/** 章节列表模块 */
+export default { name: 'ChapterList' };
+</script>
 <script setup lang="ts">
 import type { ChapterList, ChapterListItem } from '@common/regular/@types/homepage';
 import { pageRender } from '@common/reactive/pageRender';
@@ -136,6 +121,25 @@ const watchEffectStop = watchEffect(() => {
 				: '';
 });
 </script>
+
+<template>
+	<view
+		v-if="!render.show"
+		class="chapter-list-render-tip"
+		:class="render.loading ? 'loading' : render.empty ? 'placeholder' : render.error ? 'error' : ''"
+		>{{ placeholder }}</view
+	>
+	<view v-else class="full-size chapter-list-container">
+		<view
+			class="text-ellipsis list-item"
+			v-for="(item, index) in renderList"
+			:key="'chapter-list-' + index"
+			@click="item.href ? clickChapter(item) : null"
+		>
+			<text class="text" :class="item.href ? '' : 'no-href'">{{ item.name }}</text>
+		</view>
+	</view>
+</template>
 
 <style scoped lang="scss">
 @import '../../style/scss/config/main.scss';

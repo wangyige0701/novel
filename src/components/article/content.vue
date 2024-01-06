@@ -1,14 +1,7 @@
-<template>
-	<view class="article-content-container">
-		<slot name="pageStart" :prev="hrefs[0]" :next="hrefs[1]"></slot>
-		<view class="title">{{ title }}</view>
-		<view class="content">
-			<p v-for="(item, index) in contentList" :key="'article-content' + index">{{ item }}</p>
-		</view>
-		<slot name="pageEnd" :prev="hrefs[0]" :next="hrefs[1]"></slot>
-	</view>
-</template>
-
+<script lang="ts">
+/** 章节文本内容显示模块 */
+export default { name: 'ChapterContent' };
+</script>
 <script setup lang="ts">
 import type { ArticleReturnVal } from '@common/regular/@types/article';
 
@@ -50,6 +43,17 @@ defineExpose({
 	hrefs,
 });
 </script>
+
+<template>
+	<view class="article-content-container">
+		<slot name="pageStart" :prev="hrefs[0]" :next="hrefs[1]"></slot>
+		<view class="title">{{ title }}</view>
+		<view class="content">
+			<p v-for="(item, index) in contentList" :key="'article-content' + index">{{ item }}</p>
+		</view>
+		<slot name="pageEnd" :prev="hrefs[0]" :next="hrefs[1]"></slot>
+	</view>
+</template>
 
 <style scoped lang="scss">
 @import '../../style/scss/config/main.scss';

@@ -1,7 +1,11 @@
+<script lang="ts">
+/** 搜索模块 */
+export default { name: 'Search' };
+</script>
+<script setup lang="ts"></script>
+
 <template>
 	<view> </view>
 </template>
 
-<script lang="ts"></script>
-
-<style lang="scss"></style>
+<style scoped lang="scss"></style>

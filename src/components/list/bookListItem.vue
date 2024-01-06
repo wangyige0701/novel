@@ -1,26 +1,3 @@
-<template>
-	<view class="book-list-item-container">
-		<view class="show">
-			<view v-if="item.img" class="book-image">
-				<image :src="item.img" mode="scaleToFill" />
-			</view>
-			<view v-else class="image-placeholder"></view>
-			<view class="book-info">
-				<view class="text-ellipsis book-name">
-					<text>{{ item.name }}</text>
-				</view>
-				<view class="text-ellipsis book-type">
-					<text>{{ item.type }}</text>
-				</view>
-				<view class="text-ellipsis book-author">
-					<text>{{ item.author }}</text>
-				</view>
-			</view>
-		</view>
-		<view class="delete"></view>
-	</view>
-</template>
-
 <script lang="ts">
 import type { PropType } from 'vue';
 
@@ -86,6 +63,29 @@ export default defineComponent({
 	},
 });
 </script>
+
+<template>
+	<view class="book-list-item-container">
+		<view class="show">
+			<view v-if="item.img" class="book-image">
+				<image :src="item.img" mode="scaleToFill" />
+			</view>
+			<view v-else class="image-placeholder"></view>
+			<view class="book-info">
+				<view class="text-ellipsis book-name">
+					<text>{{ item.name }}</text>
+				</view>
+				<view class="text-ellipsis book-type">
+					<text>{{ item.type }}</text>
+				</view>
+				<view class="text-ellipsis book-author">
+					<text>{{ item.author }}</text>
+				</view>
+			</view>
+		</view>
+		<view class="delete"></view>
+	</view>
+</template>
 
 <style scoped lang="scss">
 @import '../../style/scss/config/main.scss';

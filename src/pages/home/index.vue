@@ -1,22 +1,3 @@
-<template>
-	<StatusBar color="transparent" :full="true">
-		<template #statusBar="{ height }">
-			<view class="content">
-				<view class="no-scrollbar container">
-					<view class="info">
-						<BookInfo :book-id="bookId" :book-name="bookName"></BookInfo>
-					</view>
-					<view class="list">
-						<view class="no-scrollbar list-container">
-							<!-- <ChapterList :book-id="bookId" :book-name="bookName" @select="selectChapter"></ChapterList> -->
-						</view>
-					</view>
-				</view>
-			</view>
-		</template>
-	</StatusBar>
-</template>
-
 <script setup lang="ts">
 import type { ChapterListItem } from '@common/regular/@types/homepage';
 import StatusBar from '@comp/statusBar/index.vue';
@@ -39,6 +20,25 @@ function selectChapter({ name, href }: ChapterListItem) {
 	console.log(name, href);
 }
 </script>
+
+<template>
+	<StatusBar color="transparent" :full="true">
+		<template #statusBar="{ height }">
+			<view class="content">
+				<view class="no-scrollbar container">
+					<view class="info">
+						<BookInfo :book-id="bookId" :book-name="bookName"></BookInfo>
+					</view>
+					<view class="list">
+						<view class="no-scrollbar list-container">
+							<!-- <ChapterList :book-id="bookId" :book-name="bookName" @select="selectChapter"></ChapterList> -->
+						</view>
+					</view>
+				</view>
+			</view>
+		</template>
+	</StatusBar>
+</template>
 
 <style scoped lang="scss">
 @import '../../style/scss/config/main.scss';

@@ -1,24 +1,7 @@
-<template>
-	<view
-		id="statusBar"
-		class="status-bar-container"
-		:style="{ '--status-bar-height': (props.fullScreen ? 0 : statusBarHeight) + 'px' }"
-		:class="[isNeedFull ? 'full-screen flex-child' : '', props.autoHeight ? 'auto-height' : '']"
-		@click="isNeedFull ? useFuncs.onClick() : null"
-	>
-		<view
-			v-if="!props.fullScreen"
-			class="status-bar-heigth"
-			:class="props.autoHeight ? 'auto-height' : ''"
-			:style="{ 'background-color': props.color ?? '#fff' }"
-		></view>
-		<view v-if="isNeedFull" class="no-scrollbar slot-container" :class="props.autoHeight ? 'auto-height' : ''">
-			<slot name="statusBar" :height="statusBarHeight"></slot>
-		</view>
-		<slot v-else name="statusBar" :height="statusBarHeight"></slot>
-	</view>
-</template>
-
+<script lang="ts">
+/** 导航栏配置容器组件 */
+export default { name: 'StatusBar' };
+</script>
 <script setup lang="ts">
 import { immediate } from '@/config/watch';
 import { GlobalStore } from '@store/static';
@@ -75,6 +58,27 @@ watch(
 	immediate,
 );
 </script>
+
+<template>
+	<view
+		id="statusBar"
+		class="status-bar-container"
+		:style="{ '--status-bar-height': (props.fullScreen ? 0 : statusBarHeight) + 'px' }"
+		:class="[isNeedFull ? 'full-screen flex-child' : '', props.autoHeight ? 'auto-height' : '']"
+		@click="isNeedFull ? useFuncs.onClick() : null"
+	>
+		<view
+			v-if="!props.fullScreen"
+			class="status-bar-heigth"
+			:class="props.autoHeight ? 'auto-height' : ''"
+			:style="{ 'background-color': props.color ?? '#fff' }"
+		></view>
+		<view v-if="isNeedFull" class="no-scrollbar slot-container" :class="props.autoHeight ? 'auto-height' : ''">
+			<slot name="statusBar" :height="statusBarHeight"></slot>
+		</view>
+		<slot v-else name="statusBar" :height="statusBarHeight"></slot>
+	</view>
+</template>
 
 <style scoped lang="scss">
 #statusBar .status-bar-heigth {

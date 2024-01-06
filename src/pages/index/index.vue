@@ -1,16 +1,3 @@
-<template>
-	<StatusBar color="red" :full="true" @click="globalClick">
-		<template #statusBar>
-			<view class="content">
-				<view class="search-container"></view>
-				<view class="book-list">
-					<BookList v-if="showType === 'bookList'" :book-list="testData" @select="bookHomepage"></BookList>
-				</view>
-			</view>
-		</template>
-	</StatusBar>
-</template>
-
 <script setup lang="ts">
 import { data as testData } from '@test/data/bookList.test';
 import { path } from '@common/path';
@@ -43,6 +30,19 @@ path.navigateTo({
 	},
 });
 </script>
+
+<template>
+	<StatusBar color="red" :full="true" @click="globalClick">
+		<template #statusBar>
+			<view class="content">
+				<view class="search-container"></view>
+				<view class="book-list">
+					<BookList v-if="showType === 'bookList'" :book-list="testData" @select="bookHomepage"></BookList>
+				</view>
+			</view>
+		</template>
+	</StatusBar>
+</template>
 
 <style scoped lang="scss">
 @import '../../style/scss/config/main.scss';

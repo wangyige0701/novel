@@ -1,12 +1,7 @@
-<template>
-	<view v-if="!props.bookList || props.bookList.length === 0" :class="props.placeholder" class="full-size"></view>
-	<view v-else class="book-list-container">
-		<view class="book" v-for="(item, index) in props.bookList" :key="'book-list-' + index">
-			<BookListItem :item="item" @click="interactive.onClick(item)"></BookListItem>
-		</view>
-	</view>
-</template>
-
+<script lang="ts">
+/** 主页图书列表模块 */
+export default { name: 'BookList' };
+</script>
 <script setup lang="ts">
 import BookListItem from './bookListItem.vue';
 
@@ -54,6 +49,15 @@ defineExpose({
 	globalClick,
 });
 </script>
+
+<template>
+	<view v-if="!props.bookList || props.bookList.length === 0" :class="props.placeholder" class="full-size"></view>
+	<view v-else class="book-list-container">
+		<view class="book" v-for="(item, index) in props.bookList" :key="'book-list-' + index">
+			<BookListItem :item="item" @click="interactive.onClick(item)"></BookListItem>
+		</view>
+	</view>
+</template>
 
 <style scoped lang="scss">
 @import '../../style/scss/config/main.scss';

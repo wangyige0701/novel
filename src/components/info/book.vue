@@ -1,24 +1,7 @@
-<template>
-	<view
-		v-if="!render.show"
-		class="book-info-render-tip"
-		:class="render.loading ? 'loading' : render.empty ? 'placeholder' : render.error ? 'error' : ''"
-	>
-		{{ placeholder }}
-	</view>
-	<view v-else class="full-size book-info-container">
-		<view class="image">
-			<image src="" mode="scaleToFill" />
-		</view>
-		<view class="info">
-			<view class="text-ellipsis title">{{ renderData?.novelName ?? '' }}</view>
-			<view class="text-ellipsis author">作者：{{ renderData?.author?.name ?? '' }}</view>
-			<view class="text-ellipsis type">类型：{{ renderData?.novelType ?? '' }}</view>
-			<view class="no-scrollbar introduction">{{ renderData?.introduction ?? '' }}</view>
-		</view>
-	</view>
-</template>
-
+<script lang="ts">
+/** 图书信息模块 */
+export default { name: 'BookInfo' };
+</script>
 <script setup lang="ts">
 import type { HomePageExcludeChapter } from '@common/regular/@types/homepage';
 import { bookInfo } from '@common/regular/index';
@@ -101,6 +84,27 @@ const watchEffectStop = watchEffect(() => {
 				: '';
 });
 </script>
+
+<template>
+	<view
+		v-if="!render.show"
+		class="book-info-render-tip"
+		:class="render.loading ? 'loading' : render.empty ? 'placeholder' : render.error ? 'error' : ''"
+	>
+		{{ placeholder }}
+	</view>
+	<view v-else class="full-size book-info-container">
+		<view class="image">
+			<image src="" mode="scaleToFill" />
+		</view>
+		<view class="info">
+			<view class="text-ellipsis title">{{ renderData?.novelName ?? '' }}</view>
+			<view class="text-ellipsis author">作者：{{ renderData?.author?.name ?? '' }}</view>
+			<view class="text-ellipsis type">类型：{{ renderData?.novelType ?? '' }}</view>
+			<view class="no-scrollbar introduction">{{ renderData?.introduction ?? '' }}</view>
+		</view>
+	</view>
+</template>
 
 <style scoped lang="scss">
 @import '../../style/scss/config/main.scss';

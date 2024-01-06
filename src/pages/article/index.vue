@@ -1,11 +1,3 @@
-<template>
-	<StatusBar :full-screen="true">
-		<template #statusBar>
-			<ArticleContainer :chapter-id="chapterId" :chapter-name="chapterName"></ArticleContainer>
-		</template>
-	</StatusBar>
-</template>
-
 <script setup lang="ts">
 import StatusBar from '@comp/statusBar/index.vue';
 import ArticleContainer from '@comp/article/container.vue';
@@ -22,5 +14,13 @@ onLoad(options => {
 	chapterName.value = name;
 });
 </script>
+
+<template>
+	<StatusBar :full-screen="true">
+		<template #statusBar>
+			<ArticleContainer :chapter-id="chapterId" :chapter-name="chapterName"></ArticleContainer>
+		</template>
+	</StatusBar>
+</template>
 
 <style scoped lang="scss"></style>

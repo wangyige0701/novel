@@ -1,0 +1,62 @@
+@use 'sass:math';
+@use 'sass:map';
+@use './color.scss' as *;
+@use './setting.scss' as *;
+@use './size.scss' as *;
+
+// 文章标题
+$reading-title-size: math.div(32rpx, $font-base);
+
+// 文章内容
+$reading-paragraph-size: math.div(26rpx, $font-base);
+
+/* 阅读区域样式 */
+@mixin readingStyle() {
+	$title-size: $font-base * $reading-title-size;
+	$paragraph-size: $font-base * $reading-paragraph-size;
+	.bg {
+		background-color: $bg-color;
+	}
+	.title {
+		color: $text-color;
+		font-size: $title-size;
+	}
+	.paragraph {
+		color: $text-normal-color;
+		font-size: $paragraph-size;
+	}
+	// 设置不同主题的颜色
+	@each $key, $value in $switch-color {
+		$bg: map.get($value, bgColor);
+		$title: map.get($value, titleColor);
+		$paragraph: map.get($value, paragraphColor);
+		@if null($title) {
+			$title: $text-color;
+		}
+		@if null($paragraph) {
+			$paragraph: $text-normal-color;
+		}
+		&.#{$key} {
+			.bg {
+				background-color: $bg;
+			}
+			.title {
+				color: $title;
+			}
+			.paragraph {
+				color: $paragraph;
+			}
+		}
+	}
+	// 设置不同字体大小
+	@each $key, $value in $switch-font-size {
+		&.#{$key} {
+			.title {
+				font-size: $title-size * $value;
+			}
+			.paragraph {
+				font-size: $paragraph-size * $value;
+			}
+		}
+	}
+}

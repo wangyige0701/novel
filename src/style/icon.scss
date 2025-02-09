@@ -1,0 +1,36 @@
+@use './index.scss' as Scss;
+
+@font-face {
+	font-family: 'common-icon'; /* Project id 4820151 */
+	src:
+		url('@/static/icon/iconfont.woff2?t=1738591078104') format('woff2'),
+		url('@/static/icon/iconfont.woff?t=1738591078104') format('woff'),
+		url('@/static/icon/iconfont.ttf?t=1738591078104') format('truetype');
+}
+
+[class*=' icon-'],
+[class^='icon-'],
+.icon {
+	font-family: 'common-icon' !important;
+	font-size: Scss.$icon-size;
+	font-style: normal;
+	-webkit-font-smoothing: antialiased;
+	-moz-osx-font-smoothing: grayscale;
+	vertical-align: bottom;
+	display: inline-block;
+}
+
+/* &#xe6e2; */
+.icon-search::before {
+	content: '\e6e2';
+}
+
+/* &#xe60c; */
+.icon-operate::before {
+	content: '\e60c';
+}
+
+/* &#xe62a; */
+.icon-back::before {
+	content: '\e62a';
+}

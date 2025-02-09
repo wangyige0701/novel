@@ -1,0 +1,21 @@
+{
+	"search.exclude": {
+		"dist": true
+	},
+	"[vue][javascript][json][markdown][css][typescript][scss][html]": {
+		"editor.defaultFormatter": "esbenp.prettier-vscode",
+		"editor.formatOnSave": true
+	},
+	"[vue]": {
+		"editor.defaultFormatter": "esbenp.prettier-vscode"
+	},
+	"npm.packageManager": "pnpm",
+	"files.insertFinalNewline": true,
+	"files.trimTrailingWhitespace": true,
+	"files.associations": {
+		"manifest.json": "jsonc",
+		"pages.json": "jsonc",
+		"*.vue": "vue",
+		"*.nvue": "vue"
+	}
+}

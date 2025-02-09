@@ -1,0 +1,79 @@
+$switch-color: (
+	// 白雪
+	baixue: (
+			bgColor: #fff,
+		),
+	// 灰绿
+	huilv: (
+			bgColor: #d8e7eb,
+		),
+	// 浅蓝
+	qianlan: (
+			bgColor: #e9faff,
+		),
+	// 明黄
+	minghuang: (
+			bgColor: #ffffed,
+		),
+	// 淡绿
+	danlv: (
+			bgColor: #eefaee,
+		),
+	// 草绿
+	caolv: (
+			bgColor: #cce8cf,
+		),
+	// 红粉
+	hongfen: (
+			bgColor: #fcefff,
+		),
+	// 仿墨水屏
+	fangmoshui: (
+			bgColor: #c0d3d7,
+		),
+	// 米黄
+	mihuang: (
+			bgColor: #f5f5dc,
+		),
+	// 茶色
+	cha: (
+			bgColor: #d2b48c,
+		),
+	// 银色
+	yin: (
+			bgColor: #c0c0c0,
+		),
+	// 黑绿
+	heilv: (
+			bgColor: #000,
+			titleColor: #00b800,
+			paragraphColor: #30e933,
+		),
+	// 浅黄
+	qianhuang: (
+			bgColor: #f5f1e8,
+		),
+	// 午夜
+	wuye: (
+			bgColor: #002b36,
+			titleColor: #839496,
+			paragraphColor: #b3c5c9,
+		),
+	// 浅灰
+	qianhui: (
+			bgColor: #d9e0e8,
+		),
+	// 漆黑
+	qihei: (
+			bgColor: #000,
+			titleColor: #555,
+			paragraphColor: #858688,
+		)
+);
+
+$switch-font-size: (
+	sm: 0.95,
+	xs: 0.9,
+	lg: 1.05,
+	xl: 1.1,
+);

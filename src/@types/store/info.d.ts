@@ -1,5 +1,5 @@
 type DeviceInfoResult = UniApp.GetDeviceInfoResult;
 
-type InfoStoreData = {
+export type InfoStoreData = {
 	statusBarHeight: number;
 } & DeviceInfoResult;

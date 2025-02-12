@@ -1,4 +1,5 @@
 import { defineStore } from 'pinia';
+import type { InfoStoreData } from '@/@types/store/info';
 import { StoreKey } from '@/config/store';
 
 /**

@@ -1,5 +1,5 @@
 <template>
-	<view class="full-screen flex flex-col flex-justify-start flex-align-center container">
+	<Page class="full-screen flex flex-col flex-justify-start flex-align-center container">
 		<Search :back="false" />
 		<view class="width-full flex flex-col flex-1 content bookshelf">
 			<view class="width-full">
@@ -26,16 +26,16 @@
 				</template>
 			</view>
 		</view>
-	</view>
+	</Page>
 </template>
 
 <script setup lang="ts">
 import type { Bookshelf } from '@/@types/pages';
+import Page from '@/components/Page.vue';
 import Search from '@/components/Search.vue';
 import Image from '@/components/Image.vue';
 import { Path } from '@/common/path';
 import { Pages } from '@/config/pages';
-import path from 'path';
 
 const bookshelf = shallowReactive<Bookshelf[]>([
 	{

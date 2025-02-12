@@ -12,11 +12,12 @@ export default defineConfig({
 		AutoImport({
 			imports: ['vue', 'vue-router', 'uni-app'],
 			dts: './src/@types/auto-import.d.ts',
+			dirs: ['./src/auto'],
 		}),
 	],
 	build: {
 		rollupOptions: {
-			external: ['uni'],
+			external: ['uni', '@vue/runtime-dom'],
 		},
 	},
 	server: {

@@ -1,6 +1,7 @@
 import '@/style/icon.scss';
 import '@/style/common.scss';
 
+import type { DeviceInfoResult } from '@/@types/store/info';
 import { createSSRApp } from 'vue';
 import { createPinia } from 'pinia';
 import { isFunction } from '@wang-yige/utils';

@@ -60,6 +60,8 @@ Path.navigateTo(Pages.Search, {
 		search: 'test',
 	},
 });
+
+onBackPress(backInteract);
 </script>
 
 <style scoped lang="scss">

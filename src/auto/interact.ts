@@ -1,7 +1,7 @@
 import { useInteractStore } from '@/store/interact';
 
 /**
- * onBackPress 中关闭 modal 层的回调函数
+ * onBackPress 中关闭交互层的回调函数
  */
 export function backInteract(_options: Page.BackPressOption) {
 	const useinteract = useInteractStore();

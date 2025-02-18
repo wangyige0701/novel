@@ -8,6 +8,7 @@
 			:duration="InteractConfig.duration"
 		>
 			<template v-if="item.component">
+				<!-- 组件内部需要提供默认属性 -->
 				<component
 					ref="itemRefs"
 					:is="item.component"

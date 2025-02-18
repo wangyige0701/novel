@@ -9,9 +9,12 @@ import type {
 	InteractPopupOptions,
 } from '@/@types/store/interact';
 import { StoreKey } from '@/config/store';
-import { createPromise, Fn, isNumber, type PromiseReject, type PromiseResolve } from '@wang-yige/utils';
+import { createPromise, type Fn, isNumber } from '@wang-yige/utils';
 import { defineStore } from 'pinia';
 
+/**
+ * 绑定提示类型
+ */
 function bindType<T extends InteractBindTypeUse>(fn: T) {
 	const result = Object.create(null) as InteractBindType<T>;
 	(['success', 'warning', 'error', 'info'] as const).forEach(type => {
@@ -58,8 +61,11 @@ export const useInteractStore = defineStore(StoreKey.interact, () => {
 	}
 
 	return {
+		/** 关闭上一个交互弹层 */
 		back,
+		/** 关闭指定交互弹层 */
 		close,
+		/** 关闭所有弹层 */
 		clear,
 		value,
 		tip: { ...bindType((type, options: InteractTipOptions) => add('tip', { ...options, type })) },

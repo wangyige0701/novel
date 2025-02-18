@@ -1,5 +1,5 @@
 <template>
-	<view class="full-screen flex flex-col flex-justify-start flex-align-center container">
+	<Page class="full-screen flex flex-col flex-justify-start flex-align-center container">
 		<Search v-model:model-value="searchContent" />
 		<view class="width-full flex flex-col flex-1 content">
 			<view class="search_tip">
@@ -22,11 +22,12 @@
 				</template>
 			</view>
 		</view>
-	</view>
+	</Page>
 </template>
 
 <script setup lang="ts">
 import type { SearchBook } from '@/@types/pages/search';
+import Page from '@/components/Page.vue';
 import Search from '@/components/Search.vue';
 import Image from '@/components/Image.vue';
 
@@ -42,9 +43,11 @@ const searchResult = shallowReactive<SearchBook[]>([
 ]);
 
 onLoad(options => {
-	const { search } = options || {};
-	searchContent.value = search || '';
+	const { search = '' } = options || {};
+	searchContent.value = search;
 });
+
+onBackPress(backInteract);
 </script>
 
 <style scoped lang="scss">

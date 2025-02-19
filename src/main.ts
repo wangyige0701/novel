@@ -1,4 +1,5 @@
 import '@/style/icon.scss';
+import '@/style/animation.scss';
 import '@/style/common.scss';
 
 import type { DeviceInfoResult } from '@/@types/store/info';

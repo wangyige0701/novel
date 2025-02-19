@@ -24,6 +24,11 @@ $error-hover-color: color.scale($error-color, $lightness: 10%);
 $error-active-color: color.scale($error-color, $lightness: -10%);
 $error-disabled-color: color.scale($error-color, $lightness: 30%);
 
+$info-color: #909399;
+$info-hover-color: color.scale($info-color, $lightness: 10%);
+$info-active-color: color.scale($info-color, $lightness: -10%);
+$info-disabled-color: color.scale($info-color, $lightness: 30%);
+
 // 文字颜色
 $text-color: #303133; // 主要文字
 $text-normal-color: #606266; // 常规文字
@@ -31,7 +36,7 @@ $text-inverse-color: #fff; // 反色
 $text-grey-color: #999; // 辅助灰色，如加载更多的提示信息
 $text-secondary-color: #909399; // 次要文字颜色
 $text-placeholder-color: #c0c4cc;
-$text-disable-color: #d5d5d5;
+$text-disable-color: #c8c9cc;
 
 // 背景颜色
 $bg-color: #fff;

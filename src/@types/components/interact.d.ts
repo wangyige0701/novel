@@ -1,4 +1,4 @@
-import type { Fn, PromiseReject, PromiseResolve } from '@wang-yige/utils';
+import type { Awaitable, Fn, PromiseReject, PromiseResolve } from '@wang-yige/utils';
 import type { Component } from 'vue';
 
 export type InteractUses = 'modal' | 'tip' | 'popup';
@@ -47,6 +47,11 @@ export type InteractModalProps = {
 	component?: Component;
 	/** 是否隐藏 title，默认 `false` */
 	hideTitle?: boolean;
+	/**
+	 * 确认时的回调，如果传入 promise 则会等待 promise 完成
+	 */
+	onOk?: Fn<[], Awaitable<any>>;
+	onCancel?: Fn;
 } & InteractMask &
 	InteractButton;
 

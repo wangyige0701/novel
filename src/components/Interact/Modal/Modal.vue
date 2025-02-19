@@ -8,8 +8,12 @@
 			<text v-else>{{ props.message }}</text>
 		</view>
 		<view class="flex flex-row flex-nowrap modal_operation">
-			<Button class="flex-1 cancel" @click.stop="cancel">{{ props.cancelButtonText }}</Button>
-			<Button class="flex-1 confirm" @click.stop="confirm">{{ props.confirmButtonText }}</Button>
+			<Button class="flex-1 cancel" @click.stop="cancel" :disabled="statusRef.cancel">
+				{{ props.cancelButtonText }}
+			</Button>
+			<Button class="flex-1 confirm" @click.stop="confirm" :loading="statusRef.confirm">
+				{{ props.confirmButtonText }}
+			</Button>
 		</view>
 	</view>
 </template>
@@ -18,7 +22,10 @@
 import type { InteractExtend, InteractModalProps } from '@/@types/components/interact';
 import InteractConfig from '@/config/interact';
 import Button from '@/components/Button.vue';
+import { isAsyncFunction, isPromiseLike } from '@wang-yige/utils';
+import { useStatusRef } from '@/common/status';
 
+const statusRef = useStatusRef('cancel', 'confirm');
 const props = withDefaults(defineProps<InteractModalProps & InteractExtend>(), {
 	title: '提示',
 	hideTitle: false,
@@ -39,11 +46,23 @@ const animation = computed(() => {
 });
 
 function cancel() {
+	if (props.onCancel) {
+		props.onCancel();
+	}
 	props.close();
 	props.reject('cancel');
 }
 
-function confirm() {
+async function confirm() {
+	if (props.onOk) {
+		if (isPromiseLike(props.onOk) || isAsyncFunction(props.onOk)) {
+			statusRef.onCancel().onConfirm();
+			await props.onOk();
+			statusRef.offCancel().offConfirm();
+		} else {
+			props.onOk();
+		}
+	}
 	props.close();
 	props.resolve();
 }
@@ -102,12 +121,7 @@ defineExpose({
 	}
 	.cancel,
 	.confirm {
-		&:active {
-			background-color: Scss.$bg-hover-color;
-		}
-	}
-	.cancel {
-		color: Scss.$text-normal-color;
+		border-radius: 0;
 	}
 	.confirm {
 		color: Scss.$primary-color;

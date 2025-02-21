@@ -1,7 +1,7 @@
 import type { Awaitable, Fn, PromiseReject, PromiseResolve } from '@wang-yige/utils';
 import type { Component } from 'vue';
 
-export type InteractUses = 'modal' | 'tip' | 'popup';
+export type InteractUses = 'modal' | 'tip' | 'popup' | 'loading';
 
 type InteractButton = {
 	confirmButtonText?: string;
@@ -11,8 +11,10 @@ type InteractButton = {
 };
 
 export type InteractExtend = {
+	/** 组件可见状态 */
 	visible: boolean;
-	duration: number;
+	/** 可见状态过渡时长 */
+	transitionDuration: number;
 	resolve: PromiseResolve<void>;
 	reject: PromiseReject;
 	close: Fn;
@@ -80,4 +82,9 @@ export type InteractTipProps = {
 	message: string;
 	position?: 'top' | 'bottom' | 'center' | 'stick-top' | 'stick-bottom';
 	type: 'success' | 'warning' | 'error' | 'info';
+};
+
+export type InteractLoadingProps = {
+	text?: string;
+	duration?: number;
 };

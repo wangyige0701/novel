@@ -6,6 +6,8 @@
 			:close-mask="() => closeByMask(item, index)"
 			:visible="unref(item.visible)"
 			:duration="InteractConfig.duration"
+			:mask="item.mask"
+			:mask-closable="item.maskClosable"
 		>
 			<template v-if="item.component">
 				<!-- 组件内部需要提供默认属性 -->
@@ -14,7 +16,7 @@
 					:is="item.component"
 					v-bind="{ ...item.options }"
 					:visible="unref(item.visible)"
-					:duration="InteractConfig.duration"
+					:transition-duration="InteractConfig.duration"
 					:resolve="item.resolve"
 					:reject="item.reject"
 					:close="() => close(item, index)"
@@ -34,30 +36,37 @@ import Mask from '@/components/Interact/Mask/Mask.vue';
 import Tip from '@/components/Interact/Tip/Tip.vue';
 import Modal from '@/components/Interact/Modal/Modal.vue';
 import Popup from '@/components/Interact/Popup/Popup.vue';
+import Loading from '@/components/Interact/Loading/Loading.vue';
 import InteractConfig from '@/config/interact';
 
+const maskClosableItems: InteractUses[] = ['modal', 'popup'];
+const maskVisibleItems: InteractUses[] = ['loading', 'modal', 'popup'];
+const map = {
+	tip: Tip,
+	modal: Modal,
+	popup: Popup,
+	loading: Loading,
+};
 const useInteract = useInteractStore();
 const itemRefs = ref<any[]>([]);
 const render = computed(() => {
 	return useInteract.value.map(item => {
-		const { use, options, reject, resolve } = item;
+		const { use, options, visible, reject, resolve } = item;
 		return {
-			component: getComponent(use),
 			options,
-			visible: ref(true),
+			visible,
 			resolve,
 			reject,
+			component: getComponent(use),
+			maskClosable: maskClosableItems.includes(use),
+			mask: maskVisibleItems.includes(use),
 		};
 	});
 });
 
 function getComponent(use: InteractUses) {
-	if (use === 'tip') {
-		return Tip;
-	} else if (use === 'modal') {
-		return Modal;
-	} else if (use === 'popup') {
-		return Popup;
+	if (use in map) {
+		return map[use];
 	} else {
 		throw new Error('Interact component not found');
 	}

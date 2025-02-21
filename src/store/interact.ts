@@ -7,9 +7,10 @@ import type {
 	InteractStoreOptions,
 	InteractModalOptions,
 	InteractPopupOptions,
+	InteractLoadingOptions,
 } from '@/@types/store/interact';
 import { StoreKey } from '@/config/store';
-import { createPromise, type Fn, isNumber } from '@wang-yige/utils';
+import { createPromise, isNumber } from '@wang-yige/utils';
 import { defineStore } from 'pinia';
 
 /**
@@ -28,26 +29,32 @@ export const useInteractStore = defineStore(StoreKey.interact, () => {
 	const value = computed(() => [...list]); // 追踪依赖
 
 	function add<T extends InteractStoreUses>(use: T, options: InteractStoreOptions<T>) {
-		const { resolve, reject, promise } = createPromise<void, Promise<void> & { index: number; close: Fn }>();
-		const data = {
-			use,
-			options,
-			resolve,
-			reject,
-		};
-		const index = list.push(data);
+		const { resolve, reject, promise } = createPromise<void, Promise<void>>();
+		const data = { use, options, resolve, reject, visible: ref(true) };
+		list.push(data);
 		const _close = () => {
 			return close(list.indexOf(data));
 		};
-		promise.index = index - 1;
-		promise.close = _close;
-		return promise;
+		return {
+			close: _close,
+			then: (onfulfilled?: ((value: void) => void | PromiseLike<void>) | null | undefined) => {
+				return promise.then(onfulfilled);
+			},
+			catch: (onrejected?: ((reason: any) => PromiseLike<never>) | null | undefined) => {
+				return promise.catch(onrejected);
+			},
+			finally: (onfinally?: (() => void) | null | undefined) => {
+				return promise.finally(onfinally);
+			},
+		};
 	}
 	function close(index?: number) {
 		if (!isNumber(index) || index < 0) {
 			index = list.length - 1;
 		}
-		list.splice(index, 1);
+		list.splice(index, 1).forEach(item => {
+			item.visible.value = false;
+		});
 		return index;
 	}
 	function back() {
@@ -57,7 +64,9 @@ export const useInteractStore = defineStore(StoreKey.interact, () => {
 		return close();
 	}
 	function clear() {
-		list.splice(0, list.length);
+		list.splice(0, list.length).forEach(item => {
+			item.visible.value = false;
+		});
 	}
 
 	return {
@@ -68,8 +77,11 @@ export const useInteractStore = defineStore(StoreKey.interact, () => {
 		/** 关闭所有弹层 */
 		clear,
 		value,
-		tip: { ...bindType((type, options: InteractTipOptions) => add('tip', { ...options, type })) },
-		modal: (options: InteractModalOptions) => add('modal', { ...options }),
-		popup: (options: InteractPopupOptions) => add('popup', { ...options }),
+		tip: {
+			...bindType((type, options: InteractTipOptions) => add('tip', { ...options, type })),
+		},
+		modal: (options?: InteractModalOptions) => add('modal', { ...options }),
+		popup: (options?: InteractPopupOptions) => add('popup', { ...options }),
+		loading: (options?: InteractLoadingOptions) => add('loading', { ...options }),
 	};
 });

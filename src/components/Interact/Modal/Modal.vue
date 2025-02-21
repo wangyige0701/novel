@@ -34,7 +34,7 @@ const props = withDefaults(defineProps<InteractModalProps & InteractExtend>(), {
 });
 const animation = computed(() => {
 	const animation = uni.createAnimation({
-		duration: props.duration,
+		duration: props.transitionDuration,
 		timingFunction: 'ease',
 	});
 	if (props.visible) {

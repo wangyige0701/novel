@@ -6,6 +6,7 @@
 			:close-mask="() => closeByMask(item, index)"
 			:visible="unref(item.visible)"
 			:duration="InteractConfig.duration"
+			:transition-timing-function="InteractConfig.timingFunction"
 			:mask="item.mask"
 			:mask-closable="item.maskClosable"
 		>
@@ -17,6 +18,7 @@
 					v-bind="{ ...item.options }"
 					:visible="unref(item.visible)"
 					:transition-duration="InteractConfig.duration"
+					:transition-timing-function="InteractConfig.timingFunction"
 					:resolve="item.resolve"
 					:reject="item.reject"
 					:close="() => close(item, index)"

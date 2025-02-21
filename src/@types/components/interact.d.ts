@@ -15,6 +15,7 @@ export type InteractExtend = {
 	visible: boolean;
 	/** 可见状态过渡时长 */
 	transitionDuration: number;
+	transitionTimingFunction: 'ease' | 'linear' | 'ease-in' | 'ease-in-out' | 'ease-out' | 'step-start' | 'step-end';
 	resolve: PromiseResolve<void>;
 	reject: PromiseReject;
 	close: Fn;

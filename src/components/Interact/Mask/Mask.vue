@@ -1,6 +1,6 @@
 <template>
 	<view
-		class="flex flex-col flex-center mask"
+		class="flex flex-col flex-center fixed mask"
 		:animation="animation"
 		:style="{
 			zIndex: props.zIndex,
@@ -52,7 +52,6 @@ defineOptions({
 
 <style scoped lang="scss">
 .mask {
-	position: fixed;
 	inset: 0;
 	background-color: transparent;
 	opacity: 0;

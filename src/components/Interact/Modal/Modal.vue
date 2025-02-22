@@ -7,7 +7,7 @@
 			</template>
 			<text v-else>{{ props.message }}</text>
 		</view>
-		<view class="flex flex-row flex-nowrap modal_operation">
+		<view class="flex flex-row flex-nowrap relative modal_operation">
 			<Button class="flex-1 cancel" @click.stop="cancel" :disabled="statusRef.cancel">
 				{{ props.cancelButtonText }}
 			</Button>
@@ -106,7 +106,6 @@ defineExpose({
 	border-top: 1px solid Scss.$border-splice-color;
 	border-radius: 0 0 Scss.$border-radius-lg Scss.$border-radius-lg;
 	background-color: Scss.$white;
-	position: relative;
 	overflow: hidden;
 	&::before {
 		content: '';

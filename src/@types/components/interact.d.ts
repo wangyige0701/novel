@@ -75,6 +75,7 @@ export type InteractPopupProps = {
 	/** 弹出层的标题，可以不设置 */
 	title?: string;
 	component?: Component;
+	beforeClose?: Fn<[], Awaitable<any>>;
 } & InteractMask &
 	InteractButton;
 

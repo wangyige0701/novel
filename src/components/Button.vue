@@ -46,6 +46,9 @@ function click(e: any) {
 	border-width: 1rpx;
 	border-style: solid;
 	border-color: transparent;
+	transition-duration: 100ms;
+	transition-timing-function: ease;
+	transition-property: background-color, color, border-color;
 	&:active {
 		background-color: Scss.$bg-hover-color;
 	}

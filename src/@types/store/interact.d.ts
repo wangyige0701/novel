@@ -1,4 +1,5 @@
 import type { Fn, PromiseReject, PromiseResolve } from '@wang-yige/utils';
+import type { Component } from 'vue';
 import type {
 	InteractLoadingProps,
 	InteractModalProps,
@@ -43,8 +44,8 @@ export type InteractStoreOptions<T extends InteractStoreUses> = T extends 'modal
 /** 去除 type 属性的 tip 组件属性配置，用于调用 */
 export type InteractTipOptions = Omit<InteractTipProps, 'type'>;
 
-export type InteractModalOptions = InteractModalProps;
+export type InteractModalOptions<T = Component> = InteractModalProps<T>;
 
-export type InteractPopupOptions = InteractPopupProps;
+export type InteractPopupOptions<T = Component> = InteractPopupProps<T>;
 
 export type InteractLoadingOptions = InteractLoadingProps;

@@ -1,5 +1,6 @@
 import type { Awaitable, Fn, PromiseReject, PromiseResolve } from '@wang-yige/utils';
 import type { Component } from 'vue';
+import type { GetProps } from '@/@types/index';
 
 export type InteractUses = 'modal' | 'tip' | 'popup' | 'loading';
 
@@ -43,16 +44,15 @@ export type InteractMaskProps = InteractMask & {
 /**
  * 模态框组件属性
  */
-export type InteractModalProps = {
+export type InteractModalProps<T = Component> = {
 	/** 标题，默认 `提示` */
 	title?: string;
 	message?: string;
-	component?: Component;
+	component?: T;
+	componentProps?: GetProps<T>;
 	/** 是否隐藏 title，默认 `false` */
 	hideTitle?: boolean;
-	/**
-	 * 确认时的回调，如果传入 promise 则会等待 promise 完成
-	 */
+	/** 确认时的回调，如果传入 promise 则会等待 promise 完成  */
 	onOk?: Fn<[], Awaitable<any>>;
 	onCancel?: Fn;
 } & InteractMask &
@@ -61,7 +61,7 @@ export type InteractModalProps = {
 /**
  * 弹出层组件属性
  */
-export type InteractPopupProps = {
+export type InteractPopupProps<T = Component> = {
 	/** 弹层位置，默认 `bottom` */
 	direction?: 'left' | 'right' | 'top' | 'bottom' | 'center';
 	/** 是否显示关闭按钮，`button` 属性为 true 则不会显示 */
@@ -72,10 +72,12 @@ export type InteractPopupProps = {
 	button?: boolean;
 	/** 按钮位置，默认 `top` */
 	buttonPostion?: 'top' | 'bottom';
+	/** 弹层关闭前执行，可以传入 promise */
+	beforeClose?: Fn<[], Awaitable<any>>;
 	/** 弹出层的标题，可以不设置 */
 	title?: string;
-	component?: Component;
-	beforeClose?: Fn<[], Awaitable<any>>;
+	component?: T;
+	componentProps?: GetProps<T>;
 } & InteractMask &
 	InteractButton;
 

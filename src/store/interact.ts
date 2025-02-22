@@ -1,3 +1,4 @@
+import type { Component } from 'vue';
 import type {
 	InteractBindType,
 	InteractBindTypeUse,
@@ -80,8 +81,8 @@ export const useInteractStore = defineStore(StoreKey.interact, () => {
 		tip: {
 			...bindType((type, options: InteractTipOptions) => add('tip', { ...options, type })),
 		},
-		modal: (options?: InteractModalOptions) => add('modal', { ...options }),
-		popup: (options?: InteractPopupOptions) => add('popup', { ...options }),
+		modal: <T extends Component>(options?: InteractModalOptions<T>) => add('modal', { ...options }),
+		popup: <T extends Component>(options?: InteractPopupOptions<T>) => add('popup', { ...options }),
 		loading: (options?: InteractLoadingOptions) => add('loading', { ...options }),
 	};
 });

@@ -7,8 +7,9 @@ export type InteractUses = 'modal' | 'tip' | 'popup' | 'loading';
 type InteractButton = {
 	confirmButtonText?: string;
 	cancelButtonText?: string;
-	ok?: Fn<[any], any>;
-	cancel?: Fn<[any], any>;
+	/** 确认时的回调，如果传入 promise 则会等待 promise 完成  */
+	onOk?: Fn<[], Awaitable<any>>;
+	onCancel?: Fn;
 };
 
 export type InteractExtend = {
@@ -52,9 +53,6 @@ export type InteractModalProps<T = Component> = {
 	componentProps?: GetProps<T>;
 	/** 是否隐藏 title，默认 `false` */
 	hideTitle?: boolean;
-	/** 确认时的回调，如果传入 promise 则会等待 promise 完成  */
-	onOk?: Fn<[], Awaitable<any>>;
-	onCancel?: Fn;
 } & InteractMask &
 	InteractButton;
 
@@ -86,9 +84,12 @@ export type InteractTipProps = {
 	message: string;
 	position?: 'top' | 'bottom' | 'center' | 'stick-top' | 'stick-bottom';
 	type: 'success' | 'warning' | 'error' | 'info';
+	/** tip 显示时间，单位毫秒，默认 300 毫秒 */
+	duration?: number;
 };
 
 export type InteractLoadingProps = {
 	text?: string;
+	/** 加载时间，不传则需要手动关闭 */
 	duration?: number;
 };

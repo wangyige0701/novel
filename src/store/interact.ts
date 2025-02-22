@@ -10,9 +10,10 @@ import type {
 	InteractPopupOptions,
 	InteractLoadingOptions,
 } from '@/@types/store/interact';
+import type { InteractMask } from '@/@types/components/interact';
+import { defineStore } from 'pinia';
 import { StoreKey } from '@/config/store';
 import { createPromise, isNumber } from '@wang-yige/utils';
-import { defineStore } from 'pinia';
 
 /**
  * 绑定提示类型
@@ -29,7 +30,7 @@ export const useInteractStore = defineStore(StoreKey.interact, () => {
 	const list = shallowReactive<InteractStoreListItem[]>([]);
 	const value = computed(() => [...list]); // 追踪依赖
 
-	function add<T extends InteractStoreUses>(use: T, options: InteractStoreOptions<T>) {
+	function add<T extends InteractStoreUses>(use: T, options: InteractStoreOptions<T> & InteractMask) {
 		const { resolve, reject, promise } = createPromise<void, Promise<void>>();
 		const data = { use, options, resolve, reject, visible: ref(true) };
 		list.push(data);
@@ -79,10 +80,10 @@ export const useInteractStore = defineStore(StoreKey.interact, () => {
 		clear,
 		value,
 		tip: {
-			...bindType((type, options: InteractTipOptions) => add('tip', { ...options, type })),
+			...bindType((type, options: InteractTipOptions) => add('tip', { ...options, type, mask: false })),
 		},
-		modal: <T extends Component>(options?: InteractModalOptions<T>) => add('modal', { ...options }),
-		popup: <T extends Component>(options?: InteractPopupOptions<T>) => add('popup', { ...options }),
-		loading: (options?: InteractLoadingOptions) => add('loading', { ...options }),
+		modal: <T extends Component>(options?: InteractModalOptions<T>) => add('modal', { ...options, mask: true }),
+		popup: <T extends Component>(options?: InteractPopupOptions<T>) => add('popup', { ...options, mask: true }),
+		loading: (options?: InteractLoadingOptions) => add('loading', { ...options, mask: true, maskClosable: false }),
 	};
 });

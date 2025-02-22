@@ -30,7 +30,7 @@
 
 <script setup lang="ts">
 import { unref } from 'vue';
-import { ElementOf } from '@wang-yige/utils';
+import type { ElementOf } from '@wang-yige/utils';
 import type { InteractUses } from '@/@types/components/interact';
 import type { UnRef } from '@/@types';
 import { useInteractStore } from '@/store/interact';
@@ -41,8 +41,6 @@ import Popup from '@/components/Interact/Popup/Popup.vue';
 import Loading from '@/components/Interact/Loading/Loading.vue';
 import InteractConfig from '@/config/interact';
 
-const maskClosableItems: InteractUses[] = ['modal', 'popup'];
-const maskVisibleItems: InteractUses[] = ['loading', 'modal', 'popup'];
 const map = {
 	tip: Tip,
 	modal: Modal,
@@ -60,11 +58,15 @@ const render = computed(() => {
 			resolve,
 			reject,
 			component: getComponent(use),
-			maskClosable: maskClosableItems.includes(use),
-			mask: maskVisibleItems.includes(use),
+			maskClosable: pick(options, 'maskClosable'),
+			mask: pick(options, 'mask'),
 		};
 	});
 });
+
+function pick(options: any, key: string) {
+	return options?.[key];
+}
 
 function getComponent(use: InteractUses) {
 	if (use in map) {
@@ -74,13 +76,14 @@ function getComponent(use: InteractUses) {
 	}
 }
 
-function closeByMask(item: ElementOf<UnRef<typeof render>>, inedx: number) {
-	close(item, inedx);
+async function closeByMask(item: ElementOf<UnRef<typeof render>>, inedx: number) {
 	const ref = itemRefs.value[inedx];
 	if (ref && ref.closeByMask) {
 		// 不同组件关闭遮罩层时触发不同回调，组件内部决定
-		ref.closeByMask();
+		await ref.closeByMask();
 	}
+	// 遮罩层关闭前判断是否执行前置函数
+	close(item, inedx);
 }
 
 function close(item: ElementOf<UnRef<typeof render>>, inedx: number) {

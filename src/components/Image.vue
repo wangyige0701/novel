@@ -12,7 +12,6 @@ const emit = defineEmits<ImageComponentEmits>();
 const src = ref<string>(props.src || '');
 
 function onError(e: any) {
-	console.log(e);
 	emit('error', e);
 	if (props.reload) {
 		const str = props.reload(src.value);

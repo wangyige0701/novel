@@ -3,7 +3,7 @@
 		<view v-if="!props.hideTitle" class="text-center text-ellipsis modal_title">{{ props.title }}</view>
 		<view class="text-center modal_message">
 			<template v-if="props.component">
-				<component :is="props.component" />
+				<component :is="props.component" v-bind="{ ...props.componentProps }" />
 			</template>
 			<text v-else>{{ props.message }}</text>
 		</view>
@@ -22,7 +22,7 @@
 import type { InteractExtend, InteractModalProps } from '@/@types/components/interact';
 import InteractConfig from '@/config/interact';
 import Button from '@/components/Button.vue';
-import { isAsyncFunction, isPromiseLike } from '@wang-yige/utils';
+import { isAsyncFunction, isPromise, isPromiseLike } from '@wang-yige/utils';
 import { useStatusRef } from '@/common/status';
 
 const statusRef = useStatusRef('cancel', 'confirm');
@@ -55,7 +55,7 @@ function cancel() {
 
 async function confirm() {
 	if (props.onOk) {
-		if (isPromiseLike(props.onOk) || isAsyncFunction(props.onOk)) {
+		if (isPromise(props.onOk) || isPromiseLike(props.onOk) || isAsyncFunction(props.onOk)) {
 			statusRef.onCancel().onConfirm();
 			await props.onOk();
 			statusRef.offCancel().offConfirm();

@@ -43,6 +43,9 @@ function click(e: any) {
 	color: Scss.$text-normal-color;
 	background-color: Scss.$white;
 	border-radius: Scss.$border-radius-base;
+	border-width: 1rpx;
+	border-style: solid;
+	border-color: transparent;
 	&:active {
 		background-color: Scss.$bg-hover-color;
 	}
@@ -58,6 +61,7 @@ function click(e: any) {
 	&.type_default {
 		color: Scss.$text-normal-color;
 		background-color: Scss.$white;
+		border-color: Scss.$text-secondary-color;
 		&:active {
 			background-color: Scss.$bg-hover-color;
 		}
@@ -65,6 +69,7 @@ function click(e: any) {
 	&.type_primary {
 		color: Scss.$white;
 		background-color: Scss.$primary-color;
+		border-color: Scss.$primary-color;
 		&:active {
 			background-color: Scss.$primary-hover-color;
 		}
@@ -72,6 +77,7 @@ function click(e: any) {
 	&.type_danger {
 		color: Scss.$white;
 		background-color: Scss.$error-color;
+		border-color: Scss.$error-color;
 		&:active {
 			background-color: Scss.$error-hover-color;
 		}
@@ -79,6 +85,7 @@ function click(e: any) {
 	&.type_success {
 		color: Scss.$white;
 		background-color: Scss.$success-color;
+		border-color: Scss.$success-color;
 		&:active {
 			background-color: Scss.$success-hover-color;
 		}
@@ -86,6 +93,7 @@ function click(e: any) {
 	&.type_warning {
 		color: Scss.$white;
 		background-color: Scss.$warning-color;
+		border-color: Scss.$warning-color;
 		&:active {
 			background-color: Scss.$warning-hover-color;
 		}

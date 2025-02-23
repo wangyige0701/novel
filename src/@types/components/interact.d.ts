@@ -1,7 +1,7 @@
 import type { Awaitable, Fn, PromiseReject, PromiseResolve } from '@wang-yige/utils';
 import type { Component } from 'vue';
 import type { GetProps } from '@/@types/index';
-import type { CloseTypes } from '@/common/interact';
+import type { CloseTypes } from '@/config/interact';
 
 export type InteractUses = 'modal' | 'tip' | 'popup' | 'loading';
 

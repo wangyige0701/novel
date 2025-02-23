@@ -40,7 +40,7 @@ import { isAsyncFunction, isPromise, isPromiseLike, VOID_FUNCTION, VOID_OBJECT }
 import InteractConfig from '@/config/interact';
 import Button from '@/components/Button.vue';
 import { useStatusRef } from '@/common/status';
-import { CloseTypes } from '@/common/interact';
+import { CloseTypes } from '@/config/interact';
 
 const size = ref(0);
 const statusRef = useStatusRef('cancel', 'confirm');

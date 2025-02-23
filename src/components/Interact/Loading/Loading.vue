@@ -9,7 +9,7 @@
 
 <script setup lang="ts">
 import type { InteractExtend, InteractLoadingProps } from '@/@types/components/interact';
-import { CloseTypes } from '@/common/interact';
+import { CloseTypes } from '@/config/interact';
 import { isNumber } from '@wang-yige/utils';
 
 const props = withDefaults(defineProps<InteractLoadingProps & InteractExtend>(), {

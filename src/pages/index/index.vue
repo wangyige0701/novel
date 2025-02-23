@@ -41,7 +41,7 @@ const bookshelf = shallowReactive<Bookshelf[]>([
 	{
 		id: 1,
 		name: '书籍1',
-		img: 'https://picsum.photos/300/200',
+		img: 'https://picsum.photos/70/90',
 		author: '作者1',
 		description: '书籍1的描述',
 	},
@@ -55,11 +55,11 @@ function operate(e: Bookshelf) {
 	console.log(e);
 }
 
-Path.navigateTo(Pages.Search, {
-	params: {
-		search: 'test',
-	},
-});
+// Path.navigateTo(Pages.Search, {
+// 	params: {
+// 		search: 'test',
+// 	},
+// });
 
 onBackPress(backInteract);
 </script>

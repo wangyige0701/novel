@@ -14,7 +14,7 @@ import type { InteractMask, InteractResolve } from '@/@types/components/interact
 import { defineStore } from 'pinia';
 import { StoreKey } from '@/config/store';
 import { createPromise, delay, isNumber, isString } from '@wang-yige/utils';
-import { CloseTypes } from '@/common/interact';
+import { CloseTypes } from '@/config/interact';
 import InteractConfig from '@/config/interact';
 
 /**

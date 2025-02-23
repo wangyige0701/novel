@@ -7,7 +7,7 @@
 <script setup lang="ts">
 import type { InteractExtend, InteractTipProps } from '@/@types/components/interact';
 import { isNumber, VOID_OBJECT } from '@wang-yige/utils';
-import { CloseTypes } from '@/common/interact';
+import { CloseTypes } from '@/config/interact';
 
 const height = ref(0);
 const props = withDefaults(defineProps<InteractTipProps & InteractExtend>(), {

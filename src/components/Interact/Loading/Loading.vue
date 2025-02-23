@@ -9,6 +9,7 @@
 
 <script setup lang="ts">
 import type { InteractExtend, InteractLoadingProps } from '@/@types/components/interact';
+import { CloseTypes } from '@/common/interact';
 import { isNumber } from '@wang-yige/utils';
 
 const props = withDefaults(defineProps<InteractLoadingProps & InteractExtend>(), {
@@ -19,6 +20,7 @@ onMounted(() => {
 	if (isNumber(props.duration) && props.duration > 0) {
 		setTimeout(() => {
 			props.close();
+			props.resolve({ type: CloseTypes.Timeout, duration: props.duration });
 		}, props.duration);
 	}
 });

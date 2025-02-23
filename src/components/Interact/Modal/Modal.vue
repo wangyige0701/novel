@@ -24,6 +24,7 @@ import InteractConfig from '@/config/interact';
 import Button from '@/components/Button.vue';
 import { isAsyncFunction, isPromise, isPromiseLike } from '@wang-yige/utils';
 import { useStatusRef } from '@/common/status';
+import { CloseTypes } from '@/common/interact';
 
 const statusRef = useStatusRef('cancel', 'confirm');
 const props = withDefaults(defineProps<InteractModalProps & InteractExtend>(), {
@@ -78,7 +79,7 @@ async function confirm() {
 		}
 	}
 	props.close();
-	props.resolve();
+	props.resolve({ type: CloseTypes.Confirm });
 }
 
 defineOptions({
@@ -87,6 +88,7 @@ defineOptions({
 
 defineExpose({
 	closeByMask() {
+		// modal 组件通过遮罩层调用返回拒绝状态
 		props.reject('cancel');
 	},
 });

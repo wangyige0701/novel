@@ -4,6 +4,7 @@ import type {
 	InteractLoadingProps,
 	InteractModalProps,
 	InteractPopupProps,
+	InteractResolve,
 	InteractTipProps,
 	InteractUses,
 } from '@/@types/components/interact';
@@ -27,7 +28,7 @@ export type InteractStoreListItem = {
 	index: number;
 	use: InteractStoreUses;
 	options: InteractStoreParams;
-	resolve: PromiseResolve<void>;
+	resolve: PromiseResolve<InteractResolve>;
 	reject: PromiseReject;
 	visible: Ref<boolean>;
 };

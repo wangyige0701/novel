@@ -1,6 +1,7 @@
 import type { Awaitable, Fn, PromiseReject, PromiseResolve } from '@wang-yige/utils';
 import type { Component } from 'vue';
 import type { GetProps } from '@/@types/index';
+import type { CloseTypes } from '@/common/interact';
 
 export type InteractUses = 'modal' | 'tip' | 'popup' | 'loading';
 
@@ -12,13 +13,17 @@ type InteractButton = {
 	onCancel?: Fn;
 };
 
+export type InteractResolve = {
+	type: CloseTypes;
+} & Record<string, any>;
+
 export type InteractExtend = {
 	/** 组件可见状态 */
 	visible: boolean;
 	/** 可见状态过渡时长 */
 	transitionDuration: number;
 	transitionTimingFunction: 'ease' | 'linear' | 'ease-in' | 'ease-in-out' | 'ease-out' | 'step-start' | 'step-end';
-	resolve: PromiseResolve<void>;
+	resolve: PromiseResolve<InteractResolve>;
 	reject: PromiseReject;
 	close: Fn;
 	lock: boolean; // 是否锁定关闭行为

@@ -10,10 +10,11 @@ import type {
 	InteractPopupOptions,
 	InteractLoadingOptions,
 } from '@/@types/store/interact';
-import type { InteractMask } from '@/@types/components/interact';
+import type { InteractMask, InteractResolve } from '@/@types/components/interact';
 import { defineStore } from 'pinia';
 import { StoreKey } from '@/config/store';
 import { createPromise, isNumber } from '@wang-yige/utils';
+import { CloseTypes } from '@/common/interact';
 
 /**
  * 绑定提示类型
@@ -32,7 +33,7 @@ export const useInteractStore = defineStore(StoreKey.interact, () => {
 	const value = computed(() => [...list]); // 追踪依赖
 
 	function add<T extends InteractStoreUses>(use: T, options: InteractStoreOptions<T> & InteractMask) {
-		const { resolve, reject, promise } = createPromise<void, Promise<void>>();
+		const { resolve, reject, promise } = createPromise<InteractResolve>();
 		const data = { index: index++, use, options, resolve, reject, visible: ref(true) };
 		list.push(data);
 		const _close = () => {
@@ -40,10 +41,10 @@ export const useInteractStore = defineStore(StoreKey.interact, () => {
 		};
 		return {
 			close: _close,
-			then: (onfulfilled?: ((value: void) => void | PromiseLike<void>) | null | undefined) => {
+			then: (onfulfilled?: ((value: InteractResolve) => void | PromiseLike<void>) | null | undefined) => {
 				return promise.then(onfulfilled);
 			},
-			catch: (onrejected?: ((reason: any) => PromiseLike<never>) | null | undefined) => {
+			catch: (onrejected?: ((reason: any) => PromiseLike<any>) | null | undefined) => {
 				return promise.catch(onrejected);
 			},
 			finally: (onfinally?: (() => void) | null | undefined) => {
@@ -57,6 +58,7 @@ export const useInteractStore = defineStore(StoreKey.interact, () => {
 		}
 		list.splice(index, 1).forEach(item => {
 			item.visible.value = false;
+			item.resolve({ type: CloseTypes.Close });
 		});
 		return index;
 	}
@@ -69,6 +71,7 @@ export const useInteractStore = defineStore(StoreKey.interact, () => {
 	function clear() {
 		list.splice(0, list.length).forEach(item => {
 			item.visible.value = false;
+			item.resolve({ type: CloseTypes.Close });
 		});
 	}
 

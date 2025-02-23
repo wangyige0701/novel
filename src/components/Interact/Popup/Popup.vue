@@ -16,7 +16,11 @@
 				</view>
 			</template>
 			<template v-else>
-				<text class="icon-close absolute popup_close" :class="[props.closePosition]" @click.stop="close"></text>
+				<text
+					class="icon-close absolute popup_close"
+					:class="[props.closePosition]"
+					@click.stop="() => close(CloseTypes.Icon)"
+				></text>
 			</template>
 			<view class="flex flex-col full relative">
 				<view v-if="props.title" class="flex flex-center popup_title">{{ props.title }}</view>
@@ -36,6 +40,7 @@ import { isAsyncFunction, isPromise, isPromiseLike, VOID_FUNCTION } from '@wang-
 import InteractConfig from '@/config/interact';
 import Button from '@/components/Button.vue';
 import { useStatusRef } from '@/common/status';
+import { CloseTypes } from '@/common/interact';
 
 let size = 0;
 const statusRef = useStatusRef('cancel', 'confirm');
@@ -114,12 +119,12 @@ async function changeLock(state: boolean) {
 /**
  * 关闭统一调用
  */
-async function close() {
+async function close(type: CloseTypes) {
 	if (props.lock) {
 		return;
 	}
 	if (!props.beforeClose) {
-		return handleClose();
+		return handleClose(type);
 	}
 	// 处理关闭前的触发函数
 	if (isPromise(props.beforeClose) || isPromiseLike(props.beforeClose) || isAsyncFunction(props.beforeClose)) {
@@ -129,7 +134,7 @@ async function close() {
 	} else {
 		props.beforeClose();
 	}
-	handleClose();
+	handleClose(type);
 }
 
 async function cancel() {
@@ -139,7 +144,7 @@ async function cancel() {
 	if (props.onCancel) {
 		props.onCancel();
 	}
-	await close();
+	await close(CloseTypes.Cancel);
 }
 
 async function confirm() {
@@ -157,12 +162,12 @@ async function confirm() {
 			props.onOk();
 		}
 	}
-	await close();
+	await close(CloseTypes.Confirm);
 }
 
-function handleClose() {
+function handleClose(type: CloseTypes) {
 	props.close();
-	props.resolve();
+	props.resolve({ type });
 }
 
 onMounted(() => {
@@ -171,7 +176,7 @@ onMounted(() => {
 
 defineExpose({
 	async closeByMask() {
-		await close();
+		await close(CloseTypes.Mask);
 	},
 });
 </script>

@@ -15,6 +15,7 @@ type InteractBindPick<T extends InteractBindTypeUse> = Fn<[options: Parameters<T
 
 export type InteractBindType<T extends InteractBindTypeUse> = {
 	success: InteractBindPick<T>;
+	primary: InteractBindPick<T>;
 	warning: InteractBindPick<T>;
 	error: InteractBindPick<T>;
 	info: InteractBindPick<T>;

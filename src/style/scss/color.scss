@@ -8,26 +8,31 @@ $primary-color: #2979ff;
 $primary-hover-color: color.scale($primary-color, $lightness: 10%);
 $primary-active-color: color.scale($primary-color, $lightness: -10%);
 $primary-disabled-color: color.scale($primary-color, $lightness: 30%);
+$primary-lightly-color: color.scale($primary-color, $lightness: 80%);
 
 $success-color: #19be6b;
 $success-hover-color: color.scale($success-color, $lightness: 10%);
 $success-active-color: color.scale($success-color, $lightness: -10%);
 $success-disabled-color: color.scale($success-color, $lightness: 30%);
+$success-lightly-color: color.scale($success-color, $lightness: 80%);
 
 $warning-color: #ff9900;
 $warning-hover-color: color.scale($warning-color, $lightness: 10%);
 $warning-active-color: color.scale($warning-color, $lightness: -10%);
 $warning-disabled-color: color.scale($warning-color, $lightness: 30%);
+$warning-lightly-color: color.scale($warning-color, $lightness: 80%);
 
 $error-color: #fa3534;
 $error-hover-color: color.scale($error-color, $lightness: 10%);
 $error-active-color: color.scale($error-color, $lightness: -10%);
 $error-disabled-color: color.scale($error-color, $lightness: 30%);
+$error-lightly-color: color.scale($error-color, $lightness: 80%);
 
 $info-color: #909399;
 $info-hover-color: color.scale($info-color, $lightness: 10%);
 $info-active-color: color.scale($info-color, $lightness: -10%);
 $info-disabled-color: color.scale($info-color, $lightness: 30%);
+$info-lightly-color: color.scale($info-color, $lightness: 80%);
 
 // 文字颜色
 $text-color: #303133; // 主要文字

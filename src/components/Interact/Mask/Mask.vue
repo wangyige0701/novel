@@ -4,8 +4,8 @@
 		:animation="animation"
 		:style="{
 			zIndex: props.zIndex,
-			bottom: props.mask ? '0' : '100vh',
 			background: props.maskBgColor,
+			pointerEvents: props.mask ? 'auto' : 'none',
 		}"
 		@click.stop="close"
 	>

@@ -186,7 +186,7 @@ defineExpose({
 
 .popup {
 	--popup-size: 55%;
-	--border-radius: 15px;
+	--border-radius: 35rpx;
 	--box-shadow: rgba(255, 255, 255, 0.5);
 	background-color: Scss.$white;
 	box-shadow: 0px 0px 5px 0px var(--box-shadow);

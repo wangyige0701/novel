@@ -13,7 +13,7 @@ import type {
 import type { InteractMask, InteractResolve } from '@/@types/components/interact';
 import { defineStore } from 'pinia';
 import { StoreKey } from '@/config/store';
-import { createPromise, isNumber } from '@wang-yige/utils';
+import { createPromise, isNumber, isString } from '@wang-yige/utils';
 import { CloseTypes } from '@/common/interact';
 
 /**
@@ -84,7 +84,12 @@ export const useInteractStore = defineStore(StoreKey.interact, () => {
 		clear,
 		value,
 		tip: {
-			...bindType((type, options: InteractTipOptions) => add('tip', { ...options, type, mask: false })),
+			...bindType((type, options: InteractTipOptions | string) => {
+				if (isString(options)) {
+					options = { message: options };
+				}
+				return add('tip', { ...options, type, mask: false, maskBgColor: 'transparent', maskClosable: false });
+			}),
 		},
 		modal: <T extends Component>(options?: InteractModalOptions<T>) => add('modal', { ...options, mask: true }),
 		popup: <T extends Component>(options?: InteractPopupOptions<T>) => add('popup', { ...options, mask: true }),

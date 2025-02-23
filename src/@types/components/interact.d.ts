@@ -93,8 +93,8 @@ export type InteractTipProps = {
 	/** 提示内容 */
 	message: string;
 	position?: 'top' | 'bottom' | 'center' | 'stick-top' | 'stick-bottom';
-	type: 'success' | 'warning' | 'error' | 'info';
-	/** tip 显示时间，单位毫秒，默认 300 毫秒 */
+	type?: 'success' | 'warning' | 'error' | 'info';
+	/** tip 显示时间，单位毫秒，默认 3000 毫秒 */
 	duration?: number;
 };
 

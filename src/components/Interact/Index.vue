@@ -22,6 +22,7 @@
 					:resolve="item.resolve"
 					:reject="item.reject"
 					:close="() => close(item, index)"
+					v-model:lock="item.lock.value"
 				/>
 			</template>
 		</Mask>
@@ -61,6 +62,8 @@ const render = computed(() => {
 			component: getComponent(use),
 			maskClosable: pick(options, 'maskClosable'),
 			mask: pick(options, 'mask'),
+			/** 是否锁定，组件内部更新状态，阻止关闭 */
+			lock: ref(false),
 		};
 	});
 });
@@ -78,6 +81,9 @@ function getComponent(use: InteractUses) {
 }
 
 async function closeByMask(item: ElementOf<UnRef<typeof render>>, inedx: number) {
+	if (item.lock.value) {
+		return;
+	}
 	const ref = itemRefs.value[inedx];
 	if (ref && ref.closeByMask) {
 		// 不同组件关闭遮罩层时触发不同回调，组件内部决定
@@ -88,6 +94,9 @@ async function closeByMask(item: ElementOf<UnRef<typeof render>>, inedx: number)
 }
 
 function close(item: ElementOf<UnRef<typeof render>>, inedx: number) {
+	if (item.lock.value) {
+		return;
+	}
 	item.visible.value = false;
 	setTimeout(() => {
 		useInteract.close(inedx);

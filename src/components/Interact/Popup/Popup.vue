@@ -31,7 +31,7 @@
 </template>
 
 <script setup lang="ts">
-import type { InteractExtend, InteractPopupProps } from '@/@types/components/interact';
+import type { InteractExtend, InteractExtendEmit, InteractPopupProps } from '@/@types/components/interact';
 import { isAsyncFunction, isPromise, isPromiseLike, VOID_FUNCTION } from '@wang-yige/utils';
 import InteractConfig from '@/config/interact';
 import Button from '@/components/Button.vue';
@@ -48,6 +48,7 @@ const props = withDefaults(defineProps<InteractPopupProps & InteractExtend>(), {
 	cancelButtonText: InteractConfig.cancelText,
 	confirmButtonText: InteractConfig.confirmText,
 });
+const emit = defineEmits<InteractExtendEmit>();
 const animation = computed(() => {
 	const animation = uni.createAnimation({
 		duration: props.transitionDuration,
@@ -105,40 +106,58 @@ function getRectSize() {
 		.exec();
 }
 
+async function changeLock(state: boolean) {
+	emit('update:lock', state);
+	await nextTick();
+}
+
 /**
  * 关闭统一调用
  */
 async function close() {
+	if (props.lock) {
+		return;
+	}
 	if (!props.beforeClose) {
 		return handleClose();
 	}
 	// 处理关闭前的触发函数
 	if (isPromise(props.beforeClose) || isPromiseLike(props.beforeClose) || isAsyncFunction(props.beforeClose)) {
-		await props.beforeClose().then(handleClose).catch(VOID_FUNCTION);
-		return;
+		await changeLock(true); // 此时不允许关闭弹窗
+		await props.beforeClose().catch(VOID_FUNCTION);
+		await changeLock(false);
+	} else {
+		props.beforeClose();
 	}
-	props.beforeClose();
 	handleClose();
 }
 
-function cancel() {
+async function cancel() {
+	if (props.lock) {
+		return;
+	}
 	if (props.onCancel) {
 		props.onCancel();
 	}
-	close();
+	await close();
 }
 
 async function confirm() {
+	if (props.lock) {
+		return;
+	}
 	if (props.onOk) {
 		if (isPromise(props.onOk) || isPromiseLike(props.onOk) || isAsyncFunction(props.onOk)) {
+			await changeLock(true);
 			statusRef.onCancel().onConfirm();
 			await props.onOk();
 			statusRef.offCancel().offConfirm();
+			await changeLock(false);
 		} else {
 			props.onOk();
 		}
 	}
-	close();
+	await close();
 }
 
 function handleClose() {

@@ -21,6 +21,11 @@ export type InteractExtend = {
 	resolve: PromiseResolve<void>;
 	reject: PromiseReject;
 	close: Fn;
+	lock: boolean; // 是否锁定关闭行为
+};
+
+export type InteractExtendEmit = {
+	(event: 'update:lock', value: boolean): void;
 };
 
 export type InteractMask = {

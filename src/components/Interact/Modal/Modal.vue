@@ -19,7 +19,7 @@
 </template>
 
 <script setup lang="ts">
-import type { InteractExtend, InteractModalProps } from '@/@types/components/interact';
+import type { InteractExtend, InteractExtendEmit, InteractModalProps } from '@/@types/components/interact';
 import InteractConfig from '@/config/interact';
 import Button from '@/components/Button.vue';
 import { isAsyncFunction, isPromise, isPromiseLike } from '@wang-yige/utils';
@@ -32,6 +32,7 @@ const props = withDefaults(defineProps<InteractModalProps & InteractExtend>(), {
 	cancelButtonText: InteractConfig.cancelText,
 	confirmButtonText: InteractConfig.confirmText,
 });
+const emit = defineEmits<InteractExtendEmit>();
 const animation = computed(() => {
 	const animation = uni.createAnimation({
 		duration: props.transitionDuration,
@@ -45,7 +46,15 @@ const animation = computed(() => {
 	return animation.export();
 });
 
+async function changeLock(state: boolean) {
+	emit('update:lock', state);
+	await nextTick();
+}
+
 function cancel() {
+	if (props.lock) {
+		return;
+	}
 	if (props.onCancel) {
 		props.onCancel();
 	}
@@ -54,11 +63,16 @@ function cancel() {
 }
 
 async function confirm() {
+	if (props.lock) {
+		return;
+	}
 	if (props.onOk) {
 		if (isPromise(props.onOk) || isPromiseLike(props.onOk) || isAsyncFunction(props.onOk)) {
+			await changeLock(true);
 			statusRef.onCancel().onConfirm();
 			await props.onOk();
 			statusRef.offCancel().offConfirm();
+			await changeLock(false);
 		} else {
 			props.onOk();
 		}
@@ -121,6 +135,7 @@ defineExpose({
 	.cancel,
 	.confirm {
 		border-radius: 0;
+		border-color: transparent;
 	}
 	.confirm {
 		color: Scss.$primary-color;

@@ -49,7 +49,7 @@ const props = withDefaults(defineProps<InteractPopupProps & InteractExtend>(), {
 	closePosition: 'top-right',
 	closeIcon: false,
 	button: true,
-	buttonPostion: 'top',
+	buttonPostion: 'bottom',
 	cancelButtonText: InteractConfig.cancelText,
 	confirmButtonText: InteractConfig.confirmText,
 });

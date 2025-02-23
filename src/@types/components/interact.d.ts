@@ -78,7 +78,7 @@ export type InteractPopupProps<T = Component> = {
 	closePosition?: 'top-right' | 'top-left' | 'bottom-right' | 'bottom-left';
 	/** 是否显示交互按钮，默认 `true` */
 	button?: boolean;
-	/** 按钮位置，默认 `top` */
+	/** 按钮位置，默认 `bottom` */
 	buttonPostion?: 'top' | 'bottom';
 	/** 弹层关闭前执行，可以传入 promise */
 	beforeClose?: Fn<[], Awaitable<any>>;

@@ -42,6 +42,7 @@ import Popup from '@/components/Interact/Popup/Popup.vue';
 import Loading from '@/components/Interact/Loading/Loading.vue';
 import InteractConfig from '@/config/interact';
 
+/** 组件映射 */
 const map = {
 	tip: Tip,
 	modal: Modal,

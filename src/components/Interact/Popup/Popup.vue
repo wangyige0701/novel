@@ -36,7 +36,7 @@
 
 <script setup lang="ts">
 import type { InteractExtend, InteractExtendEmit, InteractPopupProps } from '@/@types/components/interact';
-import { isAsyncFunction, isPromise, isPromiseLike, VOID_FUNCTION } from '@wang-yige/utils';
+import { isAsyncFunction, isPromise, isPromiseLike, VOID_FUNCTION, VOID_OBJECT } from '@wang-yige/utils';
 import InteractConfig from '@/config/interact';
 import Button from '@/components/Button.vue';
 import { useStatusRef } from '@/common/status';
@@ -79,7 +79,7 @@ const animation = computed(() => {
 			animation.scale(0.8, 0.8).step();
 		}
 	} else {
-		return {};
+		return VOID_OBJECT;
 	}
 	return animation.export();
 });

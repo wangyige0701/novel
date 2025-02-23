@@ -27,12 +27,13 @@ function bindType<T extends InteractBindTypeUse>(fn: T) {
 }
 
 export const useInteractStore = defineStore(StoreKey.interact, () => {
+	let index = 0;
 	const list = shallowReactive<InteractStoreListItem[]>([]);
 	const value = computed(() => [...list]); // 追踪依赖
 
 	function add<T extends InteractStoreUses>(use: T, options: InteractStoreOptions<T> & InteractMask) {
 		const { resolve, reject, promise } = createPromise<void, Promise<void>>();
-		const data = { use, options, resolve, reject, visible: ref(true) };
+		const data = { index: index++, use, options, resolve, reject, visible: ref(true) };
 		list.push(data);
 		const _close = () => {
 			return close(list.indexOf(data));

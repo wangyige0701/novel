@@ -1,5 +1,5 @@
 <template>
-	<template v-for="(item, index) of render" :key="'interact-' + index">
+	<template v-for="(item, index) of render" :key="'interact-' + item.index">
 		<Mask
 			v-bind="{ ...item.options }"
 			:z-index="InteractConfig.baseZIndex + index"
@@ -51,8 +51,9 @@ const useInteract = useInteractStore();
 const itemRefs = ref<any[]>([]);
 const render = computed(() => {
 	return useInteract.value.map(item => {
-		const { use, options, visible, reject, resolve } = item;
+		const { index, use, options, visible, reject, resolve } = item;
 		return {
+			index,
 			options,
 			visible,
 			resolve,

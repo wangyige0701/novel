@@ -24,6 +24,7 @@ export type InteractStoreUses = InteractUses;
 export type InteractStoreParams = InteractModalProps | InteractTipProps | InteractPopupProps | InteractLoadingProps;
 
 export type InteractStoreListItem = {
+	index: number;
 	use: InteractStoreUses;
 	options: InteractStoreParams;
 	resolve: PromiseResolve<void>;

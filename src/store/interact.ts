@@ -13,15 +13,16 @@ import type {
 import type { InteractMask, InteractResolve } from '@/@types/components/interact';
 import { defineStore } from 'pinia';
 import { StoreKey } from '@/config/store';
-import { createPromise, isNumber, isString } from '@wang-yige/utils';
+import { createPromise, delay, isNumber, isString } from '@wang-yige/utils';
 import { CloseTypes } from '@/common/interact';
+import InteractConfig from '@/config/interact';
 
 /**
  * 绑定提示类型
  */
 function bindType<T extends InteractBindTypeUse>(fn: T) {
 	const result = Object.create(null) as InteractBindType<T>;
-	(['success', 'warning', 'error', 'info'] as const).forEach(type => {
+	(['success', 'warning', 'error', 'info', 'primary'] as const).forEach(type => {
 		result[type] = (options: Parameters<T>[1]) => fn(type, options);
 	});
 	return result;
@@ -56,10 +57,7 @@ export const useInteractStore = defineStore(StoreKey.interact, () => {
 		if (!isNumber(index) || index < 0) {
 			index = list.length - 1;
 		}
-		list.splice(index, 1).forEach(item => {
-			item.visible.value = false;
-			item.resolve({ type: CloseTypes.Close });
-		});
+		transition(index, 1);
 		return index;
 	}
 	function back() {
@@ -69,8 +67,14 @@ export const useInteractStore = defineStore(StoreKey.interact, () => {
 		return close();
 	}
 	function clear() {
-		list.splice(0, list.length).forEach(item => {
+		transition(0, list.length);
+	}
+	async function transition(start: number, count: number) {
+		list.slice(start, start + count).forEach(item => {
 			item.visible.value = false;
+		});
+		await delay(InteractConfig.duration);
+		list.splice(start, count).forEach(item => {
 			item.resolve({ type: CloseTypes.Close });
 		});
 	}

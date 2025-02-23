@@ -42,7 +42,7 @@ import Button from '@/components/Button.vue';
 import { useStatusRef } from '@/common/status';
 import { CloseTypes } from '@/common/interact';
 
-let size = 0;
+const size = ref(0);
 const statusRef = useStatusRef('cancel', 'confirm');
 const props = withDefaults(defineProps<InteractPopupProps & InteractExtend>(), {
 	direction: 'bottom',
@@ -61,7 +61,7 @@ const animation = computed(() => {
 	});
 	let value = 0;
 	if (!props.visible) {
-		value = size;
+		value = unref(size);
 	}
 	// 不同方向的动画
 	if (props.direction === 'bottom') {
@@ -105,7 +105,7 @@ function getRectSize() {
 		.boundingClientRect(rect => {
 			if (rect) {
 				const { width = 0, height = 0 } = rect as UniApp.NodeInfo;
-				size = props.direction === 'bottom' || props.direction === 'top' ? height : width;
+				size.value = props.direction === 'bottom' || props.direction === 'top' ? height : width;
 			}
 		})
 		.exec();

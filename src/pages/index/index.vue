@@ -1,5 +1,5 @@
 <template>
-	<Page class="full-screen flex flex-col flex-justify-start flex-align-center container">
+	<Page class="full-screen flex flex-col justify-start items-center container">
 		<Search :back="false" />
 		<view class="width-full flex flex-col flex-1 content bookshelf">
 			<view class="width-full">
@@ -8,7 +8,7 @@
 						<view class="height-full book_left">
 							<Image class="full" :src="item.img" mode="heightFix"></Image>
 						</view>
-						<view class="flex flex-col flex-justify-evenly flex-1">
+						<view class="flex flex-col justify-evenly flex-1">
 							<view class="flex flex-row flex-nowrap book_right_top">
 								<text class="flex-1 text-ellipsis">{{ item.name }}</text>
 								<text class="flex flex-center book_operate" @click.stop="operate(item)">
@@ -36,7 +36,10 @@ import Search from '@/components/Search.vue';
 import Image from '@/components/Image.vue';
 import { Path } from '@/common/path';
 import { Pages } from '@/config/pages';
+import { useInteractStore } from '@/store/interact';
+import BookInfo from '@/components/pages/index/BookInfo.vue';
 
+const interactStore = useInteractStore();
 const bookshelf = shallowReactive<Bookshelf[]>([
 	{
 		id: 1,
@@ -52,7 +55,10 @@ function select(e: Bookshelf) {
 }
 
 function operate(e: Bookshelf) {
-	console.log(e);
+	const { popup } = interactStore;
+	popup({
+		component: BookInfo,
+	});
 }
 
 // Path.navigateTo(Pages.Search, {
@@ -96,6 +102,7 @@ onBackPress(backInteract);
 	.book_operate {
 		width: 50rpx;
 		color: Scss.$text-normal-color;
+		transform: rotate(90deg);
 	}
 }
 

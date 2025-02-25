@@ -1,5 +1,5 @@
 <template>
-	<Page class="full-screen flex flex-col flex-justify-start flex-align-center container">
+	<Page class="full-screen flex flex-col justify-start items-center container">
 		<Search v-model:model-value="searchContent" />
 		<view class="width-full flex flex-col flex-1 content">
 			<view class="search_tip">
@@ -13,7 +13,7 @@
 						<view class="book_left">
 							<Image class="full" :src="item.img" mode="heightFix"></Image>
 						</view>
-						<view class="flex flex-col flex-justify-evenly flex-1">
+						<view class="flex flex-col justify-evenly flex-1">
 							<text class="text-ellipsis book_title">{{ item.name }}</text>
 							<text class="text-ellipsis book_author">{{ item.author }}</text>
 							<text class="text-ellipsis book_desc">{{ item.description }}</text>

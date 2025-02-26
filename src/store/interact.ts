@@ -35,7 +35,7 @@ export const useInteractStore = defineStore(StoreKey.interact, () => {
 
 	function add<T extends InteractStoreUses>(use: T, options: InteractStoreOptions<T> & InteractMask) {
 		const { resolve, reject, promise } = createPromise<InteractResolve>();
-		const data = { index: index++, use, options, resolve, reject, visible: ref(true) };
+		const data = { index: index++, use, options, resolve, reject, visible: ref(true), lock: ref(false) };
 		list.push(data);
 		const _close = () => {
 			return close(list.indexOf(data));
@@ -69,14 +69,23 @@ export const useInteractStore = defineStore(StoreKey.interact, () => {
 	function clear() {
 		transition(0, list.length);
 	}
+	/** 处理过渡 */
 	async function transition(start: number, count: number) {
+		// 需要判断是否被锁
+		const unlocked: InteractStoreListItem[] = [];
 		list.slice(start, start + count).forEach(item => {
+			if (item.lock.value) {
+				return;
+			}
+			unlocked.push(item);
 			item.visible.value = false;
 		});
 		await delay(InteractConfig.duration);
-		list.splice(start, count).forEach(item => {
-			item.resolve({ type: CloseTypes.Close });
-		});
+		for (const item of unlocked) {
+			list.splice(list.indexOf(item), 1).forEach(item => {
+				item.resolve({ type: CloseTypes.Close });
+			});
+		}
 	}
 
 	return {

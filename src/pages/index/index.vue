@@ -6,20 +6,20 @@
 				<template v-for="(item, index) of bookshelf" :key="item.id + '-' + index">
 					<view class="width-full flex flex-row flex-nowrap bookshelf_item" @click.stop="select(item)">
 						<view class="height-full book_left">
-							<Image class="full" :src="item.img" mode="heightFix"></Image>
+							<Image class="full" :src="item.img" mode="heightFix" />
 						</view>
-						<view class="flex flex-col justify-evenly flex-1">
+						<view class="flex flex-col justify-evenly flex-1 overflow-hidden">
 							<view class="flex flex-row flex-nowrap book_right_top">
 								<text class="flex-1 text-ellipsis">{{ item.name }}</text>
 								<text class="flex flex-center book_operate" @click.stop="operate(item)">
 									<text class="icon-operate"></text>
 								</text>
 							</view>
-							<view class="book_right_center">
-								<text class="text-ellipsis">{{ item.author }}</text>
+							<view class="flex book_right_center">
+								<text class="flex-1 text-ellipsis">{{ item.author }}</text>
 							</view>
-							<view class="book_right_bottom">
-								<text class="text-ellipsis">{{ item.description }}</text>
+							<view class="flex book_right_bottom">
+								<text class="flex-1 text-ellipsis">{{ item.description }}</text>
 							</view>
 						</view>
 					</view>
@@ -46,7 +46,9 @@ const bookshelf = shallowReactive<Bookshelf[]>([
 		name: '书籍1',
 		img: 'https://picsum.photos/70/90',
 		author: '作者1',
-		description: '书籍1的描述',
+		description: Array.from({ length: 100 })
+			.map(() => '书籍1的描述')
+			.join(''),
 	},
 ]);
 
@@ -57,7 +59,9 @@ function select(e: Bookshelf) {
 function operate(e: Bookshelf) {
 	const { popup } = interactStore;
 	popup({
+		button: false,
 		component: BookInfo,
+		componentProps: { ...e },
 	});
 }
 

@@ -15,7 +15,7 @@
 					</view>
 				</view>
 			</template>
-			<template v-else>
+			<template v-else-if="props.closeIcon">
 				<text
 					class="icon-close absolute popup_close"
 					:class="[props.closePosition]"
@@ -24,7 +24,7 @@
 			</template>
 			<view class="flex flex-col full relative">
 				<view v-if="props.title" class="flex flex-center popup_title">{{ props.title }}</view>
-				<view class="popup_content">
+				<view class="full popup_content">
 					<template v-if="props.component">
 						<component :is="props.component" v-bind="{ ...props.componentProps }" />
 					</template>

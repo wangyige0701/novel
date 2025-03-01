@@ -83,7 +83,7 @@ onBeforeUnmount(() => {
 	// color
 	background-color: Scss.$white;
 	color: Scss.$text-normal-color;
-	font-size: Scss.$font-base;
+	font-size: Scss.$font-lg;
 	text-align: center;
 	// transition
 	transition-duration: 0.3s;

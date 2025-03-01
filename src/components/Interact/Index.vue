@@ -1,6 +1,7 @@
 <template>
 	<template v-for="(item, index) of render" :key="'interact-' + item.index">
 		<Mask
+			:class="[`mask_${item.use}`]"
 			v-bind="{ ...item.options }"
 			:z-index="InteractConfig.baseZIndex + index"
 			:close-mask="() => closeByMask(item, index)"
@@ -55,6 +56,7 @@ const render = computed(() => {
 	return useInteract.value.map(item => {
 		const { index, use, options, visible, lock, reject, resolve } = item;
 		return {
+			use,
 			index,
 			options,
 			visible,
@@ -104,3 +106,9 @@ function close(item: ElementOf<UnRef<typeof render>>, inedx: number) {
 	}, InteractConfig.duration);
 }
 </script>
+
+<style scoped lang="scss">
+.mask_tip {
+	top: var(--status-bar-height);
+}
+</style>

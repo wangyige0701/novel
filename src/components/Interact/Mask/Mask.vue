@@ -1,12 +1,13 @@
 <template>
 	<view
-		class="flex flex-col flex-center fixed mask"
+		class="flex flex-col flex-center fixed overflow-hidden mask"
 		:animation="animation"
 		:style="{
 			zIndex: props.zIndex,
 			background: props.maskBgColor,
 			pointerEvents: props.mask ? 'auto' : 'none',
 		}"
+		v-bind="{ ...$attrs }"
 		@click.stop="close"
 	>
 		<slot></slot>

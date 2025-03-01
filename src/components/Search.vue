@@ -90,8 +90,8 @@ $gap: math.div(Scss.$gap-base, 2);
 }
 
 .search_box {
-	height: math.div(Scss.$search-bar-height, 2);
-	border-radius: math.div(Scss.$search-bar-height, 4);
+	height: math.div(Scss.$search-bar-height, 1.5);
+	border-radius: math.div(Scss.$search-bar-height, 2);
 	color: inherit;
 	font-size: inherit;
 	transition-property: border-color;
@@ -107,7 +107,7 @@ $gap: math.div(Scss.$gap-base, 2);
 	width: Scss.$icon-size * 1.5;
 	padding-left: $gap;
 	transition-property: color;
-	font-weight: bold;
+	font-size: 35rpx;
 	box-sizing: content-box;
 }
 

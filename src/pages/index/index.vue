@@ -1,5 +1,5 @@
 <template>
-	<Page class="full-screen flex flex-col justify-start items-center container">
+	<Page class="flex flex-col justify-start items-center container">
 		<Search :back="false" />
 		<view class="width-full flex flex-col flex-1 content bookshelf">
 			<view class="width-full">

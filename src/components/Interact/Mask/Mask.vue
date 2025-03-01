@@ -1,5 +1,5 @@
 <template>
-	<cover-view
+	<view
 		class="flex flex-col flex-center fixed mask"
 		:animation="animation"
 		:style="{
@@ -10,7 +10,7 @@
 		@click.stop="close"
 	>
 		<slot></slot>
-	</cover-view>
+	</view>
 </template>
 
 <script setup lang="ts">

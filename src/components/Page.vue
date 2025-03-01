@@ -1,5 +1,5 @@
 <template>
-	<view class="flex flex-col">
+	<view class="flex flex-col full-screen">
 		<view class="status_bar"></view>
 		<view class="page">
 			<view v-bind="{ ...$attrs }">

@@ -1,5 +1,5 @@
 <template>
-	<view class="flex flex-col full-screen">
+	<view class="full-screen">
 		<view class="status_bar"></view>
 		<view class="page">
 			<view v-bind="{ ...$attrs }">
@@ -29,6 +29,6 @@ defineOptions({
 	height: var(--status-bar-height);
 }
 .page {
-	flex: 1;
+	height: calc(100vh - var(--status-bar-height));
 }
 </style>

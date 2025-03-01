@@ -8,6 +8,8 @@ export class Path {
 	static navigateBack(options?: PathNavigateBack) {
 		return new Promise((resolve, reject) => {
 			uni.navigateBack({
+				animationType: 'pop-out',
+				animationDuration: 200,
 				...options,
 				...callback(resolve, reject, options),
 			});
@@ -20,6 +22,8 @@ export class Path {
 	static navigateTo(url: string, options?: PathNavigateTo) {
 		return new Promise((resolve, reject) => {
 			uni.navigateTo({
+				animationType: 'pop-in',
+				animationDuration: 200,
 				...options,
 				url: params(url, options?.params),
 				...callback(resolve, reject, options),

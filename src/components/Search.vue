@@ -75,10 +75,11 @@ $gap: math.div(Scss.$gap-base, 2);
 		padding-left: Scss.$gap-base;
 	}
 	&.visible {
-		width: Scss.$font-xl * 2;
+		width: Scss.$font-xl * 2.5;
 	}
 	.icon-back {
 		font-size: Scss.$font-xl * 1.2;
+		font-weight: bold;
 	}
 }
 
@@ -86,11 +87,11 @@ $gap: math.div(Scss.$gap-base, 2);
 	height: Scss.$search-bar-height;
 	background-color: transparent;
 	color: Scss.$text-normal-color;
-	font-size: Scss.$font-xl;
+	font-size: Scss.$font-xl * 1.1;
 }
 
 .search_box {
-	height: math.div(Scss.$search-bar-height, 1.5);
+	height: math.div(Scss.$search-bar-height, 1.6);
 	border-radius: math.div(Scss.$search-bar-height, 2);
 	color: inherit;
 	font-size: inherit;
@@ -113,11 +114,14 @@ $gap: math.div(Scss.$gap-base, 2);
 
 .search_input {
 	padding: 0 Scss.$gap-base 0 $gap;
-	font-size: 30rpx;
+	font-size: 35rpx;
 }
 
 .search_text {
 	padding: 0 Scss.$gap-base;
 	color: Scss.$text-color;
+	&:active {
+		color: Scss.$text-secondary-color;
+	}
 }
 </style>

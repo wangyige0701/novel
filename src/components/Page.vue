@@ -1,7 +1,12 @@
 <template>
-	<view v-bind="{ ...$attrs }">
-		<slot></slot>
-		<Interact />
+	<view class="flex flex-col">
+		<view class="status_bar"></view>
+		<view class="page">
+			<view v-bind="{ ...$attrs }">
+				<slot></slot>
+				<Interact />
+			</view>
+		</view>
 	</view>
 </template>
 
@@ -18,3 +23,12 @@ defineOptions({
 	inheritAttrs: false,
 });
 </script>
+
+<style scoped lang="scss">
+.status_bar {
+	height: var(--status-bar-height);
+}
+.page {
+	flex: 1;
+}
+</style>

@@ -9,7 +9,7 @@
 							<Image class="full" :src="item.img" mode="heightFix" />
 						</view>
 						<view class="flex flex-col justify-evenly flex-1 overflow-hidden">
-							<view class="flex flex-row flex-nowrap book_right_top">
+							<view class="flex flex-row flex-nowrap items-center book_right_top">
 								<text class="flex-1 text-ellipsis">{{ item.name }}</text>
 								<text class="flex flex-center book_operate" @click.stop="operate(item)">
 									<text class="icon-operate"></text>
@@ -26,6 +26,13 @@
 				</template>
 			</view>
 		</view>
+		<radio-group @change="changeRadio">
+			<label v-for="(item, index) of test" :key="index">
+				<radio :value="item.name" :checked="item.name === 'tip'" />
+				<view>{{ item.name }}</view>
+			</label>
+		</radio-group>
+		<button @click="useTest">打开</button>
 	</Page>
 </template>
 
@@ -57,40 +64,57 @@ function select(e: Bookshelf) {
 	console.log(e);
 }
 
-function operate(e: Bookshelf) {
-	const { popup, tip, modal, loading } = interactStore;
-	// popup({
-	// 	button: false,
-	// 	component: BookInfo,
-	// 	componentProps: { ...e },
-	// });
+function operate(e: Bookshelf) {}
 
-	// tip.success({
-	// 	message: '功能开发中',
-	// 	position: 'stick-top',
-	// });
-
-	// modal({
-	// 	title: '提示',
-	// 	message: '功能开发中',
-	// })
-	// 	.then(res => {
-	// 		console.log(res);
-	// 	})
-	// 	.catch(err => {
-	// 		console.log(err);
-	// 	});
-
-	loading({
-		duration: 2000,
-	});
+const current = ref(0);
+const test = [
+	{
+		name: 'tip',
+	},
+	{
+		name: 'popup',
+	},
+	{
+		name: 'modal',
+	},
+	{
+		name: 'loading',
+	},
+];
+function changeRadio(e: any) {
+	const index = test.findIndex(item => item.name === e.detail.value);
+	current.value = index;
 }
-
-// Path.navigateTo(Pages.Search, {
-// 	params: {
-// 		search: 'test',
-// 	},
-// });
+function useTest() {
+	const target = test[current.value]?.name;
+	const { popup, tip, modal, loading } = interactStore;
+	if (target === 'popup') {
+		popup({
+			title: '提示',
+			button: false,
+		});
+	} else if (target === 'tip') {
+		tip.warning({
+			message: '功能开发中',
+			position: 'stick-top',
+		});
+	} else if (target === 'modal') {
+		modal({
+			title: '提示',
+			message: '功能开发中',
+		})
+			.then(res => {
+				console.log(res);
+			})
+			.catch(err => {
+				console.log(err);
+			});
+	} else if (target === 'loading') {
+		loading({
+			duration: 2000,
+		});
+	}
+}
 </script>
 
 <style scoped lang="scss">
@@ -124,6 +148,7 @@ function operate(e: Bookshelf) {
 	color: Scss.$black;
 	.book_operate {
 		width: 50rpx;
+		padding: 10rpx;
 		color: Scss.$text-normal-color;
 		transform: rotate(90deg);
 	}

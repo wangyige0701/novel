@@ -39,6 +39,7 @@ import { Pages } from '@/config/pages';
 import { useInteractStore } from '@/store/interact';
 import BookInfo from '@/components/pages/index/BookInfo.vue';
 
+backInteract();
 const interactStore = useInteractStore();
 const bookshelf = shallowReactive<Bookshelf[]>([
 	{
@@ -57,11 +58,31 @@ function select(e: Bookshelf) {
 }
 
 function operate(e: Bookshelf) {
-	const { popup } = interactStore;
-	popup({
-		button: false,
-		component: BookInfo,
-		componentProps: { ...e },
+	const { popup, tip, modal, loading } = interactStore;
+	// popup({
+	// 	button: false,
+	// 	component: BookInfo,
+	// 	componentProps: { ...e },
+	// });
+
+	// tip.success({
+	// 	message: '功能开发中',
+	// 	position: 'stick-top',
+	// });
+
+	// modal({
+	// 	title: '提示',
+	// 	message: '功能开发中',
+	// })
+	// 	.then(res => {
+	// 		console.log(res);
+	// 	})
+	// 	.catch(err => {
+	// 		console.log(err);
+	// 	});
+
+	loading({
+		duration: 2000,
 	});
 }
 
@@ -70,8 +91,6 @@ function operate(e: Bookshelf) {
 // 		search: 'test',
 // 	},
 // });
-
-onBackPress(backInteract);
 </script>
 
 <style scoped lang="scss">

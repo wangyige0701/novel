@@ -31,6 +31,7 @@ import Page from '@/components/Page.vue';
 import Search from '@/components/Search.vue';
 import Image from '@/components/Image.vue';
 
+backInteract();
 const searchContent = ref('');
 const searchResult = shallowReactive<SearchBook[]>([
 	{
@@ -46,8 +47,6 @@ onLoad(options => {
 	const { search = '' } = options || {};
 	searchContent.value = search;
 });
-
-onBackPress(backInteract);
 </script>
 
 <style scoped lang="scss">

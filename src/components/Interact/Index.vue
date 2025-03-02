@@ -54,16 +54,9 @@ const useInteract = useInteractStore();
 const itemRefs = ref<any[]>([]);
 const render = computed(() => {
 	return useInteract.value.map(item => {
-		const { index, use, options, visible, lock, reject, resolve } = item;
+		const { use, options } = item;
 		return {
-			use,
-			index,
-			options,
-			visible,
-			/** 是否锁定，组件内部更新状态，阻止关闭 */
-			lock,
-			resolve,
-			reject,
+			...item,
 			component: getComponent(use),
 			maskClosable: pick(options, 'maskClosable'),
 			mask: pick(options, 'mask'),

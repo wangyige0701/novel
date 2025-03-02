@@ -33,7 +33,6 @@ export type InteractStoreListItem = {
 	reject: PromiseReject;
 	visible: Ref<boolean>;
 	lock: Ref<boolean>;
-	back: boolean;
 };
 
 export type InteractStoreOptions<T extends InteractStoreUses> = T extends 'modal'

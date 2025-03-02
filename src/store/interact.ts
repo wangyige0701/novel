@@ -33,13 +33,9 @@ export const useInteractStore = defineStore(StoreKey.interact, () => {
 	const list = shallowReactive<InteractStoreListItem[]>([]);
 	const value = computed(() => [...list]); // 追踪依赖
 
-	function add<T extends InteractStoreUses>(
-		use: T,
-		options: InteractStoreOptions<T> & InteractMask,
-		back: boolean = true,
-	) {
+	function add<T extends InteractStoreUses>(use: T, options: InteractStoreOptions<T> & InteractMask) {
 		const { resolve, reject, promise } = createPromise<InteractResolve>();
-		const data = { index: index++, use, options, resolve, reject, visible: ref(true), lock: ref(false), back };
+		const data = { index: index++, use, options, resolve, reject, visible: ref(true), lock: ref(false) };
 		list.push(data);
 		const _close = () => {
 			return close(list.indexOf(data));
@@ -69,8 +65,16 @@ export const useInteractStore = defineStore(StoreKey.interact, () => {
 			return -1;
 		}
 		const last = list[list.length - 1];
-		if (!last.back) {
-			return list.length - 1;
+		if (last) {
+			const { use } = last;
+			if (use === 'loading') {
+				// 加载状态阻止物理返回
+				return list.length - 1;
+			}
+			if (use === 'tip') {
+				// 提示组件不影响物理返回
+				return -1;
+			}
 		}
 		return close();
 	}
@@ -107,18 +111,14 @@ export const useInteractStore = defineStore(StoreKey.interact, () => {
 		modal: <T extends Component>(options?: InteractModalOptions<T>) => add('modal', { ...options, mask: true }),
 		popup: <T extends Component>(options?: InteractPopupOptions<T>) => add('popup', { ...options, mask: true }),
 		loading: (options?: InteractLoadingOptions) => {
-			return add('loading', { ...options, mask: true, maskClosable: false }, false);
+			return add('loading', { ...options, mask: true, maskClosable: false });
 		},
 		tip: {
 			...bindType((type, options: InteractTipOptions | string) => {
 				if (isString(options)) {
 					options = { message: options };
 				}
-				return add(
-					'tip',
-					{ ...options, type, mask: false, maskBgColor: 'transparent', maskClosable: false },
-					false,
-				);
+				return add('tip', { ...options, type, mask: false, maskBgColor: 'transparent', maskClosable: false });
 			}),
 		},
 	};

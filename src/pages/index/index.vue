@@ -8,7 +8,7 @@
 						<view class="height-full book_left">
 							<Image class="full" :src="item.img" mode="heightFix" />
 						</view>
-						<view class="flex flex-col justify-evenly flex-1 overflow-hidden">
+						<view class="flex flex-col justify-evenly flex-1 hidden">
 							<view class="flex flex-row flex-nowrap items-center book_right_top">
 								<text class="flex-1 text-ellipsis">{{ item.name }}</text>
 								<text class="flex flex-center book_operate" @click.stop="operate(item)">

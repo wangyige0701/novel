@@ -1,6 +1,6 @@
 <template>
 	<view
-		class="flex flex-col flex-center fixed overflow-hidden mask"
+		class="flex flex-col flex-center fixed hidden mask"
 		:animation="animation"
 		:style="{
 			zIndex: props.zIndex,

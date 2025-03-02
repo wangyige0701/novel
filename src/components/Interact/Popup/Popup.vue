@@ -41,6 +41,7 @@ import InteractConfig from '@/config/interact';
 import Button from '@/components/Button.vue';
 import { useStatusRef } from '@/common/status';
 import { CloseTypes } from '@/config/interact';
+import { useAnimation } from '../animation';
 
 const size = ref(0);
 const statusRef = useStatusRef('cancel', 'confirm');
@@ -54,35 +55,38 @@ const props = withDefaults(defineProps<InteractPopupProps & InteractExtend>(), {
 	confirmButtonText: InteractConfig.confirmText,
 });
 const emit = defineEmits<InteractExtendEmit>();
-const animation = computed(() => {
-	const animation = uni.createAnimation({
+const animation = useAnimation(
+	() => props.visible,
+	animation => {
+		let value = 0;
+		if (!props.visible) {
+			value = unref(size);
+		}
+		// 不同方向的动画
+		if (props.direction === 'bottom') {
+			animation.translateY(value).step();
+		} else if (props.direction === 'top') {
+			animation.translateY(-1 * value).step();
+		} else if (props.direction === 'left') {
+			animation.translateX(-1 * value).step();
+		} else if (props.direction === 'right') {
+			animation.translateX(value).step();
+		} else if (props.direction === 'center') {
+			if (props.visible) {
+				animation.scale(1, 1).step();
+			} else {
+				animation.scale(0.8, 0.8).step();
+			}
+		} else {
+			return VOID_OBJECT;
+		}
+		return animation.export();
+	},
+	{
 		duration: props.transitionDuration,
 		timingFunction: props.transitionTimingFunction,
-	});
-	let value = 0;
-	if (!props.visible) {
-		value = unref(size);
-	}
-	// 不同方向的动画
-	if (props.direction === 'bottom') {
-		animation.translateY(value).step();
-	} else if (props.direction === 'top') {
-		animation.translateY(-1 * value).step();
-	} else if (props.direction === 'left') {
-		animation.translateX(-1 * value).step();
-	} else if (props.direction === 'right') {
-		animation.translateX(value).step();
-	} else if (props.direction === 'center') {
-		if (props.visible) {
-			animation.scale(1, 1).step();
-		} else {
-			animation.scale(0.8, 0.8).step();
-		}
-	} else {
-		return VOID_OBJECT;
-	}
-	return animation.export();
-});
+	},
+);
 
 watch(
 	() => props.direction,

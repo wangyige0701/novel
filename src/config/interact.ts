@@ -17,4 +17,6 @@ export default {
 	timingFunction: 'ease',
 	confirmText: '确定',
 	cancelText: '取消',
+	/** 延迟渲染，app 端动画处理 */
+	renderDelay: 50,
 } as const;

@@ -17,6 +17,7 @@
 <script setup lang="ts">
 import type { InteractExtend, InteractMaskProps } from '@/@types/components/interact';
 import InteractConfig from '@/config/interact';
+import { useAnimation } from '../animation';
 
 const props = withDefaults(defineProps<InteractMaskProps & Pick<InteractExtend, 'transitionTimingFunction'>>(), {
 	mask: true,
@@ -26,18 +27,21 @@ const props = withDefaults(defineProps<InteractMaskProps & Pick<InteractExtend, 
 	duration: InteractConfig.duration,
 	timingFunction: 'ease',
 });
-const animation = computed(() => {
-	const animation = uni.createAnimation({
+const animation = useAnimation(
+	() => props.visible,
+	animation => {
+		if (props.visible) {
+			animation.opacity(1).step();
+		} else {
+			animation.opacity(0).step();
+		}
+		return animation.export();
+	},
+	{
 		duration: props.duration,
 		timingFunction: props.transitionTimingFunction,
-	});
-	if (props.visible) {
-		animation.opacity(1).step();
-	} else {
-		animation.opacity(0).step();
-	}
-	return animation.export();
-});
+	},
+);
 
 function close() {
 	if (!props.maskClosable || !props.closeMask) {

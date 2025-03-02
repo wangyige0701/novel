@@ -8,6 +8,7 @@
 import type { InteractExtend, InteractTipProps } from '@/@types/components/interact';
 import { isNumber, VOID_OBJECT } from '@wang-yige/utils';
 import { CloseTypes } from '@/config/interact';
+import { useAnimation } from '../animation';
 
 const height = ref(0);
 const props = withDefaults(defineProps<InteractTipProps & InteractExtend>(), {
@@ -15,22 +16,25 @@ const props = withDefaults(defineProps<InteractTipProps & InteractExtend>(), {
 	type: 'success',
 	duration: 3000,
 });
-const animation = computed(() => {
-	props.visible, height.value;
-	if ((props.position !== 'stick-bottom' && props.position !== 'stick-top') || !height.value) {
-		return VOID_OBJECT;
-	}
-	const animation = uni.createAnimation({
+const animation = useAnimation(
+	() => (props.position, props.visible, height.value),
+	animation => {
+		props.visible, height.value;
+		if ((props.position !== 'stick-bottom' && props.position !== 'stick-top') || !height.value) {
+			return VOID_OBJECT;
+		}
+		if (props.position === 'stick-bottom') {
+			animation.translateY(props.visible ? -1 * unref(height) : 0).step();
+		} else {
+			animation.translateY(props.visible ? 0 : -1 * unref(height)).step();
+		}
+		return animation.export();
+	},
+	{
 		duration: props.transitionDuration,
 		timingFunction: props.transitionTimingFunction,
-	});
-	if (props.position === 'stick-bottom') {
-		animation.translateY(props.visible ? -1 * unref(height) : 0).step();
-	} else {
-		animation.translateY(props.visible ? 0 : -1 * unref(height)).step();
-	}
-	return animation.export();
-});
+	},
+);
 
 function getHeight() {
 	const instance = getCurrentInstance();

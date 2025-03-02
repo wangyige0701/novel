@@ -25,6 +25,7 @@ import Button from '@/components/Button.vue';
 import { isAsyncFunction, isPromise, isPromiseLike } from '@wang-yige/utils';
 import { useStatusRef } from '@/common/status';
 import { CloseTypes } from '@/config/interact';
+import { useAnimation } from '../animation';
 
 const statusRef = useStatusRef('cancel', 'confirm');
 const props = withDefaults(defineProps<InteractModalProps & InteractExtend>(), {
@@ -34,18 +35,21 @@ const props = withDefaults(defineProps<InteractModalProps & InteractExtend>(), {
 	confirmButtonText: InteractConfig.confirmText,
 });
 const emit = defineEmits<InteractExtendEmit>();
-const animation = computed(() => {
-	const animation = uni.createAnimation({
+const animation = useAnimation(
+	() => props.visible,
+	animation => {
+		if (props.visible) {
+			animation.scale(1, 1).step();
+		} else {
+			animation.scale(1.2, 1.2).step();
+		}
+		return animation.export();
+	},
+	{
 		duration: props.transitionDuration,
 		timingFunction: props.transitionTimingFunction,
-	});
-	if (props.visible) {
-		animation.scale(1, 1).step();
-	} else {
-		animation.scale(1.2, 1.2).step();
-	}
-	return animation.export();
-});
+	},
+);
 
 async function changeLock(state: boolean) {
 	emit('update:lock', state);

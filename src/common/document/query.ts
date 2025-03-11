@@ -7,7 +7,7 @@ import type {
 	Query,
 	QueryResult,
 } from '@/@types/common/document';
-import { firstUpperCase, isArray, isString, splitByUpper } from '@wang-yige/utils';
+import { firstLowerCase, firstUpperCase, isArray, isString, splitByUpper } from '@wang-yige/utils';
 import { Combiner } from './combiner';
 import { handleSelector } from './selector';
 
@@ -115,23 +115,51 @@ function shallow(data: HTMLParse[], callback: TravselCalback, all: boolean = fal
  */
 function handleSelectorType(matchTarget: HTMLParseTag, selector: SelectorInfo) {
 	if (selector.type === 'tag') {
-		if (selector.name === '*') {
+		if (selector.data === '*') {
 			return true;
 		}
-		return matchTarget.tag === selector.name;
+		return matchTarget.tag === selector.data;
 	}
-	const attrs = matchTarget.attrs.find(item => item.name === selector.type);
-	if (!attrs) {
-		return false;
+	if (selector.type === 'attr') {
+		const selectorAttrs = selector.data;
+		// 遍历选择器筛选的属性列表，必须全部匹配，才能返回 true
+		for (const attr of selectorAttrs) {
+			// 筛选属性时，find 方法一定会筛选首次出现的，所以不需要对同属性过滤进行处理
+			const attrTarget = matchTarget.attrs.find(item => item.name === attr.key);
+			if (!attrTarget) {
+				return false;
+			}
+			if (!attr.value && attrTarget.value !== attrTarget.name && attrTarget.value !== '') {
+				return false;
+			}
+			if (attrTarget.value !== attr.value) {
+				return false;
+			}
+		}
+		return true;
 	}
-	const attrsValue = attrs.value.split(' ').filter(Boolean);
-	const toCheckNames = [...new Set(selector.name)];
-	for (const name of toCheckNames) {
-		if (!attrsValue.includes(name)) {
+	if (selector.type === 'class') {
+		const cls = matchTarget.attrs.find(item => item.name === 'class');
+		if (!cls || !cls.value) {
 			return false;
 		}
+		const clss = cls.value.split(/\s+/);
+		const selectorClasses = selector.data;
+		for (const selectorClass of selectorClasses) {
+			if (!clss.includes(selectorClass)) {
+				return false;
+			}
+		}
+		return true;
 	}
-	return true;
+	if (selector.type === 'id') {
+		const id = matchTarget.attrs.find(item => item.name === 'id');
+		if (!id || !id.value) {
+			return false;
+		}
+		return id.value === selector.data;
+	}
+	return false;
 }
 
 /**
@@ -326,7 +354,7 @@ function queryDataset(data: HTMLParse | undefined, name?: string) {
 			if (!key) {
 				continue;
 			}
-			const _key = key.trim().split('-').map(firstUpperCase).join('');
+			const _key = firstLowerCase(key.trim().split('-').map(firstUpperCase).join(''));
 			if (isString(name) && name === _key) {
 				return value.trim();
 			}

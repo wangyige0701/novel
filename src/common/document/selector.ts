@@ -1,5 +1,5 @@
-import type { AttributeData, MatchResult, SelectorInfo } from '@/@types/common/document';
-import { getAttributeDatas, getDataInQuote, nameMatch, split } from './match';
+import type { AttributeData, MatchResult, SelectorInfo, SelectorMap } from '@/@types/common/document';
+import { allAttr, matchAttr, matchClass, matchId, matchTag, splitSelector } from './match';
 import { Combiner } from './combiner';
 
 /**
@@ -8,7 +8,7 @@ import { Combiner } from './combiner';
  * @param str
  * @returns
  */
-function regexpMatchWithNoAdvance(regexp: RegExp, str: string) {
+function useExec(regexp: RegExp, str: string) {
 	const result: RegExpExecArray[] = [];
 	let match: RegExpExecArray | null;
 	regexp.lastIndex = 0;
@@ -33,23 +33,20 @@ const combinerTypes: { [key: string]: Combiner } = {
  * @returns
  */
 function handleSelectorAttribute(attribute: string) {
-	getAttributeDatas.lastIndex = 0;
 	const result: AttributeData[] = [];
-	const allAttrs = [...attribute.matchAll(getAttributeDatas)];
-	for (const attr of allAttrs) {
-		const [_$, key, value] = attr;
-		const matchResult = value.match(getDataInQuote);
-		if (!matchResult) {
+	const attrs = [...attribute.matchAll(allAttr)];
+	for (const attr of attrs) {
+		if (!attr.groups) {
 			continue;
 		}
-		const [_$$, doubleQuote, singleQuote, fullValue] = matchResult;
-		const validValue = doubleQuote || singleQuote || fullValue;
-		if (!validValue) {
+		const { name, double, single, full } = attr.groups;
+		if (!name) {
 			continue;
 		}
+		const value = double || single || full || '';
 		result.push({
-			key,
-			value: validValue,
+			key: name,
+			value,
 		});
 	}
 	return result;
@@ -57,55 +54,62 @@ function handleSelectorAttribute(attribute: string) {
 
 /**
  * 判断选择器的类型并且归类
- * @param names
+ * @param selector 选择器
+ * @param data 数据收集对象
  */
-function handleSelectorType(matchName: string, data: MatchResult) {
-	nameMatch.lastIndex = 0;
-	const names = [...matchName.matchAll(nameMatch)];
-	for (const name of names) {
-		if (!name.groups) {
-			continue;
+function handleSelectorType(selector: string, data: MatchResult) {
+	let value = selector.trim();
+	function advance(n: number) {
+		value = value.substring(n).trimStart();
+	}
+	function find<T extends SelectorInfo['type']>(
+		data: SelectorInfo[],
+		type: T,
+	): { type: T; data: SelectorMap[T] } | undefined {
+		return data.find(item => item.type === type) as { type: T; data: SelectorMap[T] } | undefined;
+	}
+	while (value) {
+		const match =
+			value.match(matchClass) || value.match(matchId) || value.match(matchTag) || value.match(matchAttr);
+		if (!match || !match[0] || !match.groups) {
+			break;
 		}
-		const { idVal, classVal, tagVal, attrs } = name.groups;
-		const [isId, isClass, isTag] = [!!idVal, !!classVal, !!tagVal];
-		if (!(+isId ^ +isClass ^ +isTag)) {
-			// 全部都是false的情况
-			continue;
-		}
-		const typeVal = isId ? 'id' : isClass ? 'class' : 'tag';
-		const selectorVal = idVal || classVal || tagVal;
-		const innerData = data.selector.find(item => item.type === typeVal);
-		if (!innerData) {
-			const item: SelectorInfo =
-				typeVal === 'tag'
-					? {
-							type: typeVal,
-							name: selectorVal,
-						}
-					: {
-							type: typeVal,
-							name: [selectorVal],
-						};
-			data.selector.push(item);
+		const index = match.index || 0;
+		const { cls, id, tag, attr } = match.groups;
+		if (cls) {
+			const target = find(data.selector, 'class');
+			if (!target) {
+				data.selector.push({ type: 'class', data: [cls] });
+			} else {
+				target.data.push(cls);
+			}
+		} else if (id) {
+			const target = find(data.selector, 'id');
+			if (target) {
+				data.selector.length = 0;
+				break;
+			}
+			data.selector.push({ type: 'id', data: id });
+		} else if (tag) {
+			const target = find(data.selector, 'tag');
+			if (target) {
+				data.selector.length = 0;
+				break;
+			}
+			data.selector.push({ type: 'tag', data: tag });
+		} else if (attr) {
+			const target = find(data.selector, 'attr');
+			// 解析属性
+			const attrTarget = handleSelectorAttribute(attr);
+			if (!target) {
+				data.selector.push({ type: 'attr', data: attrTarget });
+			} else {
+				target.data.push(...attrTarget);
+			}
 		} else {
-			if (innerData.type === 'tag') {
-				innerData.name = selectorVal;
-			} else {
-				innerData.name.push(selectorVal);
-			}
+			break;
 		}
-		if (attrs) {
-			// 属性判断
-			const attrDatas = handleSelectorAttribute(attrs);
-			if (attrDatas.length === 0) {
-				continue;
-			}
-			if (Array.isArray(data.attributes)) {
-				data.attributes.push(...attrDatas);
-			} else {
-				data.attributes = attrDatas;
-			}
-		}
+		advance(index + match[0].length);
 	}
 }
 
@@ -124,25 +128,34 @@ function handleSelectorType(matchName: string, data: MatchResult) {
  */
 export function handleSelector(selector: string): MatchResult[] {
 	// 第二项是组合器，第三项是选择器
-	const selectorSplit = regexpMatchWithNoAdvance(split, selector);
+	const matchs = useExec(splitSelector, selector);
 	const result: MatchResult[] = [];
-	for (const item of selectorSplit) {
-		if (item.length === 0) {
+	for (const match of matchs) {
+		if (!match.groups) {
+			continue;
+		}
+		const group = match.groups!;
+		// 选择器
+		const selector = group.selector;
+		if (!selector) {
 			continue;
 		}
 		// 组合器
-		const combiner = (item[1] || '').trim();
-		const matchName = item[2].trim();
+		const combiner = (group.combiner || '').trim();
 		const localData = {
-			...(result.length > 0
-				? {
-						combiner: combiner in combinerTypes ? combinerTypes[combiner] : Combiner.DESCENDANT,
-					}
-				: {}),
 			selector: [],
-		} satisfies MatchResult;
-		handleSelectorType(matchName, localData);
-		if (localData.selector.length === 0) {
+		} as MatchResult;
+		if (result.length) {
+			// 第一个元素不需要组合器
+			if (combiner in combinerTypes) {
+				localData.combiner = combinerTypes[combiner];
+			} else {
+				localData.combiner = Combiner.DESCENDANT;
+			}
+		}
+		// 解析选择器
+		handleSelectorType(selector, localData);
+		if (!localData.selector.length) {
 			continue;
 		}
 		result.push(localData);

@@ -43,23 +43,38 @@ export type AttributeData = {
 
 export type SelectorInfo =
 	| {
-			type: 'id' | 'class';
-			name: string[];
+			type: 'class';
+			data: string[];
 	  }
 	| {
 			type: 'tag';
-			name: string;
+			data: string;
+	  }
+	| {
+			type: 'id';
+			data: string;
+	  }
+	| {
+			type: 'attr';
+			data: AttributeData[];
 	  };
+
+export type SelectorMap = {
+	class: string[];
+	tag: string;
+	id: string;
+	attr: AttributeData[];
+};
 
 export type MatchResult = {
 	/** 组合器 */
 	combiner?: Combiner;
 	selector: SelectorInfo[];
-	attributes?: AttributeData[];
+	// attributes?: AttributeData[];
 };
 
 /**
- * 选择器匹配数据时，如果匹配到生成的匹配对象
+ * 递归时记录选择器节点信息
  */
 export type SelectPosition = {
 	parent: HTMLParse[];

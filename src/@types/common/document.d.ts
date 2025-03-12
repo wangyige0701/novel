@@ -73,11 +73,13 @@ export type MatchResult = {
 	// attributes?: AttributeData[];
 };
 
+export type HTMLParent = HTMLParseTag | HTMLParseScript;
+
 /**
  * 递归时记录选择器节点信息
  */
 export type SelectPosition = {
-	parent: HTMLParse[];
+	parent?: HTMLParent;
 	target: HTMLParseTag;
 	index: number;
 };

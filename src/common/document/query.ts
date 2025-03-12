@@ -6,12 +6,13 @@ import type {
 	HTMLParseText,
 	Query,
 	QueryResult,
+	HTMLParent,
 } from '@/@types/common/document';
 import { firstLowerCase, firstUpperCase, isArray, isString, splitByUpper } from '@wang-yige/utils';
 import { Combiner } from './combiner';
 import { handleSelector } from './selector';
 
-type TravselCalback = (tag: HTMLParseTag, index: number, parent: HTMLParse[]) => boolean;
+type TravselCalback = (tag: HTMLParseTag, index: number, parent?: HTMLParent) => boolean;
 
 /**
  * 遍历树
@@ -24,13 +25,13 @@ function traversal(
 	deep: boolean,
 	data: HTMLParse[],
 	callback: TravselCalback,
-	parent?: HTMLParse[],
+	parent?: HTMLParent,
 ): undefined | SelectPosition {
 	const queue: HTMLParseTag[] = [];
 	let index = 0; // 只在tag处自增
 	for (const item of data) {
 		if (item.type === 'tag') {
-			const parentVal = parent ? parent : data;
+			const parentVal = parent ? parent : void 0;
 			if (callback(item, index, parentVal)) {
 				return {
 					parent: parentVal,
@@ -49,7 +50,7 @@ function traversal(
 		const item = queue.shift();
 		if (item && item.children && item.children.length) {
 			// 遍历子元素，传入当前元素作为父元素
-			const result = traversal(deep, item.children, callback, item.children);
+			const result = traversal(deep, item.children, callback, item);
 			if (result) {
 				return result;
 			}
@@ -60,8 +61,6 @@ function traversal(
 
 /**
  * 遍历树获取所有匹配对象
- * @param d
- * @param callback
  */
 function traversal_all(deep: boolean, data: HTMLParse[], callback: TravselCalback): SelectPosition[] {
 	const result: SelectPosition[] = [];
@@ -188,7 +187,7 @@ function handleCombinators(
 	selector: SelectorInfo[],
 	target: HTMLParseTag,
 	index: number,
-	parent: HTMLParse[],
+	parent: HTMLParent | undefined,
 ): SelectPosition[] {
 	let useFunc: typeof deep | typeof shallow = shallow;
 	let params: [HTMLParse[], TravselCalback] | undefined = void 0;
@@ -201,10 +200,14 @@ function handleCombinators(
 		params = [target.children, tag => handleSelectorMatched(tag, selector)];
 	} else if (combinator === Combiner.NEXT_SIBLING) {
 		// 接续兄弟
-		params = [parent, (tag, i) => i === index + 1 && handleSelectorMatched(tag, selector)];
+		if (parent) {
+			params = [[parent], (tag, i) => i === index + 1 && handleSelectorMatched(tag, selector)];
+		}
 	} else if (combinator === Combiner.SUBSEQUENT_SIBLING) {
 		// 后代兄弟
-		params = [parent, (tag, i) => i > index && handleSelectorMatched(tag, selector)];
+		if (parent) {
+			params = [[parent], (tag, i) => i > index && handleSelectorMatched(tag, selector)];
+		}
 	}
 	if (params) {
 		return useFunc(...params, true);
@@ -234,9 +237,9 @@ function select(data: HTMLParse[], selectorStr: string, all: boolean) {
 		if (matchSuccess.length === 0) {
 			return;
 		}
-		let record: SelectPosition[] = [];
+		const record: SelectPosition[] = [];
 		for (const matchItem of matchSuccess) {
-			let result = handleCombinators(combiner, selector, matchItem.target, matchItem.index, matchItem.parent);
+			const result = handleCombinators(combiner, selector, matchItem.target, matchItem.index, matchItem.parent);
 			// 最后一层，如果已经匹配到了结果则直接返回
 			if (!all && index === parseResult.length && result.length > 0) {
 				return result[0];
@@ -374,13 +377,12 @@ export function query(data: HTMLParse[] | HTMLParse) {
 	if (!isArray(data)) {
 		data = [data];
 	}
-	function queryResult(target: SelectPosition | undefined) {
-		return {
-			parent: target?.parent,
-			target: target?.target,
-			index: target?.index ?? -1,
-			...query(target ? target.target : ({} as HTMLParse)),
-		} as QueryResult;
+	function queryResult(target: SelectPosition | undefined): QueryResult {
+		const result = Object.create(query(target ? target.target : ({} as HTMLParse)));
+		result.target = target?.target;
+		result.parent = target?.parent;
+		result.index = target?.index ?? -1;
+		return result;
 	}
 	function _query(data: HTMLParse[]): Query {
 		return {

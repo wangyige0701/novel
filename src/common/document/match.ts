@@ -7,14 +7,14 @@ const split = `\\[\\]\\s\\f\\n\\r`;
 const attrGet = `"(?<double>[^"${split}]*)"|'(?<single>[^'${split}]*)'|(?<full>[^'"${split}]*)`;
 
 /**
- * 匹配属性的数据
+ * 解析属性的数据
  * @group name 属性名
  * @group double 双引号内的数据
  * @group single 单引号内的数据
  * @group full 全部数据
- * @example `.class[id="test"]` => name: id, double: test
+ * @example `id="test"` => name: id, double: test
  */
-export const allAttr = new RegExp(`\\s*(?<name>[^${split}=]*)(?:\\s*=\\s*(?:${attrGet})\\s*)?`);
+export const parseAttr = new RegExp(`\\s*(?<name>[^${split}=]*)(?:\\s*=\\s*(?:${attrGet})\\s*)?`);
 
 /**
  * 切割选择器，正则结果第一位是组合器，第二位是选择器

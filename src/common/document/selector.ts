@@ -1,5 +1,5 @@
 import type { AttributeData, MatchResult, SelectorInfo, SelectorMap } from '@/@types/common/document';
-import { allAttr, matchAttr, matchClass, matchId, matchTag, splitSelector } from './match';
+import { parseAttr, matchAttr, matchClass, matchId, matchTag, splitSelector } from './match';
 import { Combiner } from './combiner';
 
 /**
@@ -33,7 +33,7 @@ const combinerTypes: { [key: string]: Combiner } = {
  * @returns
  */
 function handleSelectorAttribute(attribute: string) {
-	const attr = attribute.match(allAttr);
+	const attr = attribute.match(parseAttr);
 	if (!attr) {
 		return;
 	}

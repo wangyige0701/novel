@@ -33,23 +33,22 @@ const combinerTypes: { [key: string]: Combiner } = {
  * @returns
  */
 function handleSelectorAttribute(attribute: string) {
-	const result: AttributeData[] = [];
-	const attrs = [...attribute.matchAll(allAttr)];
-	for (const attr of attrs) {
-		if (!attr.groups) {
-			continue;
-		}
-		const { name, double, single, full } = attr.groups;
-		if (!name) {
-			continue;
-		}
-		const value = double || single || full || '';
-		result.push({
-			key: name,
-			value,
-		});
+	const attr = attribute.match(allAttr);
+	if (!attr) {
+		return;
 	}
-	return result;
+	if (!attr.groups) {
+		return;
+	}
+	const { name, double, single, full } = attr.groups;
+	if (!name) {
+		return;
+	}
+	const value = double || single || full || '';
+	return {
+		key: name,
+		value,
+	} as AttributeData;
 }
 
 /**
@@ -101,10 +100,12 @@ function handleSelectorType(selector: string, data: MatchResult) {
 			const target = find(data.selector, 'attr');
 			// 解析属性
 			const attrTarget = handleSelectorAttribute(attr);
-			if (!target) {
-				data.selector.push({ type: 'attr', data: attrTarget });
-			} else {
-				target.data.push(...attrTarget);
+			if (attrTarget) {
+				if (!target) {
+					data.selector.push({ type: 'attr', data: [attrTarget] });
+				} else {
+					target.data.push(attrTarget);
+				}
 			}
 		} else {
 			break;
@@ -136,8 +137,8 @@ export function handleSelector(selector: string): MatchResult[] {
 		}
 		const group = match.groups!;
 		// 选择器
-		const selector = group.selector;
-		if (!selector) {
+		const pickSelector = group.selector;
+		if (!pickSelector) {
 			continue;
 		}
 		// 组合器
@@ -154,7 +155,7 @@ export function handleSelector(selector: string): MatchResult[] {
 			}
 		}
 		// 解析选择器
-		handleSelectorType(selector, localData);
+		handleSelectorType(pickSelector, localData);
 		if (!localData.selector.length) {
 			continue;
 		}

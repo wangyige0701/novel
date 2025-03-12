@@ -4,10 +4,7 @@ const split = `\\[\\]\\s\\f\\n\\r`;
 /**
  * 匹配双引号内的属性数据
  */
-const attrGet = `"(?<double>[^"${split}]*)"|'(?<single>[^'${split}]*)'|(?<full>[^${split}]*)`;
-
-/** 匹配组合器连接符 */
-const connect = `\\s*[>+~]?\\s*`;
+const attrGet = `"(?<double>[^"${split}]*)"|'(?<single>[^'${split}]*)'|(?<full>[^'"${split}]*)`;
 
 /**
  * 匹配属性的数据
@@ -17,7 +14,7 @@ const connect = `\\s*[>+~]?\\s*`;
  * @group full 全部数据
  * @example `.class[id="test"]` => name: id, double: test
  */
-export const allAttr = new RegExp(`\\[\\s*(?<name>[^${split}=]*)(?:\\s*=\\s*(?:${attrGet})\\s*)?\\]`, 'g');
+export const allAttr = new RegExp(`\\s*(?<name>[^${split}=]*)(?:\\s*=\\s*(?:${attrGet})\\s*)?`);
 
 /**
  * 切割选择器，正则结果第一位是组合器，第二位是选择器
@@ -25,7 +22,7 @@ export const allAttr = new RegExp(`\\[\\s*(?<name>[^${split}=]*)(?:\\s*=\\s*(?:$
  * @group selector 选择器
  * @example `div > .class + #id ~ span.a` => combiner: undefined, selector: div; combiner: >, selector: .class; ...
  */
-export const splitSelector = new RegExp(`(?<combiner>${connect})?(?<selector>[^>+~]+)`, 'g');
+export const splitSelector = /(?<combiner>[>+~\s]?)?(?<selector>[^>+~\s]+)/g;
 
 const ignore = `\\.#${split}`;
 

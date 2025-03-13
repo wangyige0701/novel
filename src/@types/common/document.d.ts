@@ -70,7 +70,6 @@ export type MatchResult = {
 	/** 组合器 */
 	combiner?: Combiner;
 	selector: SelectorInfo[];
-	// attributes?: AttributeData[];
 };
 
 export type HTMLParent = HTMLParseTag | HTMLParseScript;

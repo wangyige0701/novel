@@ -22,7 +22,7 @@ export const parseAttr = new RegExp(`\\s*(?<name>[^${split}=]*)(?:\\s*=\\s*(?:${
  * @group selector 选择器
  * @example `div > .class + #id ~ span.a` => combiner: undefined, selector: div; combiner: >, selector: .class; ...
  */
-export const splitSelector = /(?<combiner>[>+~\s]?)?(?<selector>[^>+~\s]+)/g;
+export const splitSelector = /(?<combiner>[>+~]?)?\s*(?<selector>[^>+~\s]+)/g;
 
 const ignore = `\\.#${split}`;
 

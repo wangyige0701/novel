@@ -2,6 +2,9 @@ import type { Combiner } from '@/common/document/combiner';
 
 // 解析
 
+/**
+ * 标签解析属性
+ */
 export type HTMLParseTagCommon = {
 	tag: string;
 	lowerCasedTag: string;
@@ -13,7 +16,8 @@ export type HTMLParseTagCommon = {
 	end: number;
 	startTagIndex: number;
 	endTagIndex: number;
-	children: HTMLParse[];
+	parent?: HTMLParseTag | HTMLParseScript;
+	children: Array<HTMLParse>;
 };
 
 export type HTMLParseText = {
@@ -32,7 +36,11 @@ export type HTMLParseScript = {
 	script: 'js' | 'css';
 } & HTMLParseTagCommon;
 
+/** 解析后有三种类型，文本、标签、脚本 */
 export type HTMLParse = HTMLParseText | HTMLParseTag | HTMLParseScript;
+
+/** 选择器可以匹配的 html 元素 */
+export type HTMLSelectorParse = HTMLParseTag | HTMLParseScript;
 
 // 查询
 
@@ -41,6 +49,9 @@ export type AttributeData = {
 	value: string;
 };
 
+/**
+ * 选择器解析数据
+ */
 export type SelectorInfo =
 	| {
 			type: 'class';
@@ -74,18 +85,20 @@ export type MatchResult = {
 
 export type HTMLParent = HTMLParseTag | HTMLParseScript;
 
+type HTMLTarget = HTMLParent;
+
 /**
  * 递归时记录选择器节点信息
  */
 export type SelectPosition = {
-	parent?: HTMLParent;
-	target: HTMLParseTag;
+	target: HTMLParent;
 	index: number;
 };
 
 export type QueryResult = Query & {
-	parent: HTMLParseTag | undefined;
-	target: HTMLParseTag | undefined;
+	parent?: HTMLParent;
+	target?: HTMLTarget;
+	children: HTMLParse[];
 	index: number;
 };
 
@@ -145,3 +158,33 @@ export interface Query {
 	 */
 	dataset(name: string): string;
 }
+
+/**
+ * 解析单元
+ */
+export type ExplorerItem = {
+	/**
+	 * 当前匹配对象
+	 */
+	current: HTMLSelectorParse;
+	/**
+	 * 当前层级
+	 */
+	currentLayer: number;
+	/**
+	 * 下一次匹配时对应的层级，为 -1 则表示后代选择器，即只要大于当前层级即可
+	 */
+	nextLayer: number;
+	/**
+	 * 下一次匹配的选择器索引
+	 */
+	nextSelectorIndex: number;
+	/**
+	 * 在同一层级下的位置
+	 */
+	layerPosition: number;
+	/**
+	 * 匹配是否结束
+	 */
+	isEnd: boolean;
+};

@@ -315,10 +315,12 @@ export function parseHTML<T extends boolean>(
 			end: match.end,
 			startTagIndex: match.start,
 			endTagIndex: -1,
+			parent: void 0,
 			children: [],
 		};
 		if (stack.length > 0) {
 			const target = stack[stack.length - 1];
+			item.parent = target;
 			target.children.push(item);
 		} else {
 			result.push(item);

@@ -2,109 +2,173 @@ import type {
 	SelectPosition,
 	SelectorInfo,
 	HTMLParse,
-	HTMLParseTag,
 	HTMLParseText,
 	Query,
 	QueryResult,
-	HTMLParent,
+	MatchResult,
+	ExplorerItem,
+	HTMLSelectorParse,
 } from '@/@types/common/document';
-import { firstLowerCase, firstUpperCase, isArray, isString, splitByUpper } from '@wang-yige/utils';
+import { firstLowerCase, firstUpperCase, isArray, isString, isUndef, splitByUpper } from '@wang-yige/utils';
 import { Combiner } from './combiner';
 import { handleSelector } from './selector';
 
-type TravselCalback = (tag: HTMLParseTag, index: number, parent?: HTMLParent) => boolean;
-
 /**
- * 遍历树
- * @param deep 是否遍历整棵树，为false则只遍历一层
- * @param data
- * @param callback
- * @param parent
+ * 遍历 html 语法树，根据选择器获取对象，广度优先遍历时，每个单元都和选择器第一位进行匹配，
+ * 匹配上则进行记录，后续每个单元都会遍历记录数组，根据下一个选择器状态进行匹配
  */
-function traversal(
-	deep: boolean,
-	data: HTMLParse[],
-	callback: TravselCalback,
-	parent?: HTMLParent,
-): undefined | SelectPosition {
-	const queue: HTMLParseTag[] = [];
-	let index = 0; // 只在tag处自增
-	for (const item of data) {
-		if (item.type === 'tag') {
-			const parentVal = parent ? parent : void 0;
-			if (callback(item, index, parentVal)) {
-				return {
-					parent: parentVal,
-					target: item,
-					index,
-				};
-			}
-			deep && queue.push(item);
-			index++;
+class Explorer {
+	/** 解析的层级 */
+	private layer = 0;
+	/** 当前正在遍历的语法树根节点 */
+	private root: HTMLParse[] = [];
+	/** 选择器解析对象数组 */
+	private selector: MatchResult[];
+	/** 是否获取所有匹配元素 */
+	private all: boolean;
+	/** 解析结果记录 */
+	private record: ExplorerItem[] = [];
+
+	constructor(ast: HTMLParse[], selector: string, all: boolean) {
+		this.all = all;
+		this.selector = handleSelector(selector);
+		if (this.selector.length) {
+			// 开始匹配
+			this.traversal([ast]);
 		}
 	}
-	if (!deep) {
-		return;
+
+	/**
+	 * 根据组合器获取下一层级
+	 */
+	private nextLayer(combiner?: Combiner) {
+		if (isUndef(combiner)) {
+			// 空值表示没有后续选择器，直接返回 -1，并且此处 -1 不会影响后续解析
+			return -1;
+		}
+		if (combiner === Combiner.NEXT_SIBLING || combiner === Combiner.SUBSEQUENT_SIBLING) {
+			return this.layer;
+		}
+		if (combiner === Combiner.CHILD) {
+			return this.layer + 1;
+		}
+		return -1;
 	}
-	while (queue.length) {
-		const item = queue.shift();
-		if (item && item.children && item.children.length) {
-			// 遍历子元素，传入当前元素作为父元素
-			const result = traversal(deep, item.children, callback, item);
-			if (result) {
-				return result;
+
+	/**
+	 * 遍历树
+	 */
+	private traversal(list: Array<HTMLParse[]>) {
+		const next: Array<HTMLParse[]> = [];
+		for (const root of list) {
+			// 不同父元素节点分开遍历，兄弟组合器匹配必须在同一个父节点下
+			this.root = root;
+			let index = 0;
+			for (const item of root) {
+				if (item.type === 'text') {
+					continue;
+				}
+				if (this.match(item, index++) && !this.all) {
+					return;
+				}
+				next.push([...item.children]);
 			}
 		}
+		this.layer++;
+		if (next.length) {
+			this.traversal(next);
+		}
 	}
-	return;
-}
 
-/**
- * 遍历树获取所有匹配对象
- */
-function traversal_all(deep: boolean, data: HTMLParse[], callback: TravselCalback): SelectPosition[] {
-	const result: SelectPosition[] = [];
-	traversal(deep, data, (tag, index, parent) => {
-		if (callback(tag, index, parent)) {
-			result.push({
-				parent,
-				target: tag,
-				index,
-			});
+	/**
+	 * 匹配成功后重置记录数据，如果选择器索引是最后一位，则将 isEnd 置为 true
+	 */
+	private success(item: HTMLSelectorParse, selectorIndex: number, index: number, target?: ExplorerItem) {
+		const nextMatch = this.selector[selectorIndex + 1];
+		const _target: ExplorerItem = {
+			current: item,
+			currentLayer: this.layer,
+			nextLayer: this.nextLayer(nextMatch?.combiner),
+			nextSelectorIndex: selectorIndex + 1,
+			layerPosition: index,
+			isEnd: selectorIndex === this.selector.length - 1,
+		};
+		if (!target) {
+			this.record.push(_target);
+		} else if (!target.isEnd) {
+			for (const key in _target) {
+				(target as any)[key] = _target[key as keyof ExplorerItem];
+			}
+		}
+		return _target.isEnd;
+	}
+
+	/**
+	 * 匹配失败后移除记录数据
+	 */
+	private failed(target: ExplorerItem) {
+		const index = this.record.indexOf(target);
+		if (index !== -1) {
+			this.record.splice(index, 1);
+		}
+	}
+
+	/**
+	 * 遍历记录数组依次进行匹配
+	 */
+	private match(item: HTMLSelectorParse, index: number) {
+		for (const record of this.record) {
+			if (record.isEnd) {
+				continue;
+			}
+			if (record.nextLayer === -1) {
+				if (this.layer <= record.currentLayer) {
+					// 【不触发匹配】-1 代表后代选择器的层级，当前层级必须大于上一次选择器匹配的层级
+					continue;
+				}
+			} else if (record.nextLayer > this.layer) {
+				// 【不触发匹配】其余选择器必须完全等于当前层级才算匹配成功
+				continue;
+			} else if (record.nextLayer < this.layer) {
+				// 【匹配失败】需要匹配的层级小于当前层级，说明已经不满足选择器条件
+				this.failed(record);
+				continue;
+			}
+			const selector = this.selector[record.nextSelectorIndex];
+			if (selector.combiner === Combiner.NEXT_SIBLING) {
+				// 【匹配失败】紧邻兄弟组合器，位置需要紧跟在前一个元素之后
+				if (index > record.layerPosition + 1) {
+					this.failed(record);
+					continue;
+				}
+			}
+			if (!handleSelectorMatched(item, selector.selector)) {
+				if (selector.combiner === Combiner.SUBSEQUENT_SIBLING && index === this.root.length - 1) {
+					// 【匹配失败】一般兄弟组合器，父节点最后一位还没有匹配上，则匹配失败
+					this.failed(record);
+				}
+				continue;
+			}
+			if (this.success(item, record.nextSelectorIndex, index, record) && !this.all) {
+				return true;
+			}
+		}
+		const firstSelector = this.selector[0];
+		if (handleSelectorMatched(item, firstSelector.selector)) {
+			if (this.success(item, 0, index) && !this.all) {
+				// 只查询一个元素时，如果首位匹配上，则直接返回
+				return true;
+			}
 		}
 		return false;
-	});
-	return result;
-}
-
-/**
- * 广度优先遍历树
- * @param data
- * @param callback
- * @param all 是否匹配树内所有满足条件的数据
- * @returns 返回匹配到的元素及其索引，以及父元素
- */
-function deep(data: HTMLParse[], callback: TravselCalback, all: true): SelectPosition[];
-function deep(data: HTMLParse[], callback: TravselCalback, all?: false): SelectPosition | undefined;
-function deep(data: HTMLParse[], callback: TravselCalback, all: boolean = false) {
-	if (all) {
-		return traversal_all(true, data, callback);
 	}
-	return traversal(true, data, callback);
-}
 
-/**
- * 不进行深度递归，只在第一层检测
- * @param data
- * @param callback
- */
-function shallow(data: HTMLParse[], callback: TravselCalback, all: true): SelectPosition[];
-function shallow(data: HTMLParse[], callback: TravselCalback, all?: false): SelectPosition | undefined;
-function shallow(data: HTMLParse[], callback: TravselCalback, all: boolean = false) {
-	if (all) {
-		return traversal_all(false, data, callback);
+	/**
+	 * 获取结果
+	 */
+	public get result() {
+		return this.record.filter(item => item.isEnd).map(item => ({ target: item.current, index: item.currentLayer }));
 	}
-	return traversal(false, data, callback);
 }
 
 /**
@@ -112,7 +176,7 @@ function shallow(data: HTMLParse[], callback: TravselCalback, all: boolean = fal
  * @param matchTarget
  * @param selector
  */
-function handleSelectorType(matchTarget: HTMLParseTag, selector: SelectorInfo) {
+function handleSelectorType(matchTarget: HTMLSelectorParse, selector: SelectorInfo) {
 	if (selector.type === 'tag') {
 		if (selector.data === '*') {
 			return true;
@@ -166,7 +230,7 @@ function handleSelectorType(matchTarget: HTMLParseTag, selector: SelectorInfo) {
  * @param matchTarget
  * @param selectors
  */
-function handleSelectorMatched(matchTarget: HTMLParseTag, selectors: SelectorInfo[]) {
+function handleSelectorMatched(matchTarget: HTMLSelectorParse, selectors: SelectorInfo[]) {
 	for (const selector of selectors) {
 		if (!handleSelectorType(matchTarget, selector)) {
 			return false;
@@ -176,85 +240,13 @@ function handleSelectorMatched(matchTarget: HTMLParseTag, selectors: SelectorInf
 }
 
 /**
- * 根据组合器检索
- * @param combinator
- * @param parent
- * @param target
- * @param index 匹配兄弟元素时需要通过索引进行定位
- */
-function handleCombinators(
-	combinator: Combiner,
-	selector: SelectorInfo[],
-	target: HTMLParseTag,
-	index: number,
-	parent: HTMLParent | undefined,
-): SelectPosition[] {
-	let useFunc: typeof deep | typeof shallow = shallow;
-	let params: [HTMLParse[], TravselCalback] | undefined = void 0;
-	if (combinator === Combiner.DESCENDANT) {
-		// 后代
-		params = [target.children, tag => handleSelectorMatched(tag, selector)];
-		useFunc = deep;
-	} else if (combinator === Combiner.CHILD) {
-		// 子元素
-		params = [target.children, tag => handleSelectorMatched(tag, selector)];
-	} else if (combinator === Combiner.NEXT_SIBLING) {
-		// 接续兄弟
-		if (parent) {
-			params = [[parent], (tag, i) => i === index + 1 && handleSelectorMatched(tag, selector)];
-		}
-	} else if (combinator === Combiner.SUBSEQUENT_SIBLING) {
-		// 后代兄弟
-		if (parent) {
-			params = [[parent], (tag, i) => i > index && handleSelectorMatched(tag, selector)];
-		}
-	}
-	if (params) {
-		return useFunc(...params, true);
-	}
-	return [];
-}
-
-/**
  * 匹配选择器
- * @param data
- * @param selector
+ * @param data html 解析语法树
+ * @param selector 选择器字符串
+ * @param all 是否返回所有匹配结果
  */
-function select(data: HTMLParse[], selectorStr: string, all: true): SelectPosition[];
-function select(data: HTMLParse[], selectorStr: string, all: false): SelectPosition | undefined;
-function select(data: HTMLParse[], selectorStr: string, all: boolean) {
-	const parseResult = handleSelector(selectorStr);
-	const matchSuccess: SelectPosition[] = [];
-	let index = 0;
-	for (const parse of parseResult) {
-		index++;
-		const { combiner, selector } = parse;
-		if (!combiner) {
-			// 开始
-			matchSuccess.push(...deep(data, tag => handleSelectorMatched(tag, selector), true));
-			continue;
-		}
-		if (matchSuccess.length === 0) {
-			return;
-		}
-		const record: SelectPosition[] = [];
-		for (const matchItem of matchSuccess) {
-			const result = handleCombinators(combiner, selector, matchItem.target, matchItem.index, matchItem.parent);
-			// 最后一层，如果已经匹配到了结果则直接返回
-			if (!all && index === parseResult.length && result.length > 0) {
-				return result[0];
-			}
-			record.push(...result);
-		}
-		matchSuccess.splice(0, matchSuccess.length, ...record);
-	}
-	if (matchSuccess.length > 0) {
-		if (all) {
-			return matchSuccess;
-		}
-		return matchSuccess[0];
-	}
-	return;
+function select(data: HTMLParse[], selectorStr: string, all: boolean): SelectPosition[] {
+	return new Explorer(data, selectorStr, all).result;
 }
 
 /**
@@ -262,8 +254,8 @@ function select(data: HTMLParse[], selectorStr: string, all: boolean) {
  * @param data
  */
 function positionToBody(data: HTMLParse[]): HTMLParse[] {
-	const result = deep(data, tag => tag.tag === 'body');
-	return result ? [result.target] : [];
+	const result = select(data, 'body', false);
+	return result.map(item => item.target).filter(Boolean);
 }
 
 /**
@@ -371,63 +363,65 @@ function queryDataset(data: HTMLParse | undefined, name?: string) {
 }
 
 /**
+ * 创建查询结果对象
+ */
+function queryResult(target: SelectPosition | undefined): QueryResult {
+	const result: QueryResult = Object.create(query(target ? target.target : ({} as HTMLParse)));
+	result.target = target?.target;
+	result.parent = result.target?.parent;
+	result.children = result.target?.children || [];
+	result.index = target?.index ?? -1;
+	return result;
+}
+
+/**
  * 通过解析树进行元素查找，每次只查找一个元素
  */
-export function query(data: HTMLParse[] | HTMLParse) {
+export function query(data: HTMLParse[] | HTMLParse): Query {
 	if (!isArray(data)) {
 		data = [data];
 	}
-	function queryResult(target: SelectPosition | undefined): QueryResult {
-		const result = Object.create(query(target ? target.target : ({} as HTMLParse)));
-		result.target = target?.target;
-		result.parent = target?.parent;
-		result.index = target?.index ?? -1;
-		return result;
-	}
-	function _query(data: HTMLParse[]): Query {
-		return {
-			$(selector: string) {
-				return queryResult(select(data, selector, false));
-			},
-			$$(selector: string) {
-				const target = select(data, selector, true);
-				return target.map(queryResult);
-			},
-			body() {
-				return query(positionToBody(data));
-			},
-			text() {
-				return queryText(data[0]);
-			},
-			attr: function (key?: string) {
-				if (isString(key)) {
-					return queryAttr(data[0], key);
-				}
-				return queryAttrs(data[0]);
-			} as Query['attr'],
-			class() {
-				return queryClass(data[0], false);
-			},
-			classList() {
-				return queryClass(data[0], true);
-			},
-			id() {
-				return queryAttr(data[0], 'id');
-			},
-			style: function (styleName?: string) {
-				if (isString(styleName)) {
-					styleName = splitByUpper(styleName).join('-');
-					return queryStyle(data[0], styleName);
-				}
-				return queryStyle(data[0]);
-			} as Query['style'],
-			dataset: function (name?: string) {
-				if (isString(name)) {
-					return queryDataset(data[0], name);
-				}
-				return queryDataset(data[0]);
-			} as Query['dataset'],
-		};
-	}
-	return _query(data);
+	return {
+		$(selector: string) {
+			return queryResult(select(data, selector, false)[0]);
+		},
+		$$(selector: string) {
+			const target = select(data, selector, true);
+			return target.map(queryResult);
+		},
+		body() {
+			return query(positionToBody(data));
+		},
+		text() {
+			return queryText(data[0]);
+		},
+		attr: function (key?: string) {
+			if (isString(key)) {
+				return queryAttr(data[0], key);
+			}
+			return queryAttrs(data[0]);
+		} as Query['attr'],
+		class() {
+			return queryClass(data[0], false);
+		},
+		classList() {
+			return queryClass(data[0], true);
+		},
+		id() {
+			return queryAttr(data[0], 'id');
+		},
+		style: function (styleName?: string) {
+			if (isString(styleName)) {
+				styleName = splitByUpper(styleName).join('-');
+				return queryStyle(data[0], styleName);
+			}
+			return queryStyle(data[0]);
+		} as Query['style'],
+		dataset: function (name?: string) {
+			if (isString(name)) {
+				return queryDataset(data[0], name);
+			}
+			return queryDataset(data[0]);
+		} as Query['dataset'],
+	} satisfies Query;
 }

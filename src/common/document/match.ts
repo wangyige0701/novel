@@ -37,3 +37,6 @@ export const matchId = new RegExp(`^#(?<id>[^${ignore}]+)`);
 export const matchTag = new RegExp(`^(?<tag>[^${ignore}]+)`);
 
 export const matchAttr = new RegExp(`^\\[(?<attr>[^${splitAllowSpace}]+)\\]`);
+
+/** 匹配所有样式属性 */
+export const matchAllStyles = /(?<key>[^;:\s]+)\s*\:\s*(?<value>[^;\s]+)\s*\;?/g;

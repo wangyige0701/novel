@@ -9,13 +9,14 @@ import type {
 	ExplorerItem,
 	HTMLSelectorParse,
 } from '@/@types/common/document';
-import { firstLowerCase, firstUpperCase, isArray, isString, isUndef, splitByUpper } from '@wang-yige/utils';
+import { firstLowerCase, firstUpperCase, isArray, isString, isUndef, lowerCase, splitByUpper } from '@wang-yige/utils';
 import { Combiner } from './combiner';
 import { handleSelector } from './selector';
+import { matchAllStyles } from './match';
 
 /**
  * 遍历 html 语法树，根据选择器获取对象，广度优先遍历时，每个单元都和选择器第一位进行匹配，
- * 匹配上则进行记录，后续每个单元都会遍历记录数组，根据下一个选择器状态进行匹配
+ * 匹配上则进行记录，后续每个单元都会遍历记录数组，根据下一个选择器状态进行匹配。
  */
 class Explorer {
 	/** 解析的层级 */
@@ -173,8 +174,6 @@ class Explorer {
 
 /**
  * 校验单个选择器
- * @param matchTarget
- * @param selector
  */
 function handleSelectorType(matchTarget: HTMLSelectorParse, selector: SelectorInfo) {
 	if (selector.type === 'tag') {
@@ -227,8 +226,6 @@ function handleSelectorType(matchTarget: HTMLSelectorParse, selector: SelectorIn
 
 /**
  * 通过选择器进行校验
- * @param matchTarget
- * @param selectors
  */
 function handleSelectorMatched(matchTarget: HTMLSelectorParse, selectors: SelectorInfo[]) {
 	for (const selector of selectors) {
@@ -251,7 +248,6 @@ function select(data: HTMLParse[], selectorStr: string, all: boolean): SelectPos
 
 /**
  * 将html解析树定位到body位置，并且如果有值则返回一个被数组包裹着的对象
- * @param data
  */
 function positionToBody(data: HTMLParse[]): HTMLParse[] {
 	const result = select(data, 'body', false);
@@ -260,7 +256,6 @@ function positionToBody(data: HTMLParse[]): HTMLParse[] {
 
 /**
  * 获取当前元素的文本数据
- * @param data
  */
 function queryText(data: HTMLParse | undefined): string {
 	if (!data) {
@@ -291,8 +286,6 @@ function queryAttrs(data: HTMLParse | undefined) {
 
 /**
  * 获取属性值
- * @param data
- * @param key 属性键
  */
 function queryAttr(data: HTMLParse | undefined, key: string) {
 	if (!data) {
@@ -304,6 +297,10 @@ function queryAttr(data: HTMLParse | undefined, key: string) {
 	return data.attrs.find(item => item.name === key)?.value || '';
 }
 
+/**
+ * 获取类名数据
+ * @param list 为 true 返回类名数组，否则返回字符串
+ */
 function queryClass(data: HTMLParse | undefined, list: true): string[];
 function queryClass(data: HTMLParse | undefined, list: boolean): string;
 function queryClass(data: HTMLParse | undefined, list: boolean) {
@@ -314,12 +311,15 @@ function queryClass(data: HTMLParse | undefined, list: boolean) {
 	return result;
 }
 
+/**
+ * 获取样式数据
+ */
 function queryStyle(data: HTMLParse | undefined): Record<string, string>;
 function queryStyle(data: HTMLParse | undefined, name: string): string;
 function queryStyle(data: HTMLParse | undefined, name?: string) {
 	const result = queryAttr(data, 'style');
 	const styles = {} as Record<string, string>;
-	for (const item of result.matchAll(/(?<key>[^;:\s]+)\s*\:\s*(?<value>[^;\s]+)\s*\;?/g)) {
+	for (const item of result.matchAll(matchAllStyles)) {
 		if (!item.groups) {
 			continue;
 		}
@@ -337,6 +337,9 @@ function queryStyle(data: HTMLParse | undefined, name?: string) {
 	return styles;
 }
 
+/**
+ * 获取 data- 开头的属性
+ */
 function queryDataset(data: HTMLParse | undefined): Record<string, string>;
 function queryDataset(data: HTMLParse | undefined, name: string): string;
 function queryDataset(data: HTMLParse | undefined, name?: string) {
@@ -412,13 +415,14 @@ export function query(data: HTMLParse[] | HTMLParse): Query {
 		},
 		style: function (styleName?: string) {
 			if (isString(styleName)) {
-				styleName = splitByUpper(styleName).join('-');
+				styleName = splitByUpper(styleName).map(lowerCase).join('-');
 				return queryStyle(data[0], styleName);
 			}
 			return queryStyle(data[0]);
 		} as Query['style'],
 		dataset: function (name?: string) {
 			if (isString(name)) {
+				name = firstLowerCase(name.split('-').map(firstUpperCase).join(''));
 				return queryDataset(data[0], name);
 			}
 			return queryDataset(data[0]);

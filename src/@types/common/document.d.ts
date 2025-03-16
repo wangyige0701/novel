@@ -150,11 +150,11 @@ export interface Query {
 	 */
 	style(styleName: string): string;
 	/**
-	 * 获取所有的自定义数据属性对象
+	 * 获取所有的自定义数据属性对象，有短横线的属性名会转为驼峰格式
 	 */
 	dataset(): Record<string, string>;
 	/**
-	 * 根据属性名获取自定义数据属性值
+	 * 根据属性名获取自定义数据属性值，支持驼峰以及短横线两种形式
 	 */
 	dataset(name: string): string;
 }

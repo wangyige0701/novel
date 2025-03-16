@@ -20,13 +20,13 @@ const attrGet = `"(?<double>[^"${splitAllowSpace}]*)"|'(?<single>[^'${splitAllow
 export const parseAttr = new RegExp(`\\s*(?<name>[^${split}=]*)(?:\\s*=\\s*(?:${attrGet})\\s*)?`);
 
 /**
- * 切割选择器，正则结果第一位是组合器，第二位是选择器；选择器中有属性时，允许属性值匹配空格
+ * 切割选择器，正则结果第一位是组合器，第二位是选择器；选择器中有属性选择器时，允许属性值匹配空格
  * @group combiner 组合器
  * @group selector 选择器
  * @example `div > .class + #id ~ span.a` => combiner: undefined, selector: div; combiner: >, selector: .class; ...
  * @example `div[style="font-size: 12px"]` => combiner: undefined, selector: div[style="font-size: 12px"]
  */
-export const splitSelector = /(?<combiner>[>+~]?)?\s*(?<selector>[^>+~\s\f\r\n\[\]]+(?:\[[^\]\f\r\n]+\])?)/g;
+export const splitSelector = /(?<combiner>[>+~]?)?\s*(?<selector>[^>+~\s\f\r\n\[\]]+(?:\[[^\]\f\r\n]+\])*)/g;
 
 const ignore = `\\.#${split}`;
 

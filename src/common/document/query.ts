@@ -118,6 +118,8 @@ class Explorer {
 	 * 遍历记录数组依次进行匹配
 	 */
 	private match(item: HTMLSelectorParse, index: number) {
+		// 全匹配时，某条记录匹配成功后，克隆一份，继续后续匹配
+		const clones: Array<{ target: ExplorerItem; clone: ExplorerItem }> = [];
 		for (const record of this.record) {
 			if (record.isEnd) {
 				continue;
@@ -150,8 +152,15 @@ class Explorer {
 				}
 				continue;
 			}
+			clones.push({ target: record, clone: { ...record } });
 			if (this.success(item, record.nextSelectorIndex, index, record) && !this.all) {
 				return true;
+			}
+		}
+		if (this.all) {
+			for (const { target, clone } of clones) {
+				// 插入克隆数据
+				this.record.splice(this.record.indexOf(target) + 1, 0, clone);
 			}
 		}
 		const firstSelector = this.selector[0];

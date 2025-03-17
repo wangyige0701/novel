@@ -21,21 +21,64 @@ import { matchAllStyles } from './match';
 class Explorer {
 	/** 解析的层级 */
 	private layer = 0;
-	/** 当前正在遍历的语法树根节点 */
-	private root: HTMLParse[] = [];
+	/** 当前正在遍历的语法树节点对象 */
+	private ast: HTMLParse[] = [];
 	/** 选择器解析对象数组 */
 	private selector: MatchResult[];
 	/** 是否获取所有匹配元素 */
 	private all: boolean;
 	/** 解析结果记录 */
 	private record: ExplorerItem[] = [];
+	/** 实际遍历的记录数组，减少时间复杂度 */
+	private traversalRecord: ExplorerItem[] = [];
 
 	constructor(ast: HTMLParse[], selector: string, all: boolean) {
 		this.all = all;
 		this.selector = handleSelector(selector);
 		if (this.selector.length) {
 			// 开始匹配
-			this.traversal([ast]);
+			this.traversal(ast, 0);
+		}
+	}
+
+	/**
+	 * 遍历树，深度优先遍历，js 查询器也是深度优先遍历
+	 */
+	private traversal(ast: HTMLParse[], layer: number) {
+		// 不同父元素节点分开遍历，兄弟组合器匹配必须在同一个父节点下
+		let index = 0;
+		for (const item of ast) {
+			this.ast = ast;
+			this.layer = layer;
+			const _index = index++;
+			if (item.type === 'text') {
+				continue;
+			}
+			if (this.match(item, _index) === true) {
+				return true;
+			}
+			if (item.children.length) {
+				if (this.traversal(item.children, layer + 1) === true) {
+					return true;
+				}
+			}
+			for (const record of this.traversalRecord) {
+				if (record.isEnd) {
+					continue;
+				}
+				// TODO
+				if (record.nextLayer === record.currentLayer) {
+					if (record.currentLayer > layer || (record.currentLayer === layer && _index === ast.length - 1)) {
+						// 【匹配失败】当前节点遍历完成，为兄弟组合器且同层级，并且是最后一个元素；或者大于当前层级
+						this.failed(record);
+						continue;
+					}
+				}
+				if (record.currentLayer >= layer) {
+					// 【匹配失败】当前节点遍历完成后，匹配未结束且层级大于等于当前层级
+					this.failed(record);
+				}
+			}
 		}
 	}
 
@@ -57,31 +100,6 @@ class Explorer {
 	}
 
 	/**
-	 * 遍历树
-	 */
-	private traversal(list: Array<HTMLParse[]>) {
-		const next: Array<HTMLParse[]> = [];
-		for (const root of list) {
-			// 不同父元素节点分开遍历，兄弟组合器匹配必须在同一个父节点下
-			this.root = root;
-			let index = 0;
-			for (const item of root) {
-				if (item.type === 'text') {
-					continue;
-				}
-				if (this.match(item, index++) && !this.all) {
-					return;
-				}
-				next.push([...item.children]);
-			}
-		}
-		this.layer++;
-		if (next.length) {
-			this.traversal(next);
-		}
-	}
-
-	/**
 	 * 匹配成功后重置记录数据，如果选择器索引是最后一位，则将 isEnd 置为 true
 	 */
 	private success(item: HTMLSelectorParse, selectorIndex: number, index: number, target?: ExplorerItem) {
@@ -96,9 +114,15 @@ class Explorer {
 		};
 		if (!target) {
 			this.record.push(_target);
-		} else if (!target.isEnd) {
+			if (!_target.isEnd) {
+				this.traversalRecord.push(_target);
+			}
+		} else {
 			for (const key in _target) {
 				(target as any)[key] = _target[key as keyof ExplorerItem];
+			}
+			if (target.isEnd) {
+				this.traversalRecord.splice(this.traversalRecord.indexOf(target), 1);
 			}
 		}
 		return _target.isEnd;
@@ -112,6 +136,18 @@ class Explorer {
 		if (index !== -1) {
 			this.record.splice(index, 1);
 		}
+		const index2 = this.traversalRecord.indexOf(target);
+		if (index2 !== -1) {
+			this.traversalRecord.splice(index2, 1);
+		}
+	}
+
+	/**
+	 * 对两个记录数组都插入一条克隆数据
+	 */
+	private clone(target: ExplorerItem, clone: ExplorerItem) {
+		this.record.splice(this.record.indexOf(target) + 1, 0, clone);
+		this.traversalRecord.splice(this.traversalRecord.indexOf(target) + 1, 0, clone);
 	}
 
 	/**
@@ -120,8 +156,9 @@ class Explorer {
 	private match(item: HTMLSelectorParse, index: number) {
 		// 全匹配时，某条记录匹配成功后，克隆一份，继续后续匹配
 		const clones: Array<{ target: ExplorerItem; clone: ExplorerItem }> = [];
-		for (const record of this.record) {
-			if (record.isEnd) {
+		// 只遍历未完成的记录
+		for (const record of [...this.traversalRecord]) {
+			if (!this.traversalRecord.includes(record) || record.isEnd) {
 				continue;
 			}
 			if (record.nextLayer === -1) {
@@ -129,38 +166,49 @@ class Explorer {
 					// 【不触发匹配】-1 代表后代选择器的层级，当前层级必须大于上一次选择器匹配的层级
 					continue;
 				}
-			} else if (record.nextLayer > this.layer) {
+			} else if (record.nextLayer !== this.layer) {
 				// 【不触发匹配】其余选择器必须完全等于当前层级才算匹配成功
-				continue;
-			} else if (record.nextLayer < this.layer) {
-				// 【匹配失败】需要匹配的层级小于当前层级，说明已经不满足选择器条件
-				this.failed(record);
 				continue;
 			}
 			const selector = this.selector[record.nextSelectorIndex];
+			const isSameParent = item.parent === record.current;
 			if (selector.combiner === Combiner.NEXT_SIBLING) {
-				// 【匹配失败】紧邻兄弟组合器，位置需要紧跟在前一个元素之后
-				if (index > record.layerPosition + 1) {
+				// 【匹配失败】接续兄弟组合器，位置需要紧跟在前一个元素之后
+				if (isSameParent && index > record.layerPosition + 1) {
 					this.failed(record);
 					continue;
 				}
 			}
+			const isLastChild = index === this.ast.length - 1;
 			if (!handleSelectorMatched(item, selector.selector)) {
-				if (selector.combiner === Combiner.SUBSEQUENT_SIBLING && index === this.root.length - 1) {
+				/** 是否是当前遍历节点字节点的最后一位 */
+				if (isLastChild && isSameParent && selector.combiner === Combiner.SUBSEQUENT_SIBLING) {
 					// 【匹配失败】一般兄弟组合器，父节点最后一位还没有匹配上，则匹配失败
 					this.failed(record);
 				}
 				continue;
+			}
+			// 如果下一个组合器是兄弟元素，则需要判断当前元素是否是父节点下最后一位，是的话需要删除当前记录，因为后续一定不会成功匹配
+			const nextSeelctor = this.selector[record.nextSelectorIndex + 1];
+			if (nextSeelctor) {
+				const { combiner } = nextSeelctor;
+				if (combiner === Combiner.NEXT_SIBLING || combiner === Combiner.SUBSEQUENT_SIBLING) {
+					if (isLastChild) {
+						// 【匹配失败】父节点最后一位匹配成功，但是下一个组合器是兄弟元素，则删除当前记录
+						this.failed(record);
+						continue;
+					}
+				}
 			}
 			clones.push({ target: record, clone: { ...record } });
 			if (this.success(item, record.nextSelectorIndex, index, record) && !this.all) {
 				return true;
 			}
 		}
-		if (this.all) {
+		if (this.all && clones.length) {
 			for (const { target, clone } of clones) {
 				// 插入克隆数据
-				this.record.splice(this.record.indexOf(target) + 1, 0, clone);
+				this.clone(target, clone);
 			}
 		}
 		const firstSelector = this.selector[0];
@@ -170,7 +218,6 @@ class Explorer {
 				return true;
 			}
 		}
-		return false;
 	}
 
 	/**
@@ -253,14 +300,6 @@ function handleSelectorMatched(matchTarget: HTMLSelectorParse, selectors: Select
  */
 function select(data: HTMLParse[], selectorStr: string, all: boolean): SelectPosition[] {
 	return new Explorer(data, selectorStr, all).result;
-}
-
-/**
- * 将html解析树定位到body位置，并且如果有值则返回一个被数组包裹着的对象
- */
-function positionToBody(data: HTMLParse[]): HTMLParse[] {
-	const result = select(data, 'body', false);
-	return result.map(item => item.target).filter(Boolean);
 }
 
 /**
@@ -402,7 +441,7 @@ export function query(data: HTMLParse[] | HTMLParse): Query {
 			return target.map(queryResult);
 		},
 		body() {
-			return query(positionToBody(data));
+			return queryResult(select(data, 'body', false)[0]);
 		},
 		text() {
 			return queryText(data[0]);

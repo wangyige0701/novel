@@ -8,6 +8,7 @@ import type {
 	MatchResult,
 	ExplorerItem,
 	HTMLSelectorParse,
+	MatchResultList,
 } from '@/@types/common/document';
 import {
 	firstLowerCase,
@@ -28,12 +29,8 @@ import { matchAllStyles } from './match';
  * 匹配上则进行记录，后续每个单元都会遍历记录数组，根据下一个选择器状态进行匹配。
  */
 class Explorer {
-	/** 解析的层级 */
-	private layer = 0;
-	/** 当前正在遍历的语法树节点对象 */
-	private ast: HTMLParse[] = [];
 	/** 选择器解析对象数组，左右反转，先匹配最后一个选择器 */
-	private selector: MatchResult[];
+	private selector: MatchResultList[];
 	/** 是否获取所有匹配元素 */
 	private all: boolean;
 	/** 解析结果记录 */
@@ -41,42 +38,68 @@ class Explorer {
 
 	constructor(ast: HTMLParse[], selector: string, all: boolean) {
 		this.all = all;
-		this.selector = handleSelector(selector).reverse();
+		this.selector = handleSelector(selector);
+		for (const [index, selector] of this.selector.entries()) {
+			// 组合器前移
+			selector.combiner = this.selector[index + 1]?.combiner;
+		}
+		this.selector = this.selector.reverse();
+		for (const [index, selector] of this.selector.entries()) {
+			selector.next = this.selector[index + 1];
+		}
 		if (this.selector.length) {
 			// 开始匹配
-			this.traversal(ast, 0);
+			if (this.traversal(ast) === true) {
+				// 为 true 表示匹配已经完成
+				return;
+			}
+			if (this.selector.length === 1) {
+				return;
+			}
+			// 逆推筛选
+			for (const item of [...this.record]) {
+				this.match(item);
+			}
 		}
 	}
 
 	/**
 	 * 遍历树，深度优先遍历，先把选择器最后一位匹配上，筛选所有结果后再逆推匹配结果
 	 */
-	private traversal(ast: HTMLParse[], layer: number) {
+	private traversal(ast: HTMLParse[]) {
 		// 不同父元素节点分开遍历，兄弟组合器匹配必须在同一个父节点下
 		for (const item of ast) {
-			this.ast = ast;
-			this.layer = layer;
 			if (item.type === 'text') {
 				continue;
 			}
 			if (handleSelectorMatched(item, this.selector[0].selector)) {
-				this.success(item, 0);
+				const index = this.collect(item);
+				// 获取单个元素时，收集完成需要直接判断是否匹配
+				if (!this.all) {
+					if (this.match(this.record[index])) {
+						return true;
+					} else {
+						this.record.splice(index, 1);
+					}
+				}
 			}
 			if (item.children.length) {
-				this.traversal(item.children, layer + 1);
+				this.traversal(item.children);
 			}
 		}
 	}
 
 	/**
-	 * 根据组合器逆推上一个节点所在的层级
+	 * 首次收集所有最后一位选择器匹配元素，直接逆推
 	 */
-	private nextLayer(combiner?: Combiner): Fn<[layer: number], boolean> {}
-
-	/**
-	 * 匹配成功后重置记录数据，如果选择器索引是最后一位，则将 isEnd 置为 true
-	 */
-	private success(item: HTMLSelectorParse, selectorIndex: number, index: number, target?: ExplorerItem) {}
+	private collect(item: HTMLSelectorParse) {
+		const selector = this.selector[0];
+		const index = this.record.push({
+			current: item,
+			selector: selector.next,
+		});
+		return index - 1;
+	}
 
 	/**
 	 * 匹配失败后移除记录数据
@@ -89,16 +112,99 @@ class Explorer {
 	}
 
 	/**
-	 * 遍历记录数组依次进行匹配
+	 * 遍历记录数组匹配结果
 	 */
-	private match(item: HTMLSelectorParse, index: number) {}
+	private match(item: ExplorerItem) {
+		const { current, selector } = item;
+		if (handleCombiner(current, selector)) {
+			return true;
+		}
+		this.failed(item);
+	}
 
 	/**
 	 * 获取结果
 	 */
 	public get result() {
-		return this.record.filter(item => item.isEnd).map(item => ({ target: item.current, index: item.currentLayer }));
+		return this.record.map(item => ({ target: item.current }));
 	}
+}
+
+function handleCombiner(item: HTMLSelectorParse | undefined, match: MatchResultList | undefined) {
+	if (!match) {
+		// 传入 undefined ，表示已成功匹配到最后，状态为成功
+		return true;
+	} else if (!item) {
+		// 有下一个选择器，但是没有节点数据，则状态为失败
+		return false;
+	}
+	const { combiner, selector } = match;
+	if (combiner === Combiner.CHILD) {
+		if (handleSelectorMatched(item.parent, selector) && handleCombiner(item.parent, match.next)) {
+			return true;
+		}
+		return false;
+	}
+	if (combiner === Combiner.DESCENDANT) {
+		let parent = item.parent;
+		while (parent) {
+			if (handleSelectorMatched(parent, selector) && handleCombiner(parent, match.next)) {
+				return true;
+			}
+			parent = parent.parent;
+		}
+		return false;
+	}
+	// 兄弟元素判断
+	const siblings = item.parent?.children || [];
+	if (siblings.length < 2) {
+		return false;
+	}
+	if (!siblings.includes(item)) {
+		return false;
+	}
+	const customIndex = siblings.indexOf(item);
+	if (customIndex === siblings.length - 1) {
+		return false;
+	}
+	if (combiner === Combiner.NEXT_SIBLING) {
+		const target = siblings[customIndex + 1];
+		if (target.type === 'text') {
+			return false;
+		}
+		if (handleSelectorMatched(target, selector) && handleCombiner(target, match.next)) {
+			return true;
+		}
+		return false;
+	}
+	if (combiner === Combiner.SUBSEQUENT_SIBLING) {
+		for (let i = customIndex + 1; i < siblings.length; i++) {
+			const target = siblings[i];
+			if (target.type === 'text') {
+				return false;
+			}
+			if (handleSelectorMatched(target, selector) && handleCombiner(target, match.next)) {
+				return true;
+			}
+		}
+		return false;
+	}
+	return false;
+}
+
+/**
+ * 通过选择器进行校验
+ */
+function handleSelectorMatched(matchTarget: HTMLSelectorParse | undefined, selectors: SelectorInfo[]) {
+	if (!matchTarget) {
+		return false;
+	}
+	for (const selector of selectors) {
+		if (!handleSelectorType(matchTarget, selector)) {
+			return false;
+		}
+	}
+	return true;
 }
 
 /**
@@ -151,18 +257,6 @@ function handleSelectorType(matchTarget: HTMLSelectorParse, selector: SelectorIn
 		return id.value === selector.data;
 	}
 	return false;
-}
-
-/**
- * 通过选择器进行校验
- */
-function handleSelectorMatched(matchTarget: HTMLSelectorParse, selectors: SelectorInfo[]) {
-	for (const selector of selectors) {
-		if (!handleSelectorType(matchTarget, selector)) {
-			return false;
-		}
-	}
-	return true;
 }
 
 /**
@@ -294,7 +388,6 @@ function queryResult(target: SelectPosition | undefined): QueryResult {
 	result.target = target?.target;
 	result.parent = result.target?.parent;
 	result.children = result.target?.children || [];
-	result.index = target?.index ?? -1;
 	return result;
 }
 

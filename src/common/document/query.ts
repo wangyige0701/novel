@@ -5,21 +5,11 @@ import type {
 	HTMLParseText,
 	Query,
 	QueryResult,
-	MatchResult,
 	ExplorerItem,
 	HTMLSelectorParse,
 	MatchResultList,
 } from '@/@types/common/document';
-import {
-	firstLowerCase,
-	firstUpperCase,
-	Fn,
-	isArray,
-	isString,
-	isUndef,
-	lowerCase,
-	splitByUpper,
-} from '@wang-yige/utils';
+import { firstLowerCase, firstUpperCase, isArray, isString, lowerCase, splitByUpper } from '@wang-yige/utils';
 import { Combiner } from './combiner';
 import { handleSelector } from './selector';
 import { matchAllStyles } from './match';
@@ -130,6 +120,11 @@ class Explorer {
 	}
 }
 
+/**
+ * 末位节点通过组合器逆推匹配
+ * @param item 需要进行匹配的节点
+ * @param match 下一个需要匹配的选择器对象，包含选择器和组合器
+ */
 function handleCombiner(item: HTMLSelectorParse | undefined, match: MatchResultList | undefined) {
 	if (!match) {
 		// 传入 undefined ，表示已成功匹配到最后，状态为成功

@@ -83,6 +83,10 @@ export type MatchResult = {
 	selector: SelectorInfo[];
 };
 
+export type MatchResultList = MatchResult & {
+	next?: MatchResultList;
+};
+
 export type HTMLParent = HTMLParseTag | HTMLParseScript;
 
 type HTMLTarget = HTMLParent;
@@ -92,7 +96,6 @@ type HTMLTarget = HTMLParent;
  */
 export type SelectPosition = {
 	target: HTMLParent;
-	index: number;
 };
 
 export type QueryResult = Query & {
@@ -114,9 +117,9 @@ export interface Query {
 	 */
 	$$(selector: string): QueryResult[];
 	/**
-	 * 从 body 位置开始匹配
+	 * 定位到 body 元素位置
 	 */
-	body(): Query;
+	body(): QueryResult;
 	/**
 	 * 获取当前元素文本信息，如果传入数组，则获取第一个
 	 */
@@ -168,23 +171,7 @@ export type ExplorerItem = {
 	 */
 	current: HTMLSelectorParse;
 	/**
-	 * 当前层级
+	 *
 	 */
-	currentLayer: number;
-	/**
-	 * 下一次匹配时对应的层级，为 -1 则表示后代选择器，即只要大于当前层级即可
-	 */
-	nextLayer: number;
-	/**
-	 * 下一次匹配的选择器索引
-	 */
-	nextSelectorIndex: number;
-	/**
-	 * 在同一层级下的位置
-	 */
-	layerPosition: number;
-	/**
-	 * 匹配是否结束
-	 */
-	isEnd: boolean;
+	selector: MatchResultList | undefined;
 };

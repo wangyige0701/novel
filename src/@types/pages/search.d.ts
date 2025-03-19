@@ -1,3 +1,3 @@
-import { Bookshelf } from '.';
+import { Book } from '.';
 
-export type SearchBook = Bookshelf;
+export type SearchBook = Book;

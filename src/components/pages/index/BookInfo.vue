@@ -19,10 +19,10 @@
 </template>
 
 <script setup lang="ts">
-import type { Bookshelf } from '@/@types/pages/index';
+import type { Book } from '@/@types/pages/index';
 import Image from '@/components/Image.vue';
 
-const props = defineProps<Bookshelf>();
+const props = defineProps<Book>();
 const emit = defineEmits<{
 	(e: 'remove', id: string): void;
 }>();

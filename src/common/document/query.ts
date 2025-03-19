@@ -163,12 +163,14 @@ function handleCombiner(item: HTMLSelectorParse | undefined, match: MatchResultL
 	if (!siblings.includes(item)) {
 		return false;
 	}
+	// html 节点从右往左遍历，返回的语法树结构上越靠近右侧则索引越小，
+	// 所以当最后一个节点索引为 0 时，逆推向上是找不到兄弟节点的，判断失败。
 	const customIndex = siblings.indexOf(item);
-	if (customIndex === siblings.length - 1) {
+	if (customIndex === 0) {
 		return false;
 	}
 	if (combiner === Combiner.NEXT_SIBLING) {
-		const target = siblings[customIndex + 1];
+		const target = siblings[customIndex - 1];
 		if (target.type === 'text') {
 			return false;
 		}
@@ -178,7 +180,7 @@ function handleCombiner(item: HTMLSelectorParse | undefined, match: MatchResultL
 		return false;
 	}
 	if (combiner === Combiner.SUBSEQUENT_SIBLING) {
-		for (let i = customIndex + 1; i < siblings.length; i++) {
+		for (let i = customIndex - 1; i >= 0; i--) {
 			const target = siblings[i];
 			if (target.type === 'text') {
 				return false;

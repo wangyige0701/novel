@@ -1,3 +1,3 @@
-import { Book } from '.';
+import { BookItemInfo } from '.';
 
-export type SearchBook = Book;
+export type SearchBookInfo = BookItemInfo;

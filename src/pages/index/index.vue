@@ -37,7 +37,7 @@
 </template>
 
 <script setup lang="ts">
-import type { Book } from '@/@types/pages';
+import type { BookItemInfo } from '@/@types/pages';
 import Page from '@/components/Page.vue';
 import Search from '@/components/Search.vue';
 import Image from '@/components/Image.vue';
@@ -48,9 +48,9 @@ import BookInfo from '@/components/pages/index/BookInfo.vue';
 
 backInteract();
 const interactStore = useInteractStore();
-const bookshelf = shallowReactive<Book[]>([
+const bookshelf = shallowReactive<BookItemInfo[]>([
 	{
-		id: 1,
+		id: '1',
 		name: '书籍1',
 		img: 'https://picsum.photos/70/90',
 		author: '作者1',
@@ -60,11 +60,11 @@ const bookshelf = shallowReactive<Book[]>([
 	},
 ]);
 
-function select(e: Book) {
+function select(e: BookItemInfo) {
 	console.log(e);
 }
 
-function operate(e: Book) {}
+function operate(e: BookItemInfo) {}
 
 const current = ref(0);
 const test = [

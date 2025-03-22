@@ -26,16 +26,16 @@
 </template>
 
 <script setup lang="ts">
-import type { SearchBook } from '@/@types/pages/search';
+import type { SearchBookInfo } from '@/@types/pages/search';
 import Page from '@/components/Page.vue';
 import Search from '@/components/Search.vue';
 import Image from '@/components/Image.vue';
 
 backInteract();
 const searchContent = ref('');
-const searchResult = shallowReactive<SearchBook[]>([
+const searchResult = shallowReactive<SearchBookInfo[]>([
 	{
-		id: 1,
+		id: '1',
 		name: '书籍1',
 		img: 'https://picsum.photos/70/90',
 		author: '作者1',

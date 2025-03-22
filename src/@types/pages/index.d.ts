@@ -1,5 +1,8 @@
-export interface Book {
-	id: number | string;
+/**
+ * 单本书信息
+ */
+export interface BookItemInfo {
+	id: string;
 	name: string;
 	img: string;
 	author: string;

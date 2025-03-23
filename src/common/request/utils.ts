@@ -4,54 +4,54 @@ import type { RequestConfig } from '@/@types/common/request';
 export type Config = RequestConfig & { method: UniApp.RequestOptions['method'] };
 
 export class RequestCache {
-	static #cacheMap = new Map<string, Promise<UniApp.RequestSuccessCallbackResult>>();
+	private static cacheMap = new Map<string, Promise<UniApp.RequestSuccessCallbackResult>>();
 
 	static has(src: string) {
-		return this.#cacheMap.has(src);
+		return this.cacheMap.has(src);
 	}
 
 	static get(src: string) {
-		return this.#cacheMap.get(src);
+		return this.cacheMap.get(src);
 	}
 
 	static set(src: string, value: Promise<UniApp.RequestSuccessCallbackResult>, time: number) {
 		if (time > 0) {
-			this.#cacheMap.set(src, value);
+			this.cacheMap.set(src, value);
 			setTimeout(() => {
-				this.#cacheMap.delete(src);
+				this.cacheMap.delete(src);
 			});
 		}
 	}
 }
 
 export class RequestSync {
-	static #syncMap = new Map<string, Promise<UniApp.RequestSuccessCallbackResult>>();
+	private static syncMap = new Map<string, Promise<UniApp.RequestSuccessCallbackResult>>();
 
 	static has(src: string) {
-		return this.#syncMap.has(src);
+		return this.syncMap.has(src);
 	}
 
 	static get(src: string) {
-		return this.#syncMap.get(src);
+		return this.syncMap.get(src);
 	}
 
 	static set(src: string, value: Promise<UniApp.RequestSuccessCallbackResult>) {
-		this.#syncMap.set(src, value);
+		this.syncMap.set(src, value);
 		value.finally(() => {
-			this.#syncMap.delete(src);
+			this.syncMap.delete(src);
 		});
 	}
 }
 
 export class RequestFrequent {
-	static #frequentMap = new Map<string, Fn<[], boolean>>();
+	private static frequentMap = new Map<string, Fn<[], boolean>>();
 
 	static use(src: string, range: number, maximum: number) {
-		if (!this.#frequentMap.has(src)) {
+		if (!this.frequentMap.has(src)) {
 			const use = checkFrequency({ range, maximum });
-			this.#frequentMap.set(src, use);
+			this.frequentMap.set(src, use);
 		}
-		const use = this.#frequentMap.get(src)!;
+		const use = this.frequentMap.get(src)!;
 		return use();
 	}
 }

@@ -52,6 +52,7 @@
     "@dcloudio/uni-quickapp-webview": "3.0.0-4040520250104002",
     "@wang-yige/utils": "^0.0.17",
     "pinia": "^2.3.1",
+    "reflect-metadata": "^0.2.2",
     "status-ref": "^0.3.0",
     "vue": "^3.5.13",
     "vue-i18n": "^9.14.2"

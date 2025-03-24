@@ -32,6 +32,8 @@
 		"forceConsistentCasingInFileNames": true,
 		// See <https://github.com/vuejs/vue-cli/pull/5688>
 		"skipLibCheck": true,
-		"strictPropertyInitialization": false
+		"strictPropertyInitialization": false,
+		"experimentalDecorators": true,
+		"emitDecoratorMetadata": true
 	}
 }

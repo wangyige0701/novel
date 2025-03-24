@@ -1,6 +1,7 @@
 import '@/style/icon.scss';
 import '@/style/animation.scss';
 import '@/style/common.scss';
+import 'reflect-metadata';
 
 import type { DeviceInfoResult } from '@/@types/store/info';
 import { createSSRApp } from 'vue';

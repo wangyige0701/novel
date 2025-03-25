@@ -1,0 +1,32 @@
+import { Constructor, Fn } from '@wang-yige/utils';
+
+type Clz = {
+	__create: Fn<[], Promise<void>>;
+	__sql: string;
+	__info: () => {
+		name: string;
+		path: string;
+		table: string;
+	};
+};
+
+/**
+ * 加载数据表
+ */
+export async function loadDatabase() {
+	const configs = import.meta.glob('../database/*.ts', {
+		eager: true,
+		import: 'default',
+	});
+	for (const key in configs) {
+		const clz = configs[key] as Constructor<Clz>;
+		const ins = new clz();
+		const { path, table, name } = ins.__info();
+		try {
+			await ins.__create();
+			console.log(`[Success] 数据表 ${path} [${name}] --> ${table} 创建成功`);
+		} catch (error: any) {
+			console.log(`[Error] 数据表 ${path} [${name}] --> ${table} 创建异常: ${error.message}`);
+		}
+	}
+}

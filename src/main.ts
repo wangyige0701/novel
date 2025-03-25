@@ -1,7 +1,6 @@
 import '@/style/icon.scss';
 import '@/style/animation.scss';
 import '@/style/common.scss';
-import 'reflect-metadata';
 
 import type { DeviceInfoResult } from '@/@types/store/info';
 import { createSSRApp } from 'vue';
@@ -25,6 +24,9 @@ export function createApp() {
 	for (const key in deviceInfo) {
 		infoStore.set(key as keyof DeviceInfoResult, deviceInfo[key as keyof DeviceInfoResult]);
 	}
+
+	// 加载数据库
+	loadDatabase();
 
 	// 默认的数据请求节点
 	const searchProxyStore = useSearchProxyStore();

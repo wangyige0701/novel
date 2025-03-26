@@ -1,7 +1,5 @@
 import { isDef, PartialOptional, toArray } from '@wang-yige/utils';
 
-type Options = Omit<PartialOptional<PlusSqliteOpenDatabaseOptions, 'success' | 'fail'>, 'success' | 'fail'>;
-
 class SQLiteTransaction {
 	private name: string;
 

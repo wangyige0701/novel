@@ -53,6 +53,7 @@
     "@wang-yige/utils": "^0.0.17",
     "pinia": "^2.3.1",
     "reflect-metadata": "^0.2.2",
+    "sqlstring": "^2.3.3",
     "status-ref": "^0.3.0",
     "vue": "^3.5.13",
     "vue-i18n": "^9.14.2"

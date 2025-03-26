@@ -1,3 +1,6 @@
+/**
+ * 字段类型
+ */
 export enum Type {
 	TEXT = 'TEXT',
 	INTEGER = 'INTEGER',

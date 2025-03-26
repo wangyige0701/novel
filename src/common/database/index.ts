@@ -2,7 +2,7 @@ import 'reflect-metadata';
 import type { ColumnOptions, TableOptions } from '@/@types/common/database';
 import Database, { Type } from '@/config/database';
 import SQLite from './SQLite';
-import { Fn, isString } from '@wang-yige/utils';
+import { ElementOf, Fn, isString } from '@wang-yige/utils';
 
 type ColumnMetadata = Array<{
 	id: boolean;
@@ -111,7 +111,7 @@ export function Column(options?: ColumnOptions | string, _description?: string) 
 	options = options || {};
 	return function (target: any, key: string) {
 		options.name = options.name || key;
-		const data = { key, options, id: false };
+		const data = { key, options, id: false } satisfies ElementOf<ColumnMetadata>;
 		if (!Reflect.hasMetadata(TABLE_FIELD, target)) {
 			Reflect.defineMetadata(TABLE_FIELD, [data], target);
 		} else {

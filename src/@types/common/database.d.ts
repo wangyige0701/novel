@@ -22,3 +22,20 @@ export interface ColumnOptions {
 	/** 默认 `false` */
 	unique?: boolean;
 }
+
+export type TableId = string | number | Array<string | number>;
+
+export type Insert = {
+	/** 插入的 id */
+	lastRowtId: number;
+};
+
+export type Update = {
+	/** 修改的行数 */
+	affectedRows: number;
+};
+
+export type Delete = {
+	/** 删除的行数 */
+	affectedRows: number;
+};

@@ -1,5 +1,8 @@
-import { isDef, PartialOptional, toArray } from '@wang-yige/utils';
+import { isDef, toArray } from '@wang-yige/utils';
 
+/**
+ * SQLite 事务方法类
+ */
 class SQLiteTransaction {
 	private name: string;
 
@@ -8,7 +11,7 @@ class SQLiteTransaction {
 	}
 
 	private use(operation: 'begin' | 'commit' | 'rollback') {
-		return new Promise((resolve, reject) => {
+		return new Promise<any>((resolve, reject) => {
 			plus.sqlite.transaction({
 				name: this.name,
 				operation,
@@ -79,14 +82,55 @@ export default class SQLite {
 		this.path = path;
 	}
 
-	/**
-	 * 打开数据库
-	 */
-	public open() {
+	private _open() {
 		return new Promise<any>((resolve, reject) => {
 			plus.sqlite.openDatabase({
 				name: this.name,
 				path: this.path,
+				success(result) {
+					resolve(result);
+				},
+				fail(result) {
+					reject(result);
+				},
+			});
+		});
+	}
+
+	private _close() {
+		return new Promise<any>((resolve, reject) => {
+			plus.sqlite.closeDatabase({
+				name: this.name,
+				success(result) {
+					resolve(result);
+				},
+				fail(result) {
+					reject(result);
+				},
+			});
+		});
+	}
+
+	private _execute(sql: string | string[]) {
+		return new Promise<any>((resolve, reject) => {
+			plus.sqlite.executeSql({
+				name: this.name,
+				sql: toArray(sql),
+				success(result) {
+					resolve(result);
+				},
+				fail(result) {
+					reject(result);
+				},
+			});
+		});
+	}
+
+	private _select(sql: string) {
+		return new Promise<any>((resolve, reject) => {
+			plus.sqlite.selectSql({
+				name: this.name,
+				sql,
 				success(result) {
 					resolve(result);
 				},
@@ -105,59 +149,65 @@ export default class SQLite {
 	}
 
 	/**
-	 * 关闭数据库
-	 */
-	public close() {
-		return new Promise<any>((resolve, reject) => {
-			plus.sqlite.closeDatabase({
-				name: this.name,
-				success(result) {
-					resolve(result);
-				},
-				fail(result) {
-					reject(result);
-				},
-			});
-		});
-	}
-
-	/**
 	 * 获取一个事务实例
 	 */
-	public transaction() {
+	public get transaction() {
 		if (!this.__transaction) {
 			this.__transaction = new SQLiteTransaction(this.name);
 		}
 		return this.__transaction;
 	}
 
-	public execute(sql: string | string[]) {
-		return new Promise<any>((resolve, reject) => {
-			plus.sqlite.executeSql({
-				name: this.name,
-				sql: toArray(sql),
-				success(result) {
-					resolve(result);
-				},
-				fail(result) {
-					reject(result);
-				},
-			});
-		});
+	/**
+	 * 打开数据库
+	 */
+	public async open() {
+		if (!this.isOpen) {
+			return await this._open();
+		}
 	}
 
-	public select(sql: string) {
-		return new Promise<any>((resolve, reject) => {
-			plus.sqlite.selectSql({
-				name: this.name,
-				sql,
-				success(result) {
-					resolve(result);
-				},
-				fail(result) {
-					reject(result);
-				},
-			});
-		});
+	/**
+	 * 关闭数据库
+	 */
+	public async close() {
+		if (this.isOpen) {
+			return await this._close();
+		}
+	}
+
+	/**
+	 * 开启事务
+	 */
+	public async beginTransaction() {
+		return await this.transaction.begin();
+	}
+
+	/**
+	 * 提交事务
+	 */
+	public async commitTransaction() {
+		return await this.transaction.commit();
+	}
+
+	/**
+	 * 回滚事务
+	 */
+	public async rollbackTransaction() {
+		return await this.transaction.rollback();
+	}
+
+	/**
+	 * 执行 SQL
+	 */
+	public async execute(sql: string | string[]) {
+		return await this._execute(sql);
+	}
+
+	/**
+	 * 查询 SQL
+	 */
+	public async select(sql: string) {
+		return await this._select(sql);
 	}
 }

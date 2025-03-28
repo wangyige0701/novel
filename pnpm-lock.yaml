@@ -93,6 +93,9 @@ importers:
       '@types/node':
         specifier: ^22.13.0
         version: 22.13.0
+      '@types/sqlstring':
+        specifier: ^2.3.2
+        version: 2.3.2
       '@vue/runtime-core':
         specifier: ^3.5.13
         version: 3.5.13
@@ -1558,6 +1561,9 @@ packages:
 
   '@types/prettier@2.7.3':
     resolution: {integrity: sha512-+68kP9yzs4LMp7VNh8gdzMSPZFL44MLGqiHWvttYJe+6qnuVr4Ek9wSBQoveqY/r+LwjCcU29kNVkidwim+kYA==}
+
+  '@types/sqlstring@2.3.2':
+    resolution: {integrity: sha512-lVRe4Iz9UNgiHelKVo8QlC8fb5nfY8+p+jNQNE+UVsuuVlQnWhyWmQ/wF5pE8Ys6TdjfVpqTG9O9i2vi6E0+Sg==}
 
   '@types/stack-utils@2.0.3':
     resolution: {integrity: sha512-9aEbYZ3TbYMznPdcdr3SmIrLXwC/AKZXQeCf9Pgao5CKb8CyHuEX5jzWPTkvregvhRJHcpRO6BFoGW9ycaOkYw==}
@@ -5996,6 +6002,8 @@ snapshots:
       undici-types: 6.20.0
 
   '@types/prettier@2.7.3': {}
+
+  '@types/sqlstring@2.3.2': {}
 
   '@types/stack-utils@2.0.3': {}
 

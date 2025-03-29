@@ -6,8 +6,9 @@ export enum Type {
 	INTEGER = 'INTEGER',
 	REAL = 'REAL',
 	BLOB = 'BLOB',
-	BOOLEAN = 'BOOLEAN',
+	NUMERIC = 'NUMERIC',
 	DATETIME = 'DATETIME',
+	BOOLEAN = 'BOOLEAN',
 }
 
 export default {

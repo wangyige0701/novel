@@ -22,11 +22,12 @@ export async function loadDatabase() {
 		const clz = configs[key] as Constructor<Clz>;
 		const ins = new clz();
 		const { path, table, name } = ins.__info();
+		console.log('预执行 SQL ：' + ins.__sql);
 		try {
 			await ins.__create();
-			console.log(`[Success] 数据表 ${path} [${name}] --> ${table} 创建成功`);
+			console.log(`[Success] 数据表 ${path} [${name}] --> ${table} SQL 执行成功`);
 		} catch (error: any) {
-			console.log(`[Error] 数据表 ${path} [${name}] --> ${table} 创建异常: ${error.message}`);
+			console.log(`[Error] 数据表 ${path} [${name}] --> ${table} SQL 执行异常: ${error.message}`);
 		}
 	}
 }

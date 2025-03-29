@@ -4,6 +4,7 @@ import { type ElementOf, type Fn, isDef, isNumber, isString, isUndef, toArray } 
 import type { ColumnOptions, TableId, TableOptions } from '@/@types/common/database';
 import DatabaseConfig, { Type } from '@/config/database';
 import SQLite from './SQLite';
+import { BaseTable } from './base';
 
 type ColumnMetadata = Array<{
 	id: boolean;
@@ -13,6 +14,7 @@ type ColumnMetadata = Array<{
 
 const TABLE_FIELD = Symbol.for('database#tableField');
 const TABLE_ID = Symbol.for('database#tableId');
+const instanceCache = new WeakMap<any, any>();
 
 export { Type };
 
@@ -144,11 +146,16 @@ export function Table(options: string | TableOptions, _description?: string) {
 		};
 	}
 	return function (target: any) {
+		if (!(target.prototype instanceof BaseTable)) {
+			throw new Error(`数据表类必须继承于 ${BaseTable.name}`);
+		}
 		const { name, database = 'main', test = false } = options;
 		const columns = (Reflect.getMetadata(TABLE_FIELD, target.prototype) || []) as ColumnMetadata;
 		// 新建表
 		let idColumnName = 'id';
+		/** 记录除了主键外的字段，没有转义 */
 		const keys = new Set<string>();
+		/** 转义后的表名 */
 		const tableName = sqlstring.escapeId(name);
 		const fields = columns.map(column => {
 			const columnName = sqlstring.escapeId(column.options.name!);
@@ -157,7 +164,7 @@ export function Table(options: string | TableOptions, _description?: string) {
 				return `${columnName} INTEGER PRIMARY KEY AUTOINCREMENT`;
 			} else {
 				// 记录字段
-				keys.add(columnName!);
+				keys.add(column.options.name!);
 				return columnSql(column.options);
 			}
 		});
@@ -175,22 +182,35 @@ export function Table(options: string | TableOptions, _description?: string) {
 			const config = DatabaseConfig[database];
 			return new SQLite(config.name, config.path);
 		};
-		/** 执行 sql 语句，没有查询所以未提供 select 语法 */
-		const execute = async (sql: string | string[], sqlite: SQLite) => {
+		/** 执行 sql 语句 */
+		const useSql = async (sqlite: SQLite, executeSql: string | string[], selectSql?: string) => {
 			await sqlite.open();
-			const result = await sqlite.execute(sql);
+			if (executeSql) {
+				await sqlite.execute(executeSql);
+			}
+			let result;
+			if (selectSql) {
+				result = await sqlite.select(selectSql);
+			}
 			await sqlite.close();
 			return result;
 		};
-		/** 数据表名属性注入 */
+		// sqlite 实例注入
+		Object.defineProperty(target, 'sqlite', {
+			...config,
+			value: getSqlite(),
+		});
+		// 表名属性注入
 		Object.defineProperty(target, 'name', {
 			...config,
 			value: tableName,
 		});
+		// 预执行的 sql 语句注入
 		Object.defineProperty(target.prototype, '__sql', {
 			...config,
 			value: sql(),
 		});
+		// 数据库信息注入
 		Object.defineProperty(target.prototype, '__info', {
 			...config,
 			value: () => {
@@ -202,7 +222,7 @@ export function Table(options: string | TableOptions, _description?: string) {
 				};
 			},
 		});
-		// 数据表创建方法
+		// 数据表创建执行函数注入
 		Object.defineProperty(target.prototype, '__create', {
 			...config,
 			value: async () => {
@@ -217,67 +237,96 @@ export function Table(options: string | TableOptions, _description?: string) {
 					console.log(`数据表 ${name} 更新成功：\n${update.join('\n')}`);
 					return;
 				}
-				await execute(sql(), sqlite);
+				await useSql(sqlite, sql());
 			},
 		});
-		// 注入基础方法
-		Object.defineProperties(target.prototype, {
-			insert: {
-				...config,
-				value: async (fields: object) => {
-					const list = [...keys.entries()].map(item => item[0]);
-					const datas = {} as Record<string, any>;
-					for (const key of list) {
-						if (key in fields) {
-							datas[key] = fields[key as keyof typeof fields];
-							continue;
-						}
-						datas[key] = null;
-					}
-					const sqlite = getSqlite();
-					await execute([sqlstring.format(`INSERT INTO ${tableName} SET ?;`, [datas])], sqlite);
-					const lastRowtId = await sqlite.select('SELECT last_insert_rowid();');
-					return { lastRowtId };
-				},
+		// 单例缓存
+		return new Proxy(class {}, {
+			construct(...args: any[]) {
+				if (instanceCache.has(target)) {
+					return instanceCache.get(target);
+				}
+				const instance = new target(...args);
+				// 注入基础方法
+				Object.defineProperties(instance, {
+					insert: {
+						...config,
+						value: async (fields: object) => {
+							const list = [...keys.entries()].map(item => item[0]);
+							const datas = {} as Record<string, any>;
+							for (const item of list) {
+								if (item in fields) {
+									datas[sqlstring.escapeId(item)] = fields[item as keyof typeof fields];
+									continue;
+								}
+								datas[sqlstring.escapeId(item)] = 'NULL';
+							}
+							const sqlite = getSqlite();
+							const columnKeys = Object.keys(datas);
+							const columnValues = Object.values(datas);
+							const lastRowtId = await useSql(
+								sqlite,
+								[
+									sqlstring.format(`INSERT INTO ${tableName} (${columnKeys.join(',')}) VALUES (?);`, [
+										columnValues,
+									]),
+								],
+								'SELECT last_insert_rowid();',
+							);
+							return { lastRowtId: lastRowtId[0]?.['last_insert_rowid()'] };
+						},
+					},
+					update: {
+						...config,
+						value: async (id: TableId, fields: object) => {
+							if (!isString(id) || !isNumber(id)) {
+								throw new Error('id 必须是字符串或数字');
+							}
+							const datas = { ...fields } as Record<string, any>;
+							for (const key in datas) {
+								if (isUndef(datas[key])) {
+									datas[key] = 'NULL';
+								}
+							}
+							const sqlite = getSqlite();
+							const affectedRows = await useSql(
+								sqlite,
+								sqlstring.format(`UPDATE ${tableName} SET ? WHERE ${idColumnName} IN (?);`, [
+									datas,
+									toArray(id),
+								]),
+								'SELECT changes();',
+							);
+							return { affectedRows: affectedRows[0]?.['changes()'] };
+						},
+					},
+					delete: {
+						...config,
+						value: async (id: TableId) => {
+							if (!isString(id) || !isNumber(id)) {
+								throw new Error('id 必须是字符串或数字');
+							}
+							const sqlite = getSqlite();
+							const affectedRows = await useSql(
+								sqlite,
+								sqlstring.format(`DELETE FROM ${tableName} WHERE ${idColumnName} IN (?);`, [
+									toArray(id),
+								]),
+								'SELECT changes();',
+							);
+							return { affectedRows: affectedRows[0]?.['changes()'] };
+						},
+					},
+				});
+				instanceCache.set(target, instance);
+				return instance;
 			},
-			update: {
-				...config,
-				value: async (id: TableId, fields: object) => {
-					if (!isString(id) || !isNumber(id)) {
-						throw new Error('id 必须是字符串或数字');
-					}
-					const datas = { ...fields } as Record<string, any>;
-					for (const key in datas) {
-						if (isUndef(datas[key])) {
-							datas[key] = 'NULL';
-						}
-					}
-					const sqlite = getSqlite();
-					await execute(
-						sqlstring.format(`UPDATE ${tableName} SET ? WHERE ${idColumnName} IN (?);`, [
-							datas,
-							toArray(id),
-						]),
-						sqlite,
-					);
-					const affectedRows = await sqlite.select('SELECT changes();');
-					return { affectedRows };
-				},
-			},
-			delete: {
-				...config,
-				value: async (id: TableId) => {
-					if (!isString(id) || !isNumber(id)) {
-						throw new Error('id 必须是字符串或数字');
-					}
-					const sqlite = getSqlite();
-					await execute(
-						sqlstring.format(`DELETE FROM ${tableName} WHERE ${idColumnName} IN (?);`, [toArray(id)]),
-						sqlite,
-					);
-					const affectedRows = await sqlite.select('SELECT changes();');
-					return { affectedRows };
-				},
+			get(_: any, key: string) {
+				if (key === 'prototype') {
+					return target.prototype;
+				}
+				const a = Reflect.get(target, key);
+				return Reflect.get(target, key);
 			},
 		});
 	};

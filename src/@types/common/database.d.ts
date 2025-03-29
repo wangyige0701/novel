@@ -2,7 +2,9 @@ import type { Type } from '@/config/database';
 import database from '@/config/database';
 
 export interface TableOptions {
+	/** 数据表名 */
 	name: string;
+	/** 创建表的数据库 */
 	database?: keyof typeof database;
 	/** 是否是测试环境的表，默认 `false` */
 	test?: boolean;

@@ -31,6 +31,9 @@ export function Database(database: keyof typeof DatabaseConfig) {
 }
 
 function getSqlMetadata(target: any, key: string, descriptor: PropertyDescriptor) {
+	if (!descriptor) {
+		throw new Error(`未声明 ${key} 成员属性`);
+	}
 	if (!Reflect.hasMetadata(SQL_METADATA, target, key)) {
 		const options = {
 			transaction: false,
@@ -77,11 +80,26 @@ function getSqlMetadata(target: any, key: string, descriptor: PropertyDescriptor
 	return Reflect.getMetadata(SQL_METADATA, target, key) as SQLMetadata;
 }
 
+function getDescriptor(target: any, key: string) {
+	const descriptor = Object.getOwnPropertyDescriptor(target, key);
+	if (descriptor) {
+		return descriptor;
+	}
+	Object.defineProperty(target, key, {
+		writable: true,
+		configurable: true,
+		enumerable: true,
+		value: void 0,
+	});
+	return getDescriptor(target, key);
+}
+
 /**
  * 声明事务
  */
 export function Transcation() {
-	return function (target: any, key: string, descriptor: PropertyDescriptor) {
+	return function (target: any, key: string) {
+		const descriptor = getDescriptor(target, key);
 		const metadata = getSqlMetadata(target, key, descriptor);
 		if (metadata) {
 			metadata.transaction = true;
@@ -93,7 +111,8 @@ export function Transcation() {
  * 声明一个 SQLite 执行语句
  */
 export function Execute(sql: string, params?: any[]) {
-	return function (target: any, key: string, descriptor: PropertyDescriptor) {
+	return function (target: any, key: string) {
+		const descriptor = getDescriptor(target, key);
 		const metadata = getSqlMetadata(target, key, descriptor);
 		if (metadata) {
 			metadata.sql = {
@@ -109,7 +128,8 @@ export function Execute(sql: string, params?: any[]) {
  * 声明一个 SQLite 查询语句
  */
 export function Select(sql: string, params?: any[]) {
-	return function (target: any, key: string, descriptor: PropertyDescriptor) {
+	return function (target: any, key: string) {
+		const descriptor = getDescriptor(target, key);
 		const metadata = getSqlMetadata(target, key, descriptor);
 		if (metadata) {
 			metadata.sql = {

@@ -1,6 +1,6 @@
 import 'reflect-metadata';
 import sqlstring from 'sqlstring';
-import { type ElementOf, type Fn, isNumber, isString, isUndef, toArray } from '@wang-yige/utils';
+import { type ElementOf, type Fn, isDef, isNumber, isString, isUndef, toArray } from '@wang-yige/utils';
 import type { ColumnOptions, TableId, TableOptions } from '@/@types/common/database';
 import DatabaseConfig, { Type } from '@/config/database';
 import SQLite from './SQLite';
@@ -28,7 +28,7 @@ function columnSql(options: ColumnOptions, isUpdate: boolean = false) {
 		merges.push(Type[type]);
 	}
 	if (nullable) {
-		if (_default) {
+		if (isDef(_default)) {
 			merges.push(`DEFAULT ${_default}`);
 		} else if (isUpdate) {
 			throw new Error(`更新的列 ${name} 允许为空但是没有提供默认值`);
@@ -95,9 +95,6 @@ async function updateTableSql(
 			modifies.push(item.name);
 		}
 	}
-	console.log(adds);
-	console.log(modifies);
-	console.log(removes);
 
 	if (modifies.length || removes.length) {
 		// 创建临时表并迁移数据
@@ -112,8 +109,9 @@ async function updateTableSql(
 			.join(',');
 		sqls.push(
 			...[
+				`DROP TABLE IF EXISTS ${tempName};`,
 				createSql(tempName),
-				`INSERT INTO ${tempName} (${copyColumns}) SELECT ${copyColumns} FROM ${escapeTableName}};`,
+				`INSERT INTO ${tempName} (${copyColumns}) SELECT ${copyColumns} FROM ${escapeTableName};`,
 				`DROP TABLE ${escapeTableName};`,
 				`ALTER TABLE ${tempName} RENAME TO ${escapeTableName};`,
 			],
@@ -178,10 +176,7 @@ export function Table(options: string | TableOptions, _description?: string) {
 			return new SQLite(config.name, config.path);
 		};
 		/** 执行 sql 语句，没有查询所以未提供 select 语法 */
-		const execute = async (sql: string | string[], sqlite?: SQLite) => {
-			if (!sqlite) {
-				sqlite = getSqlite();
-			}
+		const execute = async (sql: string | string[], sqlite: SQLite) => {
 			await sqlite.open();
 			const result = await sqlite.execute(sql);
 			await sqlite.close();
@@ -194,7 +189,7 @@ export function Table(options: string | TableOptions, _description?: string) {
 		});
 		Object.defineProperty(target.prototype, '__sql', {
 			...config,
-			get: () => sql(),
+			value: sql(),
 		});
 		Object.defineProperty(target.prototype, '__info', {
 			...config,
@@ -215,13 +210,14 @@ export function Table(options: string | TableOptions, _description?: string) {
 					// 测试表，生产环境不创建
 					return;
 				}
+				const sqlite = getSqlite();
 				// 如果更新表，则不继续执行
 				let update;
-				if ((update = await updateTableSql(getSqlite(), name, columns, sql))) {
+				if ((update = await updateTableSql(sqlite, name, columns, sql))) {
 					console.log(`数据表 ${name} 更新成功：\n${update.join('\n')}`);
 					return;
 				}
-				return await execute(sql());
+				await execute(sql(), sqlite);
 			},
 		});
 		// 注入基础方法
@@ -238,10 +234,9 @@ export function Table(options: string | TableOptions, _description?: string) {
 						}
 						datas[key] = null;
 					}
-					const lastRowtId = await execute([
-						sqlstring.format(`INSERT INTO ${tableName} SET ?;`, [datas]),
-						'SELECT last_insert_rowid();',
-					]);
+					const sqlite = getSqlite();
+					await execute([sqlstring.format(`INSERT INTO ${tableName} SET ?;`, [datas])], sqlite);
+					const lastRowtId = await sqlite.select('SELECT last_insert_rowid();');
 					return { lastRowtId };
 				},
 			},
@@ -257,15 +252,16 @@ export function Table(options: string | TableOptions, _description?: string) {
 							datas[key] = 'NULL';
 						}
 					}
-					const result = await execute(
-						sqlstring.format(
-							`UPDATE ${tableName} SET ? WHERE ${idColumnName} IN (?) RETURNING ${idColumnName}`,
-							[datas, toArray(id)],
-						),
+					const sqlite = getSqlite();
+					await execute(
+						sqlstring.format(`UPDATE ${tableName} SET ? WHERE ${idColumnName} IN (?);`, [
+							datas,
+							toArray(id),
+						]),
+						sqlite,
 					);
-					return {
-						affectedRows: result?.length || 0,
-					};
+					const affectedRows = await sqlite.select('SELECT changes();');
+					return { affectedRows };
 				},
 			},
 			delete: {
@@ -274,15 +270,13 @@ export function Table(options: string | TableOptions, _description?: string) {
 					if (!isString(id) || !isNumber(id)) {
 						throw new Error('id 必须是字符串或数字');
 					}
-					const result = await execute(
-						sqlstring.format(
-							`DELETE FROM ${tableName} WHERE ${idColumnName} IN (?) RETURNING ${idColumnName}`,
-							[toArray(id)],
-						),
+					const sqlite = getSqlite();
+					await execute(
+						sqlstring.format(`DELETE FROM ${tableName} WHERE ${idColumnName} IN (?);`, [toArray(id)]),
+						sqlite,
 					);
-					return {
-						affectedRows: result?.length || 0,
-					};
+					const affectedRows = await sqlite.select('SELECT changes();');
+					return { affectedRows };
 				},
 			},
 		});
@@ -303,6 +297,9 @@ export function Id() {
 			const data = columns.find(item => item.key === key);
 			if (data) {
 				data.id = true;
+				data.options.nullable = false;
+				data.options.type = Type.INTEGER;
+				data.options.unique = true;
 			}
 		}
 	};

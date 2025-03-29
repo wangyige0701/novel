@@ -17,6 +17,124 @@ const TABLE_ID = Symbol.for('database#tableId');
 export { Type };
 
 /**
+ * 根据列的元数据生成对应的字段创建 SQL 语句
+ * @param options 列元数据配置项
+ * @param isUpdate 是否用于更新语法，更新字段时，空字段必须有默认值
+ */
+function columnSql(options: ColumnOptions, isUpdate: boolean = false) {
+	const { type, name, unique = false, nullable = true, key = false, default: _default } = options;
+	const merges = [];
+	if (type) {
+		merges.push(Type[type]);
+	}
+	if (nullable) {
+		if (_default) {
+			merges.push(`DEFAULT ${_default}`);
+		} else if (isUpdate) {
+			throw new Error(`更新的列 ${name} 允许为空但是没有提供默认值`);
+		}
+	} else {
+		merges.push('NOT NULL');
+	}
+	if (unique) {
+		merges.push('UNIQUE');
+	}
+	if (key) {
+		merges.push('PRIMARY KEY');
+	}
+	return sqlstring.escapeId(name) + ' ' + merges.join(' ');
+}
+
+/**
+ * 数据表更新处理
+ * @param sqlite 数据库实例
+ * @param tableName 未进行转义的数据表名
+ * @param columns 所有列的元数据
+ * @param createSql 创建表的 sql 语句获取方法
+ */
+async function updateTableSql(
+	sqlite: SQLite,
+	tableName: string,
+	columns: ColumnMetadata,
+	createSql: Fn<[string], string>,
+) {
+	const escapeTableName = sqlstring.escapeId(tableName);
+	await sqlite.open();
+	const result = (await sqlite.select(`PRAGMA table_info(${escapeTableName})`)) as Array<{
+		name: string;
+		type: string;
+	}>;
+	if (!result || !result.length) {
+		await sqlite.close();
+		return;
+	}
+	const tableColumns = columns.map(item => item.options);
+	const adds = [] as ColumnOptions[];
+	const modifies = [] as string[];
+	const removes = [] as string[];
+	const sqls = [] as string[];
+	// 收集新增字段
+	for (const column of tableColumns) {
+		const target = result.find(item => item.name === column.name);
+		if (!target) {
+			adds.push(column);
+			continue;
+		}
+		if (target.type !== column.type && !modifies.find(item => item === column.name)) {
+			modifies.push(target.name);
+		}
+	}
+	// 收集删除字段
+	for (const item of result) {
+		const target = tableColumns.find(column => column.name === item.name);
+		if (!target) {
+			removes.push(item.name);
+			continue;
+		}
+		if (target.type !== item.type && !modifies.find(name => name === target.name)) {
+			modifies.push(item.name);
+		}
+	}
+	console.log(adds);
+	console.log(modifies);
+	console.log(removes);
+
+	if (modifies.length || removes.length) {
+		// 创建临时表并迁移数据
+		const tempName = sqlstring.escapeId(tableName + '_new_temp');
+		const copyColumns = columns
+			.map(item => {
+				if (!removes.includes(item.options.name!)) {
+					return sqlstring.escapeId(item.options.name);
+				}
+			})
+			.filter(Boolean)
+			.join(',');
+		sqls.push(
+			...[
+				createSql(tempName),
+				`INSERT INTO ${tempName} (${copyColumns}) SELECT ${copyColumns} FROM ${escapeTableName}};`,
+				`DROP TABLE ${escapeTableName};`,
+				`ALTER TABLE ${tempName} RENAME TO ${escapeTableName};`,
+			],
+		);
+	} else if (adds.length) {
+		// 新增字段
+		sqls.push(
+			...adds.map(item => {
+				return `ALTER TABLE ${escapeTableName} ADD COLUMN ${columnSql(item)};`;
+			}),
+		);
+	} else {
+		await sqlite.close();
+		return;
+	}
+	await sqlite.execute(sqls);
+	await sqlite.close();
+	return sqls;
+}
+
+/**
  * 声明表，如果没有声明数据库，则默认为 `main` 主数据库
  */
 export function Table(name: string, _description?: string): Fn<[target: any], void>;
@@ -30,56 +148,53 @@ export function Table(options: string | TableOptions, _description?: string) {
 	return function (target: any) {
 		const { name, database = 'main', test = false } = options;
 		const columns = (Reflect.getMetadata(TABLE_FIELD, target.prototype) || []) as ColumnMetadata;
+		// 新建表
 		let idColumnName = 'id';
 		const keys = new Set<string>();
 		const tableName = sqlstring.escapeId(name);
 		const fields = columns.map(column => {
-			const { type, name, unique = false, nullable = true, key = false, default: _default } = column.options;
-			const columnName = sqlstring.escapeId(name);
+			const columnName = sqlstring.escapeId(column.options.name!);
 			if (column.id) {
 				idColumnName = columnName!;
-				return `${sqlstring.escapeId(columnName)} INTEGER PRIMARY KEY AUTOINCREMENT`;
+				return `${columnName} INTEGER PRIMARY KEY AUTOINCREMENT`;
 			} else {
-				const merges = [];
-				if (type) {
-					merges.push(Type[type]);
-				}
-				if (nullable) {
-					merges.push('NULL');
-					if (_default) {
-						merges.push(`DEFAULT ${_default}`);
-					}
-				} else {
-					merges.push('NOT NULL');
-				}
-				if (unique) {
-					merges.push('UNIQUE');
-				}
-				if (key) {
-					merges.push('PRIMARY KEY');
-				}
 				// 记录字段
 				keys.add(columnName!);
-				return `${sqlstring.escapeId(columnName)} ${merges.join(' ')}`;
+				return columnSql(column.options);
 			}
 		});
-		const sql = `CREATE TABLE IF NOT EXISTS ${tableName} (${fields.join(',')});`;
+		/** 获取数据表创建的 sql */
+		const sql = (useTableName: string = tableName) => {
+			return `CREATE TABLE IF NOT EXISTS ${useTableName} (${fields.join(',')});`;
+		};
 		const config = {
 			enumerable: false,
 			writable: false,
 			configurable: false,
 		} as PropertyDescriptor;
-		const execute = async (sql: string | string[]) => {
+		/** 获取当前数据库对应的 sqlite 实例 */
+		const getSqlite = () => {
 			const config = DatabaseConfig[database];
-			const sqlite = new SQLite(config.name, config.path);
+			return new SQLite(config.name, config.path);
+		};
+		/** 执行 sql 语句，没有查询所以未提供 select 语法 */
+		const execute = async (sql: string | string[], sqlite?: SQLite) => {
+			if (!sqlite) {
+				sqlite = getSqlite();
+			}
 			await sqlite.open();
 			const result = await sqlite.execute(sql);
 			await sqlite.close();
 			return result;
 		};
+		/** 数据表名属性注入 */
+		Object.defineProperty(target, 'name', {
+			...config,
+			value: tableName,
+		});
 		Object.defineProperty(target.prototype, '__sql', {
 			...config,
-			value: sql,
+			get: () => sql(),
 		});
 		Object.defineProperty(target.prototype, '__info', {
 			...config,
@@ -100,7 +215,13 @@ export function Table(options: string | TableOptions, _description?: string) {
 					// 测试表，生产环境不创建
 					return;
 				}
-				return await execute(sql);
+				// 如果更新表，则不继续执行
+				let update;
+				if ((update = await updateTableSql(getSqlite(), name, columns, sql))) {
+					console.log(`数据表 ${name} 更新成功：\n${update.join('\n')}`);
+					return;
+				}
+				return await execute(sql());
 			},
 		});
 		// 注入基础方法

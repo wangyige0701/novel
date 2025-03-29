@@ -1,6 +1,6 @@
 import 'reflect-metadata';
 import sqlstring from 'sqlstring';
-import { isFunction, type Fn } from '@wang-yige/utils';
+import { isArray, isFunction, type Fn } from '@wang-yige/utils';
 import DatabaseConfig from '@/config/database';
 import SQLite from './SQLite';
 
@@ -11,14 +11,11 @@ type SQLMetadata = {
 
 const USE_DATABASE = Symbol.for('USE_DATABASE');
 const SQL_METADATA = Symbol.for('SQL_METADATA');
+const SQL_INSTANCE = Symbol.for('SQL_INSTANCE');
+const instanceCache = new WeakMap<any, any>();
 
 /**
- * 用于获取包含有 sql 执行结果的符号
- */
-export const SQL = Symbol('@SQL');
-
-/**
- * 声明数据库，没有声明则为 `main`
+ * 声明数据库，模型类上必须使用
  */
 export function Database(database: keyof typeof DatabaseConfig) {
 	return function (target: any, key?: string) {
@@ -26,72 +23,100 @@ export function Database(database: keyof typeof DatabaseConfig) {
 			Reflect.defineMetadata(USE_DATABASE, database, target, key);
 		} else {
 			Reflect.defineMetadata(USE_DATABASE, database, target.prototype);
+			return new Proxy(class {} as any, {
+				construct(_, ...args: any[]) {
+					if (instanceCache.has(target)) {
+						return instanceCache.get(target);
+					}
+					const instance = new target(...args);
+					instanceCache.set(target, instance);
+					const initialList = Reflect.getMetadata(SQL_INSTANCE, target.prototype);
+					if (isArray(initialList)) {
+						initialList.forEach(item => isFunction(item) && item(instance));
+					}
+					return instance;
+				},
+				get(_, key: string) {
+					if (key === 'prototype') {
+						return target.prototype;
+					}
+					return Reflect.get(target, key);
+				},
+			});
 		}
 	};
 }
 
-function getSqlMetadata(target: any, key: string, descriptor: PropertyDescriptor) {
-	if (!descriptor) {
-		throw new Error(`未声明 ${key} 成员属性`);
-	}
+function getSqlMetadata(target: any, key: string) {
 	if (!Reflect.hasMetadata(SQL_METADATA, target, key)) {
+		const config = {
+			enumerable: false,
+			writable: false,
+			configurable: false,
+		} as PropertyDescriptor;
 		const options = {
 			transaction: false,
 		} as SQLMetadata;
+		// 绑定执行条件
 		Reflect.defineMetadata(SQL_METADATA, options, target, key);
-		const oldMethod = descriptor.value as Fn<any[], any>;
-		descriptor.value = async function (this: any, ...args: any[]) {
-			const database = (Reflect.getMetadata(USE_DATABASE, target, key) as keyof typeof DatabaseConfig) || 'main';
-			const { name, path } = DatabaseConfig[database];
-			const sqlite = new SQLite(name, path);
-			const options = Reflect.getMetadata(SQL_METADATA, target, key) as SQLMetadata;
-			let result: any;
-			await sqlite.open();
-			try {
-				if (options.transaction) {
-					await sqlite.beginTransaction();
+		// 注入成员属性的方法，接收实例
+		const initial = (instance: any) => {
+			const oldMethod = instance[key] as Fn<any[], any>;
+			const useful = async function (this: any, ...args: any[]) {
+				let database = Reflect.getMetadata(USE_DATABASE, target, key) as keyof typeof DatabaseConfig;
+				if (!database) {
+					database = Reflect.getMetadata(USE_DATABASE, target) as keyof typeof DatabaseConfig;
 				}
-				if (options.sql) {
-					const { type, statement, params } = options.sql;
-					const sql = sqlstring.format(statement, params);
-					if (type === 'execute') {
-						this[SQL] = await sqlite.execute(sql);
-					} else if (type === 'select') {
-						this[SQL] = await sqlite.select(sql);
-					} else {
-						throw new Error('不支持的 SQL 类型');
+				if (!database) {
+					throw new Error('未指定数据库');
+				}
+				const { name, path } = DatabaseConfig[database];
+				const sqlite = new SQLite(name, path);
+				const options = Reflect.getMetadata(SQL_METADATA, target, key) as SQLMetadata;
+				let result: any;
+				await sqlite.open();
+				try {
+					if (options.transaction) {
+						await sqlite.beginTransaction();
+					}
+					if (options.sql) {
+						const { type, statement, params } = options.sql;
+						const sql = sqlstring.format(statement, params);
+						if (type === 'execute') {
+							await sqlite.execute(sql);
+						} else if (type === 'select') {
+							result = await sqlite.select(sql);
+						} else {
+							throw new Error('不支持的 SQLite 操作类型');
+						}
+					}
+					if (oldMethod && isFunction(oldMethod)) {
+						result = await oldMethod.apply(this, args);
+					}
+					if (options.transaction) {
+						await sqlite.commitTransaction();
+					}
+				} catch (error) {
+					if (options.transaction) {
+						await sqlite.rollbackTransaction();
 					}
 				}
-				if (oldMethod && isFunction(oldMethod)) {
-					result = await oldMethod.apply(this, args);
-				}
-				if (options.transaction) {
-					await sqlite.commitTransaction();
-				}
-			} catch (error) {
-				if (options.transaction) {
-					await sqlite.rollbackTransaction();
-				}
-			}
-			await sqlite.close();
-			return result;
+				await sqlite.close();
+				return result;
+			};
+			Object.defineProperty(instance, key, {
+				...config,
+				value: useful,
+			});
 		};
+		// 绑定初始化函数
+		if (!Reflect.hasMetadata(SQL_INSTANCE, target)) {
+			Reflect.defineMetadata(SQL_INSTANCE, [], target);
+		}
+		const initialList = Reflect.getMetadata(SQL_INSTANCE, target) as any[];
+		initialList.push(initial);
 	}
 	return Reflect.getMetadata(SQL_METADATA, target, key) as SQLMetadata;
-}
-
-function getDescriptor(target: any, key: string) {
-	const descriptor = Object.getOwnPropertyDescriptor(target, key);
-	if (descriptor) {
-		return descriptor;
-	}
-	Object.defineProperty(target, key, {
-		writable: true,
-		configurable: true,
-		enumerable: true,
-		value: void 0,
-	});
-	return getDescriptor(target, key);
 }
 
 /**
@@ -99,8 +124,7 @@ function getDescriptor(target: any, key: string) {
  */
 export function Transcation() {
 	return function (target: any, key: string) {
-		const descriptor = getDescriptor(target, key);
-		const metadata = getSqlMetadata(target, key, descriptor);
+		const metadata = getSqlMetadata(target, key);
 		if (metadata) {
 			metadata.transaction = true;
 		}
@@ -112,8 +136,7 @@ export function Transcation() {
  */
 export function Execute(sql: string, params?: any[]) {
 	return function (target: any, key: string) {
-		const descriptor = getDescriptor(target, key);
-		const metadata = getSqlMetadata(target, key, descriptor);
+		const metadata = getSqlMetadata(target, key);
 		if (metadata) {
 			metadata.sql = {
 				type: 'execute',
@@ -129,8 +152,7 @@ export function Execute(sql: string, params?: any[]) {
  */
 export function Select(sql: string, params?: any[]) {
 	return function (target: any, key: string) {
-		const descriptor = getDescriptor(target, key);
-		const metadata = getSqlMetadata(target, key, descriptor);
+		const metadata = getSqlMetadata(target, key);
 		if (metadata) {
 			metadata.sql = {
 				type: 'select',

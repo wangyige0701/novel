@@ -242,7 +242,7 @@ export function Table(options: string | TableOptions, _description?: string) {
 		});
 		// 单例缓存
 		return new Proxy(class {}, {
-			construct(...args: any[]) {
+			construct(_, ...args: any[]) {
 				if (instanceCache.has(target)) {
 					return instanceCache.get(target);
 				}
@@ -321,11 +321,10 @@ export function Table(options: string | TableOptions, _description?: string) {
 				instanceCache.set(target, instance);
 				return instance;
 			},
-			get(_: any, key: string) {
+			get(_, key: string) {
 				if (key === 'prototype') {
 					return target.prototype;
 				}
-				const a = Reflect.get(target, key);
 				return Reflect.get(target, key);
 			},
 		});

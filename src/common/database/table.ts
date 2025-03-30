@@ -152,19 +152,20 @@ export function Table(options: string | TableOptions, _description?: string) {
 		const { name, database = 'main', test = false } = options;
 		const columns = (Reflect.getMetadata(TABLE_FIELD, target.prototype) || []) as ColumnMetadata;
 		// 新建表
-		let idColumnName = 'id';
-		/** 记录除了主键外的字段，没有转义 */
+		/** 通过 ID 装饰器注册的字段，用于作为查询的主键 id */
+		let idColumnName: string;
+		/** 没有转义的字段 */
 		const keys = new Set<string>();
 		/** 转义后的表名 */
 		const tableName = sqlstring.escapeId(name);
 		const fields = columns.map(column => {
 			const columnName = sqlstring.escapeId(column.options.name!);
+			keys.add(column.options.name!);
 			if (column.id) {
 				idColumnName = columnName!;
 				return `${columnName} INTEGER PRIMARY KEY AUTOINCREMENT`;
 			} else {
 				// 记录字段
-				keys.add(column.options.name!);
 				return columnSql(column.options);
 			}
 		});
@@ -252,7 +253,8 @@ export function Table(options: string | TableOptions, _description?: string) {
 					insert: {
 						...config,
 						value: async (fields: object) => {
-							const list = [...keys.entries()].map(item => item[0]);
+							// 过滤掉主键字段
+							const list = [...keys.entries()].map(item => item[0]).filter(k => k !== idColumnName);
 							const datas = {} as Record<string, any>;
 							for (const item of list) {
 								if (item in fields) {
@@ -279,6 +281,9 @@ export function Table(options: string | TableOptions, _description?: string) {
 					update: {
 						...config,
 						value: async (id: TableId, fields: object) => {
+							if (!idColumnName) {
+								throw new Error('使用 `update` 方法时，必须使用 ID 装饰器注册主键字段');
+							}
 							if (!isString(id) && !isNumber(id)) {
 								throw new Error(`${idColumnName} 必须是字符串或数字`);
 							}
@@ -303,6 +308,9 @@ export function Table(options: string | TableOptions, _description?: string) {
 					delete: {
 						...config,
 						value: async (id: TableId) => {
+							if (!idColumnName) {
+								throw new Error('使用 `delete` 方法时，必须使用 ID 装饰器注册主键字段');
+							}
 							if (!isString(id) && !isNumber(id)) {
 								throw new Error(`${idColumnName} 必须是字符串或数字`);
 							}
@@ -318,6 +326,18 @@ export function Table(options: string | TableOptions, _description?: string) {
 						},
 					},
 				});
+				const bindKeyNames = [...keys.entries()].reduce(
+					(prev, [key]) => {
+						prev[key] = {
+							...config,
+							value: sqlstring.escapeId(key),
+						};
+						return prev;
+					},
+					{} as Record<string, PropertyDescriptor>,
+				);
+				// 绑定所有经过转义的字段名
+				Object.defineProperties(instance, bindKeyNames);
 				instanceCache.set(target, instance);
 				return instance;
 			},

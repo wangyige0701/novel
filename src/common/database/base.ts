@@ -14,8 +14,10 @@ export class BaseTable<T extends Constructor<any, any[]>> {
 	static name: string;
 	/** sqlite 实例 */
 	static sqlite: SQLite;
-
+	/** 插入一条数据 */
 	insert: Fn<[fields: Fields<T>], Promise<Insert>>;
+	/** 更新指定 id 的数据，可以传入多个 id */
 	update: Fn<[id: TableId, fields: Fields<T>], Promise<Update>>;
+	/** 删除指定 id 的数据，可以传入多个 id */
 	delete: Fn<[id: TableId | string], Promise<Delete>>;
 }

@@ -152,24 +152,25 @@ export function Table(options: string | TableOptions, _description?: string) {
 		const { name, database = 'main', test = false } = options;
 		const columns = (Reflect.getMetadata(TABLE_FIELD, target.prototype) || []) as ColumnMetadata;
 		// 新建表
-		/** 通过 ID 装饰器注册的字段，用于作为查询的主键 id */
+		/** 通过 ID 装饰器注册的字段（经过转义），用于作为查询的主键 id */
 		let idColumnName: string;
-		/** 没有转义的字段 */
-		const keys = new Set<string>();
+		/** 记录字段数据 */
+		const keys = new Array<{ name: string; id: boolean }>();
 		/** 转义后的表名 */
 		const tableName = sqlstring.escapeId(name);
 		const fields = columns.map(column => {
 			const columnName = sqlstring.escapeId(column.options.name!);
-			keys.add(column.options.name!);
+			const length = keys.push({ name: column.options.name!, id: false });
 			if (column.id) {
 				idColumnName = columnName!;
+				keys[length - 1].id = true;
 				return `${columnName} INTEGER PRIMARY KEY AUTOINCREMENT`;
 			} else {
 				// 记录字段
 				return columnSql(column.options);
 			}
 		});
-		/** 获取数据表创建的 sql */
+		/** 获取数据表创建的 sql，创建字段相同，可以传入表名 */
 		const sql = (useTableName: string = tableName) => {
 			return `CREATE TABLE IF NOT EXISTS ${useTableName} (${fields.join(',')});`;
 		};
@@ -254,7 +255,7 @@ export function Table(options: string | TableOptions, _description?: string) {
 						...config,
 						value: async (fields: object) => {
 							// 过滤掉主键字段
-							const list = [...keys.entries()].map(item => item[0]).filter(k => k !== idColumnName);
+							const list = keys.filter(item => !item.id).map(item => item.name);
 							const datas = {} as Record<string, any>;
 							for (const item of list) {
 								if (item in fields) {
@@ -326,11 +327,11 @@ export function Table(options: string | TableOptions, _description?: string) {
 						},
 					},
 				});
-				const bindKeyNames = [...keys.entries()].reduce(
-					(prev, [key]) => {
-						prev[key] = {
+				const bindKeyNames = keys.reduce(
+					(prev, { name: _key }) => {
+						prev[_key] = {
 							...config,
-							value: sqlstring.escapeId(key),
+							value: sqlstring.escapeId(_key),
 						};
 						return prev;
 					},

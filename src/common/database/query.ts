@@ -11,7 +11,7 @@ type SQLMetadata = {
 
 const USE_DATABASE = Symbol.for('USE_DATABASE');
 const SQL_METADATA = Symbol.for('SQL_METADATA');
-const SQL_INSTANCE = Symbol.for('SQL_INSTANCE');
+const SQL_INITIAL = Symbol.for('SQL_INITIAL');
 const instanceCache = new WeakMap<any, any>();
 
 /**
@@ -30,9 +30,9 @@ export function Database(database: keyof typeof DatabaseConfig) {
 					}
 					const instance = new target(...args);
 					instanceCache.set(target, instance);
-					const initialList = Reflect.getMetadata(SQL_INSTANCE, target.prototype);
+					const initialList = Reflect.getMetadata(SQL_INITIAL, target.prototype);
 					if (isArray(initialList)) {
-						initialList.forEach(item => isFunction(item) && item(instance));
+						initialList.forEach(initial => isFunction(initial) && initial(instance));
 					}
 					return instance;
 				},
@@ -110,10 +110,10 @@ function getSqlMetadata(target: any, key: string) {
 			});
 		};
 		// 绑定初始化函数
-		if (!Reflect.hasMetadata(SQL_INSTANCE, target)) {
-			Reflect.defineMetadata(SQL_INSTANCE, [], target);
+		if (!Reflect.hasMetadata(SQL_INITIAL, target)) {
+			Reflect.defineMetadata(SQL_INITIAL, [], target);
 		}
-		const initialList = Reflect.getMetadata(SQL_INSTANCE, target) as any[];
+		const initialList = Reflect.getMetadata(SQL_INITIAL, target) as any[];
 		initialList.push(initial);
 	}
 	return Reflect.getMetadata(SQL_METADATA, target, key) as SQLMetadata;

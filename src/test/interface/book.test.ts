@@ -1,10 +1,10 @@
 import { IDType } from '@/@types';
 import { BookContentType, ChapterType } from '@/@types/interface/boos';
 import { BookItemInfo } from '@/@types/pages';
-import { Book } from '@/interface/Book/Book';
-import { Bookshelf } from '@/interface/Book/Bookshelf';
-import { Chapter } from '@/interface/Book/Chapter';
-import { Content } from '@/interface/Book/Content';
+import { Book } from '@/interface/Book';
+import { Bookshelf } from '@/interface/Bookshelf';
+import { Chapter } from '@/interface/Chapter';
+import { Content } from '@/interface/Content';
 import { describe, expect, it } from 'vitest';
 
 describe('Book', () => {

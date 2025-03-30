@@ -279,8 +279,8 @@ export function Table(options: string | TableOptions, _description?: string) {
 					update: {
 						...config,
 						value: async (id: TableId, fields: object) => {
-							if (!isString(id) || !isNumber(id)) {
-								throw new Error('id 必须是字符串或数字');
+							if (!isString(id) && !isNumber(id)) {
+								throw new Error(`${idColumnName} 必须是字符串或数字`);
 							}
 							const datas = { ...fields } as Record<string, any>;
 							for (const key in datas) {
@@ -303,8 +303,8 @@ export function Table(options: string | TableOptions, _description?: string) {
 					delete: {
 						...config,
 						value: async (id: TableId) => {
-							if (!isString(id) || !isNumber(id)) {
-								throw new Error('id 必须是字符串或数字');
+							if (!isString(id) && !isNumber(id)) {
+								throw new Error(`${idColumnName} 必须是字符串或数字`);
 							}
 							const sqlite = getSqlite();
 							const affectedRows = await useSql(

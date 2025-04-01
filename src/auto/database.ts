@@ -1,7 +1,7 @@
 import { Constructor, Fn } from '@wang-yige/utils';
 
 type Clz = {
-	__create: Fn<[], Promise<void>>;
+	__create: Fn<[], Promise<false | void>>;
 	__sql: string;
 	__info: () => {
 		name: string;
@@ -22,12 +22,13 @@ export async function loadDatabase() {
 		const clz = configs[key] as Constructor<Clz>;
 		const ins = new clz();
 		const { path, table, name } = ins.__info();
-		console.log('预执行 SQL ：' + ins.__sql);
 		try {
-			await ins.__create();
-			console.log(`[Success] 数据表 ${path} [${name}] --> ${table} SQL 执行成功`);
+			const result = await ins.__create();
+			if (result !== false) {
+				console.log(`[Success] 数据表 ${path} [${name}] --> ${table} SQL 执行成功：\n${ins.__sql}`);
+			}
 		} catch (error: any) {
-			console.log(`[Error] 数据表 ${path} [${name}] --> ${table} SQL 执行异常: ${error.message}`);
+			console.log(`[Error] 数据表 ${path} [${name}] --> ${table} SQL 执行异常：\n${error.message}\n${ins.__sql}`);
 		}
 	}
 }

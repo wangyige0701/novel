@@ -1,13 +1,28 @@
 import type { Type } from '@/config/database';
-import database from '@/config/database';
+import type database from '@/config/database';
+
+interface IndexOptions {
+	/** 索引名 */
+	name: string;
+	/** 索引字段 */
+	columns: string[] | string;
+	/** 是否是唯一索引，默认 `false` */
+	unique?: boolean;
+	/** 条件索引 */
+	where?: string;
+}
 
 export interface TableOptions {
 	/** 数据表名 */
 	name: string;
 	/** 创建表的数据库 */
 	database?: keyof typeof database;
+	/** 索引配置 */
+	indexs?: IndexOptions[];
 	/** 是否是测试环境的表，默认 `false` */
 	test?: boolean;
+	/** 是否禁用，默认 `false` */
+	disabled?: boolean;
 }
 
 export interface ColumnOptions {

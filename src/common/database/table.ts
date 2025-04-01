@@ -1,7 +1,17 @@
 import 'reflect-metadata';
 import sqlstring from 'sqlstring';
-import { type ElementOf, type Fn, isDef, isNumber, isString, isUndef, toArray } from '@wang-yige/utils';
-import type { ColumnOptions, TableId, TableOptions } from '@/@types/common/database';
+import {
+	type ElementOf,
+	type Fn,
+	isBoolean,
+	isDef,
+	isNumber,
+	isString,
+	isUndef,
+	toArray,
+	toString,
+} from '@wang-yige/utils';
+import type { ColumnOptions, IndexOptions, TableId, TableOptions } from '@/@types/common/database';
 import DatabaseConfig, { Type } from '@/config/database';
 import SQLite from './SQLite';
 import { BaseTable } from './base';
@@ -11,6 +21,23 @@ type ColumnMetadata = Array<{
 	key: string;
 	options: ColumnOptions;
 }>;
+
+type SqliteColumnOption = {
+	cid: number;
+	name: string;
+	type: string;
+	notnull: number;
+	dflt_value: string | null;
+	pk: number;
+};
+
+type SqliteIndexOption = {
+	seq: number;
+	name: string;
+	unique: number;
+	origin: string;
+	partial: number;
+};
 
 const TABLE_FIELD = Symbol.for('database#tableField');
 const TABLE_ID = Symbol.for('database#tableId');
@@ -29,14 +56,13 @@ function columnSql(options: ColumnOptions, isUpdate: boolean = false) {
 	if (type) {
 		merges.push(Type[type]);
 	}
-	if (nullable) {
-		if (isDef(_default)) {
-			merges.push(`DEFAULT ${_default}`);
-		} else if (isUpdate) {
-			throw new Error(`更新的列 ${name} 允许为空但是没有提供默认值`);
-		}
-	} else {
+	if (!nullable) {
 		merges.push('NOT NULL');
+	}
+	if (isDef(_default)) {
+		merges.push(`DEFAULT ${_default}`);
+	} else if (isUpdate) {
+		throw new Error(`更新的列 ${name} 允许为空但是没有提供默认值`);
 	}
 	if (unique) {
 		merges.push('UNIQUE');
@@ -48,25 +74,95 @@ function columnSql(options: ColumnOptions, isUpdate: boolean = false) {
 }
 
 /**
+ * 生成索引语句
+ */
+function compareIndexs(tableName: string, current: IndexOptions[], origin: SqliteIndexOption[] = []) {
+	const add = [] as IndexOptions[];
+	const remove = [] as string[];
+	for (const item of current) {
+		const target = origin.find(i => i.name === item.name);
+		if (!target) {
+			add.push(item);
+		} else {
+			const unique = isBoolean(item.unique) ? +item.unique : 0;
+			// 判断唯一索引以及条件索引是否保持一直，不会检查具体条件
+			if (unique !== target.unique || +!!item.where !== target.partial) {
+				remove.push(item.name);
+				add.push(item);
+			}
+		}
+	}
+	for (const item of origin) {
+		// unique 和 primary key 自动创建的索引不进行更新
+		if (item.origin === 'u' || item.origin === 'pk') {
+			continue;
+		}
+		const target = current.find(i => i.name === item.name);
+		if (!target) {
+			remove.push(item.name);
+		}
+	}
+	return {
+		add: add.map(i => {
+			const columns = toArray(i.columns)
+				.map(v => sqlstring.escapeId(v))
+				.join(',');
+			if (i.unique) {
+				return `CREATE UNIQUE INDEX ${sqlstring.escapeId(i.name)} ON ${tableName} (${columns});`;
+			}
+			if (i.where) {
+				return `CREATE INDEX ${sqlstring.escapeId(i.name)} ON ${tableName} (${columns}) WHERE ${i.where};`;
+			}
+			return `CREATE INDEX ${sqlstring.escapeId(i.name)} ON ${tableName} (${columns});`;
+		}),
+		remove: remove.map(name => {
+			return `DROP INDEX IF EXISTS ${sqlstring.escapeId(name)};`;
+		}),
+	};
+}
+
+/**
+ * 比较传入字段和数据库字段
+ * @return false 需要更新， true 不需要更新
+ */
+function compareColumn(current: ColumnOptions, origin: SqliteColumnOption) {
+	const { type: currentType, default: _default, nullable = true, key = false } = current;
+	const { type: originType, dflt_value, notnull, pk } = origin;
+	if (currentType !== originType) {
+		return false;
+	}
+	if (+key !== +pk) {
+		return false;
+	}
+	if (+nullable !== +!notnull) {
+		return false;
+	}
+	if ((isDef(_default) || isDef(dflt_value)) && toString(_default) !== toString(dflt_value)) {
+		return false;
+	}
+	return true;
+}
+
+/**
  * 数据表更新处理
  * @param sqlite 数据库实例
  * @param tableName 未进行转义的数据表名
  * @param columns 所有列的元数据
+ * @param indexs 所有索引的元数据
  * @param createSql 创建表的 sql 语句获取方法
  */
 async function updateTableSql(
 	sqlite: SQLite,
 	tableName: string,
 	columns: ColumnMetadata,
-	createSql: Fn<[string], string>,
+	indexs: IndexOptions[],
+	createSql: Fn<[string], string[]>,
 ) {
 	const escapeTableName = sqlstring.escapeId(tableName);
 	await sqlite.open();
-	const result = (await sqlite.select(`PRAGMA table_info(${escapeTableName})`)) as Array<{
-		name: string;
-		type: string;
-	}>;
-	if (!result || !result.length) {
+	const infoList = (await sqlite.select(`PRAGMA table_info(${escapeTableName});`)) as Array<SqliteColumnOption>;
+	const indexList = (await sqlite.select(`PRAGMA index_list(${escapeTableName});`)) as Array<SqliteIndexOption>;
+	if (!infoList || !infoList.length) {
 		await sqlite.close();
 		return;
 	}
@@ -74,30 +170,29 @@ async function updateTableSql(
 	const adds = [] as ColumnOptions[];
 	const modifies = [] as string[];
 	const removes = [] as string[];
-	const sqls = [] as string[];
 	// 收集新增字段
 	for (const column of tableColumns) {
-		const target = result.find(item => item.name === column.name);
+		const target = infoList.find(item => item.name === column.name);
 		if (!target) {
 			adds.push(column);
 			continue;
 		}
-		if (target.type !== column.type && !modifies.find(item => item === column.name)) {
+		if (!compareColumn(column, target) && !modifies.find(item => item === column.name)) {
 			modifies.push(target.name);
 		}
 	}
 	// 收集删除字段
-	for (const item of result) {
+	for (const item of infoList) {
 		const target = tableColumns.find(column => column.name === item.name);
 		if (!target) {
 			removes.push(item.name);
-			continue;
-		}
-		if (target.type !== item.type && !modifies.find(name => name === target.name)) {
-			modifies.push(item.name);
 		}
 	}
-
+	const _execute = async (sqls: string[]) => {
+		await sqlite.execute(sqls);
+		await sqlite.close();
+		return sqls;
+	};
 	if (modifies.length || removes.length) {
 		// 创建临时表并迁移数据
 		const tempName = sqlstring.escapeId(tableName + '_new_temp');
@@ -109,29 +204,33 @@ async function updateTableSql(
 			})
 			.filter(Boolean)
 			.join(',');
-		sqls.push(
-			...[
-				`DROP TABLE IF EXISTS ${tempName};`,
-				createSql(tempName),
-				`INSERT INTO ${tempName} (${copyColumns}) SELECT ${copyColumns} FROM ${escapeTableName};`,
-				`DROP TABLE ${escapeTableName};`,
-				`ALTER TABLE ${tempName} RENAME TO ${escapeTableName};`,
-			],
-		);
-	} else if (adds.length) {
+		return await _execute([
+			`DROP TABLE IF EXISTS ${tempName};`,
+			...createSql(tempName),
+			`INSERT INTO ${tempName} (${copyColumns}) SELECT ${copyColumns} FROM ${escapeTableName};`,
+			`DROP TABLE ${escapeTableName};`,
+			`ALTER TABLE ${tempName} RENAME TO ${escapeTableName};`,
+			...compareIndexs(escapeTableName, indexs).add,
+		]);
+	}
+	/** 索引更新执行的 sql */
+	const indexSqls = compareIndexs(escapeTableName, indexs, indexList);
+	if (adds.length) {
 		// 新增字段
-		sqls.push(
+		return await _execute([
 			...adds.map(item => {
 				return `ALTER TABLE ${escapeTableName} ADD COLUMN ${columnSql(item)};`;
 			}),
-		);
-	} else {
-		await sqlite.close();
-		return;
+			...indexSqls.remove,
+			...indexSqls.add,
+		]);
 	}
-	await sqlite.execute(sqls);
+	const updateIndexs = [...indexSqls.remove, ...indexSqls.add];
+	if (updateIndexs.length) {
+		return await _execute(updateIndexs);
+	}
 	await sqlite.close();
-	return sqls;
+	return;
 }
 
 /**
@@ -149,7 +248,7 @@ export function Table(options: string | TableOptions, _description?: string) {
 		if (!(target.prototype instanceof BaseTable)) {
 			throw new Error(`数据表类必须继承于 ${BaseTable.name}`);
 		}
-		const { name, database = 'main', test = false } = options;
+		const { name, database = 'main', test = false, disabled = false, indexs = [] } = options;
 		const columns = (Reflect.getMetadata(TABLE_FIELD, target.prototype) || []) as ColumnMetadata;
 		// 新建表
 		/** 通过 ID 装饰器注册的字段（经过转义），用于作为查询的主键 id */
@@ -172,7 +271,7 @@ export function Table(options: string | TableOptions, _description?: string) {
 		});
 		/** 获取数据表创建的 sql，创建字段相同，可以传入表名 */
 		const sql = (useTableName: string = tableName) => {
-			return `CREATE TABLE IF NOT EXISTS ${useTableName} (${fields.join(',')});`;
+			return [`CREATE TABLE IF NOT EXISTS ${useTableName} (${fields.join(',')});`];
 		};
 		const config = {
 			enumerable: false,
@@ -210,7 +309,7 @@ export function Table(options: string | TableOptions, _description?: string) {
 		// 预执行的 sql 语句注入
 		Object.defineProperty(target.prototype, '__sql', {
 			...config,
-			value: sql(),
+			value: sql().join('\n'),
 		});
 		// 数据库信息注入
 		Object.defineProperty(target.prototype, '__info', {
@@ -228,14 +327,19 @@ export function Table(options: string | TableOptions, _description?: string) {
 		Object.defineProperty(target.prototype, '__create', {
 			...config,
 			value: async () => {
+				if (disabled) {
+					console.log(`表 ${name} 已禁用，取消执行`);
+					// 禁用状态
+					return false;
+				}
 				if (test && import.meta.env.PROD) {
 					// 测试表，生产环境不创建
-					return;
+					return false;
 				}
 				const sqlite = getSqlite();
 				// 如果更新表，则不继续执行
 				let update;
-				if ((update = await updateTableSql(sqlite, name, columns, sql))) {
+				if ((update = await updateTableSql(sqlite, name, columns, indexs, sql))) {
 					console.log(`数据表 ${name} 更新成功：\n${update.join('\n')}`);
 					return;
 				}
@@ -366,9 +470,8 @@ export function Id() {
 			const data = columns.find(item => item.key === key);
 			if (data) {
 				data.id = true;
-				data.options.nullable = false;
 				data.options.type = Type.INTEGER;
-				data.options.unique = true;
+				data.options.key = true;
 			}
 		}
 	};

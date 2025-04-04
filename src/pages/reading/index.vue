@@ -16,6 +16,7 @@ import { getReading } from '@/common/reading';
 import Page from '@/components/Page.vue';
 import Test from '@/database/Test';
 import { TestModel } from '@/model/Test';
+import { randomString } from '@wang-yige/utils';
 
 backInteract();
 const { page, content, loading } = getReading();
@@ -26,12 +27,20 @@ const testModel = new TestModel();
 async function add() {
 	console.log(test.id, test.name, test.gender);
 	const result = await testModel.all();
-	console.log(result);
-	const a = await test.insert({
-		name: 'test' + result.length,
-		gender: result.length % 2,
-	});
+	const a = await test.insertMulti([
+		{
+			name: 'test' + result.length,
+			gender: result.length % 2,
+			idCard: randomString(10),
+		},
+		{
+			name: 'test' + (result.length + 1),
+			gender: result.length % 2,
+			idCard: randomString(10),
+		},
+	]);
 	console.log(a);
+	console.log(await testModel.all());
 }
 
 async function remove() {

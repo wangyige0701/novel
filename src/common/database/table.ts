@@ -3,6 +3,7 @@ import sqlstring from 'sqlstring';
 import {
 	type ElementOf,
 	type Fn,
+	isArray,
 	isBoolean,
 	isDef,
 	isNumber,
@@ -250,16 +251,18 @@ export function Table(options: string | TableOptions, _description?: string) {
 		}
 		const { name, database = 'main', test = false, disabled = false, indexs = [] } = options;
 		const columns = (Reflect.getMetadata(TABLE_FIELD, target.prototype) || []) as ColumnMetadata;
+		/** 手动执行数据库开关状态，为 true 则不能自动处理数据库开关 */
+		let selfDatabaseStatus = false;
 		// 新建表
 		/** 通过 ID 装饰器注册的字段（经过转义），用于作为查询的主键 id */
 		let idColumnName: string;
 		/** 记录字段数据 */
-		const keys = new Array<{ name: string; id: boolean }>();
+		const keys = new Array<{ name: string; id: boolean; key: string }>();
 		/** 转义后的表名 */
 		const tableName = sqlstring.escapeId(name);
 		const fields = columns.map(column => {
 			const columnName = sqlstring.escapeId(column.options.name!);
-			const length = keys.push({ name: column.options.name!, id: false });
+			const length = keys.push({ name: column.options.name!, key: column.key, id: false });
 			if (column.id) {
 				idColumnName = columnName!;
 				keys[length - 1].id = true;
@@ -285,15 +288,19 @@ export function Table(options: string | TableOptions, _description?: string) {
 		};
 		/** 执行 sql 语句 */
 		const useSql = async (sqlite: SQLite, executeSql: string | string[], selectSql?: string) => {
-			await sqlite.open();
-			if (executeSql) {
+			if (!selfDatabaseStatus) {
+				await sqlite.open();
+			}
+			if ((isString(executeSql) && executeSql) || (isArray(executeSql) && executeSql.length)) {
 				await sqlite.execute(executeSql);
 			}
 			let result;
 			if (selectSql) {
 				result = await sqlite.select(selectSql);
 			}
-			await sqlite.close();
+			if (!selfDatabaseStatus) {
+				await sqlite.close();
+			}
 			return result;
 		};
 		// sqlite 实例注入
@@ -341,8 +348,10 @@ export function Table(options: string | TableOptions, _description?: string) {
 				let update;
 				if ((update = await updateTableSql(sqlite, name, columns, indexs, sql))) {
 					console.log(`数据表 ${name} 更新成功：\n${update.join('\n')}`);
-					return;
+					return false;
 				}
+				// 执行 __create 方法需要关闭手动数据库操作
+				selfDatabaseStatus = false;
 				await useSql(sqlite, sql());
 			},
 		});
@@ -355,32 +364,71 @@ export function Table(options: string | TableOptions, _description?: string) {
 				const instance = new target(...args);
 				// 注入基础方法
 				Object.defineProperties(instance, {
+					open: {
+						...config,
+						value: async () => {
+							selfDatabaseStatus = true;
+							await getSqlite().open();
+							return instance;
+						},
+					},
+					close: {
+						...config,
+						value: async () => {
+							if (!selfDatabaseStatus) {
+								throw new Error('数据库未手动打开');
+							}
+							selfDatabaseStatus = false;
+							await getSqlite().close();
+						},
+					},
 					insert: {
 						...config,
 						value: async (fields: object) => {
 							// 过滤掉主键字段
-							const list = keys.filter(item => !item.id).map(item => item.name);
+							const list = keys
+								.filter(item => !item.id)
+								.map(item => ({ name: item.name, key: item.key }));
 							const datas = {} as Record<string, any>;
-							for (const item of list) {
-								if (item in fields) {
-									datas[sqlstring.escapeId(item)] = fields[item as keyof typeof fields];
+							// 表字段和对应属性不一定相同，需要分开处理
+							for (const { name, key } of list) {
+								if (key in fields) {
+									datas[sqlstring.escapeId(name)] = fields[key as keyof typeof fields];
 									continue;
 								}
-								datas[sqlstring.escapeId(item)] = 'NULL';
+								datas[sqlstring.escapeId(name)] = 'NULL';
 							}
-							const sqlite = getSqlite();
 							const columnKeys = Object.keys(datas);
 							const columnValues = Object.values(datas);
+							const _sql = `INSERT INTO ${tableName} (${columnKeys.join(',')}) VALUES (?);`;
 							const lastRowtId = await useSql(
-								sqlite,
-								[
-									sqlstring.format(`INSERT INTO ${tableName} (${columnKeys.join(',')}) VALUES (?);`, [
-										columnValues,
-									]),
-								],
+								getSqlite(),
+								[sqlstring.format(_sql, [columnValues])],
 								'SELECT last_insert_rowid();',
 							);
 							return { lastRowtId: lastRowtId[0]?.['last_insert_rowid()'] };
+						},
+					},
+					insertMulti: {
+						...config,
+						value: async (fields: object[]) => {
+							if (!isArray(fields)) {
+								throw new Error('批量插入数据必须为数组');
+							}
+							await instance.open();
+							const sqlite = getSqlite();
+							const results = [];
+							try {
+								await sqlite.beginTransaction();
+								for (const field of fields) {
+									results.push(await instance.insert(field));
+								}
+								await sqlite.commitTransaction();
+							} catch (error) {
+								await sqlite.rollbackTransaction();
+							}
+							await instance.close();
+							return results;
 						},
 					},
 					update: {
@@ -398,13 +446,10 @@ export function Table(options: string | TableOptions, _description?: string) {
 									datas[key] = 'NULL';
 								}
 							}
-							const sqlite = getSqlite();
+							const _sql = `UPDATE ${tableName} SET ? WHERE ${idColumnName} IN (?);`;
 							const affectedRows = await useSql(
-								sqlite,
-								sqlstring.format(`UPDATE ${tableName} SET ? WHERE ${idColumnName} IN (?);`, [
-									datas,
-									toArray(id),
-								]),
+								getSqlite(),
+								sqlstring.format(_sql, [datas, toArray(id)]),
 								'SELECT changes();',
 							);
 							return { affectedRows: affectedRows[0]?.['changes()'] };
@@ -419,12 +464,10 @@ export function Table(options: string | TableOptions, _description?: string) {
 							if (!isString(id) && !isNumber(id)) {
 								throw new Error(`${idColumnName} 必须是字符串或数字`);
 							}
-							const sqlite = getSqlite();
+							const _sql = `DELETE FROM ${tableName} WHERE ${idColumnName} IN (?);`;
 							const affectedRows = await useSql(
-								sqlite,
-								sqlstring.format(`DELETE FROM ${tableName} WHERE ${idColumnName} IN (?);`, [
-									toArray(id),
-								]),
+								getSqlite(),
+								sqlstring.format(_sql, [toArray(id)]),
 								'SELECT changes();',
 							);
 							return { affectedRows: affectedRows[0]?.['changes()'] };
@@ -432,10 +475,10 @@ export function Table(options: string | TableOptions, _description?: string) {
 					},
 				});
 				const bindKeyNames = keys.reduce(
-					(prev, { name: _key }) => {
-						prev[_key] = {
+					(prev, { name }) => {
+						prev[name] = {
 							...config,
-							value: sqlstring.escapeId(_key),
+							value: sqlstring.escapeId(name),
 						};
 						return prev;
 					},

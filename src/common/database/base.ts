@@ -14,8 +14,14 @@ export class BaseTable<T extends Constructor<any, any[]>> {
 	static name: string;
 	/** sqlite 实例 */
 	static sqlite: SQLite;
+	/** 手动打开数据库，如果执行此函数则内部方法不会自动开启数据库，且需要手动执行关闭函数 */
+	open: Fn<[], BaseTable<T>>;
+	/** 手动关闭数据库 */
+	close: Fn<[], void>;
 	/** 插入一条数据 */
 	insert: Fn<[fields: Fields<T>], Promise<Insert>>;
+	/** 插入多条数据 */
+	insertMulti: Fn<[fields: Fields<T>[]], Promise<Insert[]>>;
 	/** 更新指定 id 的数据，可以传入多个 id */
 	update: Fn<[id: TableId, fields: Fields<T>], Promise<Update>>;
 	/** 删除指定 id 的数据，可以传入多个 id */

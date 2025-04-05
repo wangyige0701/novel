@@ -10,6 +10,13 @@ import { useInfoStore } from '@/store/info';
 import { useSearchProxyStore } from '@/store/proxy';
 import App from './App.vue';
 
+// @ts-expect-error 添加 Buffer api，并禁止使用 Buffer
+globalThis.Buffer = class Buffer {
+	isBuffer(obj: any) {
+		return false;
+	}
+};
+
 export function createApp() {
 	const app = createSSRApp(App);
 	app.use(createPinia());

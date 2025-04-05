@@ -27,18 +27,23 @@ const testModel = new TestModel();
 async function add() {
 	console.log(test.id, test.name, test.gender);
 	const result = await testModel.all();
-	const a = await test.insertMulti([
-		{
-			name: 'test' + result.length,
-			gender: result.length % 2,
-			idCard: randomString(10),
-		},
-		{
-			name: 'test' + (result.length + 1),
-			gender: result.length % 2,
-			idCard: randomString(10),
-		},
-	]);
+	// const a = await test.insert([
+	// 	{
+	// 		name: 'test' + result.length,
+	// 		gender: result.length % 2,
+	// 		idCard: randomString(10),
+	// 	},
+	// 	{
+	// 		name: 'test' + (result.length + 1),
+	// 		gender: (result.length + 1) % 2,
+	// 		idCard: randomString(10),
+	// 	},
+	// ]);
+	const a = await test.insert({
+		name: 'test' + result.length,
+		gender: result.length % 2,
+		idCard: randomString(10),
+	});
 	console.log(a);
 	console.log(await testModel.all());
 }

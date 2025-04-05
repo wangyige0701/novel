@@ -385,50 +385,47 @@ export function Table(options: string | TableOptions, _description?: string) {
 					insert: {
 						...config,
 						value: async (fields: object) => {
-							// 过滤掉主键字段
-							const list = keys
-								.filter(item => !item.id)
-								.map(item => ({ name: item.name, key: item.key }));
-							const datas = {} as Record<string, any>;
-							// 表字段和对应属性不一定相同，需要分开处理
-							for (const { name, key } of list) {
-								if (key in fields) {
-									datas[sqlstring.escapeId(name)] = fields[key as keyof typeof fields];
-									continue;
+							const _insert = async (field: object) => {
+								// 过滤掉主键字段
+								const list = keys
+									.filter(item => !item.id)
+									.map(item => ({ name: item.name, key: item.key }));
+								const datas = {} as Record<string, any>;
+								// 表字段和对应属性不一定相同，需要分开处理
+								for (const { name, key } of list) {
+									if (key in field) {
+										datas[sqlstring.escapeId(name)] = field[key as keyof typeof field];
+										continue;
+									}
+									datas[sqlstring.escapeId(name)] = 'NULL';
 								}
-								datas[sqlstring.escapeId(name)] = 'NULL';
-							}
-							const columnKeys = Object.keys(datas);
-							const columnValues = Object.values(datas);
-							const _sql = `INSERT INTO ${tableName} (${columnKeys.join(',')}) VALUES (?);`;
-							const lastRowtId = await useSql(
-								getSqlite(),
-								[sqlstring.format(_sql, [columnValues])],
-								'SELECT last_insert_rowid();',
-							);
-							return { lastRowtId: lastRowtId[0]?.['last_insert_rowid()'] };
-						},
-					},
-					insertMulti: {
-						...config,
-						value: async (fields: object[]) => {
-							if (!isArray(fields)) {
-								throw new Error('批量插入数据必须为数组');
-							}
-							await instance.open();
-							const sqlite = getSqlite();
-							const results = [];
-							try {
-								await sqlite.beginTransaction();
-								for (const field of fields) {
-									results.push(await instance.insert(field));
+								const columnKeys = Object.keys(datas);
+								const columnValues = Object.values(datas);
+								const _sql = `INSERT INTO ${tableName} (${columnKeys.join(',')}) VALUES (?);`;
+								const lastRowtId = await useSql(
+									getSqlite(),
+									[sqlstring.format(_sql, [columnValues])],
+									'SELECT last_insert_rowid();',
+								);
+								return { lastRowtId: lastRowtId[0]?.['last_insert_rowid()'] };
+							};
+							if (isArray(fields)) {
+								await instance.open();
+								const sqlite = getSqlite();
+								const results = [];
+								try {
+									await sqlite.beginTransaction();
+									for (const field of fields) {
+										results.push(await _insert(field));
+									}
+									await sqlite.commitTransaction();
+								} catch (error) {
+									await sqlite.rollbackTransaction();
 								}
-								await sqlite.commitTransaction();
-							} catch (error) {
-								await sqlite.rollbackTransaction();
+								await instance.close();
+								return results;
 							}
-							await instance.close();
-							return results;
+							return _insert(fields);
 						},
 					},
 					update: {

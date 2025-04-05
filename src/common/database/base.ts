@@ -6,6 +6,13 @@ type Fields<T extends Constructor<any, any[]>> = {
 	[K in keyof Omit<InstanceType<T>, keyof InstanceType<typeof BaseTable>>]?: any;
 };
 
+type InsertFun<T extends Constructor<any, any[]>> = {
+	/** 插入一条数据 */
+	(fields: Fields<T>): Promise<Insert>;
+	/** 插入多条数据 */
+	(fields: Fields<T>[]): Promise<Insert[]>;
+};
+
 /**
  * 提供数据表基础方法
  */
@@ -19,9 +26,7 @@ export class BaseTable<T extends Constructor<any, any[]>> {
 	/** 手动关闭数据库 */
 	close: Fn<[], void>;
 	/** 插入一条数据 */
-	insert: Fn<[fields: Fields<T>], Promise<Insert>>;
-	/** 插入多条数据 */
-	insertMulti: Fn<[fields: Fields<T>[]], Promise<Insert[]>>;
+	insert: InsertFun<T>;
 	/** 更新指定 id 的数据，可以传入多个 id */
 	update: Fn<[id: TableId, fields: Fields<T>], Promise<Update>>;
 	/** 删除指定 id 的数据，可以传入多个 id */

@@ -411,7 +411,7 @@ export function Table(options: string | TableOptions, _description?: string) {
 										datas[sqlstring.escapeId(name)] = dltVal;
 										continue;
 									}
-									datas[sqlstring.escapeId(name)] = 'NULL';
+									datas[sqlstring.escapeId(name)] = null;
 								}
 								const columnKeys = Object.keys(datas);
 								const columnValues = Object.values(datas);
@@ -454,7 +454,7 @@ export function Table(options: string | TableOptions, _description?: string) {
 							const datas = { ...fields } as Record<string, any>;
 							for (const key in datas) {
 								if (isUndef(datas[key])) {
-									datas[key] = 'NULL';
+									datas[key] = null;
 								}
 							}
 							const _sql = `UPDATE ${tableName} SET ? WHERE ${idColumnName} IN (?);`;

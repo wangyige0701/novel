@@ -11,5 +11,5 @@ export type SearchProxyData = {
 
 export type SearchProxy = {
 	local: SearchProxyData;
-	dingdian: SearchProxyData;
+	biqu: SearchProxyData;
 };

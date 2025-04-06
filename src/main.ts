@@ -37,7 +37,7 @@ export function createApp() {
 
 	// 默认的数据请求节点
 	const searchProxyStore = useSearchProxyStore();
-	searchProxyStore.switch('dingdian');
+	searchProxyStore.switch('biqu');
 
 	return {
 		app,

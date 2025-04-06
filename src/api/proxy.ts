@@ -1,7 +1,7 @@
 import type { SearchProxy } from '@/@types/api/proxy';
 
-enum SearchProxyKeys {
-	dingdian = 'dingdian',
+export enum SearchProxyKeys {
+	biqu = 'biqu',
 }
 
 export const searchProxy: SearchProxy = {
@@ -11,9 +11,9 @@ export const searchProxy: SearchProxy = {
 		description: '本地代理',
 		local: true,
 	},
-	[SearchProxyKeys.dingdian]: {
-		domain: 'https://m.ytryx.com',
-		alias: SearchProxyKeys.dingdian,
-		description: '顶点小说',
+	[SearchProxyKeys.biqu]: {
+		domain: 'https://www.xbiqu6.com/',
+		alias: SearchProxyKeys.biqu,
+		description: '笔趣阁',
 	},
 };

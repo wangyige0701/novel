@@ -7,7 +7,7 @@ import { searchProxy } from '@/api/proxy';
  * 数据获取网络代理配置
  */
 export const useSearchProxyStore = defineStore(StoreKey.searchProxy, () => {
-	const current = ref<keyof SearchProxy>('dingdian');
+	const current = ref<keyof SearchProxy>('biqu');
 	const path = computed(() => {
 		const config = getConfig();
 		if (process.env.UNI_PLATFORM === 'h5') {

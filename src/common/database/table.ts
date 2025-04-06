@@ -6,6 +6,7 @@ import {
 	isArray,
 	isBoolean,
 	isDef,
+	isFunction,
 	isNumber,
 	isString,
 	isUndef,
@@ -257,12 +258,17 @@ export function Table(options: string | TableOptions, _description?: string) {
 		/** 通过 ID 装饰器注册的字段（经过转义），用于作为查询的主键 id */
 		let idColumnName: string;
 		/** 记录字段数据 */
-		const keys = new Array<{ name: string; id: boolean; key: string }>();
+		const keys = new Array<{ name: string; id: boolean; key: string; dltVal: any }>();
 		/** 转义后的表名 */
 		const tableName = sqlstring.escapeId(name);
 		const fields = columns.map(column => {
 			const columnName = sqlstring.escapeId(column.options.name!);
-			const length = keys.push({ name: column.options.name!, key: column.key, id: false });
+			const length = keys.push({
+				name: column.options.name!,
+				key: column.key,
+				id: false,
+				dltVal: column.options.dltVal,
+			});
 			if (column.id) {
 				idColumnName = columnName!;
 				keys[length - 1].id = true;
@@ -389,12 +395,20 @@ export function Table(options: string | TableOptions, _description?: string) {
 								// 过滤掉主键字段
 								const list = keys
 									.filter(item => !item.id)
-									.map(item => ({ name: item.name, key: item.key }));
+									.map(item => ({ name: item.name, key: item.key, dltVal: item.dltVal }));
 								const datas = {} as Record<string, any>;
 								// 表字段和对应属性不一定相同，需要分开处理
-								for (const { name, key } of list) {
+								for (const { name, key, dltVal } of list) {
 									if (key in field) {
 										datas[sqlstring.escapeId(name)] = field[key as keyof typeof field];
+										continue;
+									}
+									if (isFunction(dltVal)) {
+										datas[sqlstring.escapeId(name)] = await dltVal();
+										continue;
+									}
+									if (isDef(dltVal)) {
+										datas[sqlstring.escapeId(name)] = dltVal;
 										continue;
 									}
 									datas[sqlstring.escapeId(name)] = 'NULL';

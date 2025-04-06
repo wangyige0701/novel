@@ -1,5 +1,6 @@
 import type { Type } from '@/config/database';
 import type database from '@/config/database';
+import type { Fn } from '@wang-yige/utils';
 
 interface IndexOptions {
 	/** 索引名 */
@@ -38,6 +39,8 @@ export interface ColumnOptions {
 	default?: any;
 	/** 默认 `false` */
 	unique?: boolean;
+	/** 通过默认方法插入数据时，提供的默认值，如果为函数则会执行 */
+	dltVal?: Fn<[], any> | any;
 }
 
 export type TableId = string | number | Array<string | number>;

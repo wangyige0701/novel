@@ -29,6 +29,6 @@ export default class Test extends BaseTable<typeof Test> {
 	@Column({ name: 'level_id', type: Type.INTEGER, nullable: true }, '等级')
 	levelId: number;
 
-	@Column({ name: 'create_time', type: Type.DATETIME, dltVal: () => new Date().toISOString() }, '创建时间')
-	createTime: string;
+	@Column({ name: 'create_time', type: Type.DATETIME }, '创建时间')
+	createTime: Date;
 }

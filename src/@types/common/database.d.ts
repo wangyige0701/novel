@@ -39,8 +39,6 @@ export interface ColumnOptions {
 	default?: any;
 	/** 默认 `false` */
 	unique?: boolean;
-	/** 通过默认方法插入数据时，提供的默认值，如果为函数则会执行 */
-	dltVal?: Fn<[], any> | any;
 }
 
 export type TableId = string | number | Array<string | number>;
@@ -58,4 +56,27 @@ export type Update = {
 export type Delete = {
 	/** 删除的行数 */
 	affectedRows: number;
+};
+
+export type ColumnMetadata = Array<{
+	id: boolean;
+	key: string;
+	options: ColumnOptions;
+}>;
+
+export type SqliteColumnOption = {
+	cid: number;
+	name: string;
+	type: string;
+	notnull: number;
+	dflt_value: string | null;
+	pk: number;
+};
+
+export type SqliteIndexOption = {
+	seq: number;
+	name: string;
+	unique: number;
+	origin: string;
+	partial: number;
 };

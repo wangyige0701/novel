@@ -13,6 +13,6 @@ export default class BookShelf extends BaseTable<typeof BookShelf> {
 	@Column({ type: Type.INTEGER, nullable: false, default: 0, unique: true }, '排序')
 	sort: number;
 
-	@Column({ name: 'create_time', type: Type.DATETIME, dltVal: () => new Date().toISOString() }, '创建时间')
-	createTime: string;
+	@Column({ name: 'create_time', type: Type.DATETIME }, '创建时间')
+	createTime: Date;
 }

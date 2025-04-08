@@ -35,6 +35,6 @@ export default class Chapter extends BaseTable<typeof Chapter> {
 	@Column({ name: 'content_length', type: Type.INTEGER, default: 0 }, '章节内容长度')
 	contentLength: number;
 
-	@Column({ name: 'create_time', type: Type.DATETIME, dltVal: () => new Date().toISOString() }, '创建时间')
-	createTime: string;
+	@Column({ name: 'create_time', type: Type.DATETIME }, '创建时间')
+	createTime: Date;
 }

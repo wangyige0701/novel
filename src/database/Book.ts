@@ -29,9 +29,9 @@ export default class Book extends BaseTable<typeof Book> {
 	@Column({ type: Type.TEXT }, '书籍封面图片地址')
 	img: string;
 
-	@Column({ name: 'create_time', type: Type.DATETIME, dltVal: () => new Date().toISOString() }, '创建时间')
-	createTime: string;
+	@Column({ name: 'create_time', type: Type.DATETIME }, '创建时间')
+	createTime: Date;
 
-	@Column({ name: 'update_time', type: Type.DATETIME, dltVal: () => new Date().toISOString() }, '更新时间')
-	updateTime: string;
+	@Column({ name: 'update_time', type: Type.DATETIME }, '更新时间')
+	updateTime: Date;
 }

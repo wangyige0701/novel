@@ -282,6 +282,7 @@ export function Table(options: string | TableOptions, _description?: string) {
 							} else if (isBoolean(condition)) {
 								// 第二个参数是boolean，第一个参数可能为 fields 或 condition
 								single = condition;
+								condition = void 0;
 								if (isString(fields) || isArray(fields)) {
 									condition = toArray(fields).filter(Boolean);
 									fields = void 0;

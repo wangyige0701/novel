@@ -26,7 +26,7 @@ const testModel = new TestModel();
 
 async function add() {
 	console.log(test.id, test.name, test.gender);
-	const result = await testModel.all();
+	// const result = await testModel.all();
 	// const a = await test.insert([
 	// 	{
 	// 		name: 'test' + result.length,
@@ -39,13 +39,24 @@ async function add() {
 	// 		idCard: randomString(10),
 	// 	},
 	// ]);
-	const a = await test.insert({
-		name: 'test' + result.length,
-		gender: result.length % 2,
-		idCard: randomString(10),
-	});
-	console.log(a);
-	console.log(await testModel.all());
+
+	// const a = await test.insert({
+	// 	name: 'test' + result.length,
+	// 	gender: result.length % 2,
+	// 	idCard: randomString(10),
+	// });
+	// console.log(a);
+	// console.log(await testModel.all());
+
+	const value = await test.select(
+		{
+			name: 1,
+			gender: 1,
+			createTime: 1,
+		},
+		true,
+	);
+	console.log(value);
 }
 
 async function remove() {

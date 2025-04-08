@@ -1,239 +1,28 @@
 import 'reflect-metadata';
 import sqlstring from 'sqlstring';
 import {
+	Arrayable,
 	type ElementOf,
 	type Fn,
 	isArray,
 	isBoolean,
 	isDef,
-	isFunction,
 	isNumber,
 	isString,
 	isUndef,
 	toArray,
-	toString,
 } from '@wang-yige/utils';
-import type { ColumnOptions, IndexOptions, TableId, TableOptions } from '@/@types/common/database';
+import type { ColumnMetadata, ColumnOptions, TableId, TableOptions } from '@/@types/common/database';
 import DatabaseConfig, { Type } from '@/config/database';
 import SQLite from './SQLite';
-import { BaseTable } from './base';
-
-type ColumnMetadata = Array<{
-	id: boolean;
-	key: string;
-	options: ColumnOptions;
-}>;
-
-type SqliteColumnOption = {
-	cid: number;
-	name: string;
-	type: string;
-	notnull: number;
-	dflt_value: string | null;
-	pk: number;
-};
-
-type SqliteIndexOption = {
-	seq: number;
-	name: string;
-	unique: number;
-	origin: string;
-	partial: number;
-};
+import { BaseTable, DisabledFields } from './base';
+import { columnSql, parseValue, stringifyValue, updateTableSql } from './utils';
 
 const TABLE_FIELD = Symbol.for('database#tableField');
 const TABLE_ID = Symbol.for('database#tableId');
 const instanceCache = new WeakMap<any, any>();
 
 export { Type };
-
-/**
- * 根据列的元数据生成对应的字段创建 SQL 语句
- * @param options 列元数据配置项
- * @param isUpdate 是否用于更新语法，更新字段时，空字段必须有默认值
- */
-function columnSql(options: ColumnOptions, isUpdate: boolean = false) {
-	const { type, name, unique = false, nullable = true, key = false, default: _default } = options;
-	const merges = [];
-	if (type) {
-		merges.push(Type[type]);
-	}
-	if (!nullable) {
-		merges.push('NOT NULL');
-	}
-	if (isDef(_default)) {
-		merges.push(`DEFAULT ${_default}`);
-	} else if (isUpdate) {
-		throw new Error(`更新的列 ${name} 允许为空但是没有提供默认值`);
-	}
-	if (unique) {
-		merges.push('UNIQUE');
-	}
-	if (key) {
-		merges.push('PRIMARY KEY');
-	}
-	return sqlstring.escapeId(name) + ' ' + merges.join(' ');
-}
-
-/**
- * 生成索引语句
- */
-function compareIndexs(tableName: string, current: IndexOptions[], origin: SqliteIndexOption[] = []) {
-	const add = [] as IndexOptions[];
-	const remove = [] as string[];
-	for (const item of current) {
-		const target = origin.find(i => i.name === item.name);
-		if (!target) {
-			add.push(item);
-		} else {
-			const unique = isBoolean(item.unique) ? +item.unique : 0;
-			// 判断唯一索引以及条件索引是否保持一直，不会检查具体条件
-			if (unique !== target.unique || +!!item.where !== target.partial) {
-				remove.push(item.name);
-				add.push(item);
-			}
-		}
-	}
-	for (const item of origin) {
-		// unique 和 primary key 自动创建的索引不进行更新
-		if (item.origin === 'u' || item.origin === 'pk') {
-			continue;
-		}
-		const target = current.find(i => i.name === item.name);
-		if (!target) {
-			remove.push(item.name);
-		}
-	}
-	return {
-		add: add.map(i => {
-			const columns = toArray(i.columns)
-				.map(v => sqlstring.escapeId(v))
-				.join(',');
-			if (i.unique) {
-				return `CREATE UNIQUE INDEX ${sqlstring.escapeId(i.name)} ON ${tableName} (${columns});`;
-			}
-			if (i.where) {
-				return `CREATE INDEX ${sqlstring.escapeId(i.name)} ON ${tableName} (${columns}) WHERE ${i.where};`;
-			}
-			return `CREATE INDEX ${sqlstring.escapeId(i.name)} ON ${tableName} (${columns});`;
-		}),
-		remove: remove.map(name => {
-			return `DROP INDEX IF EXISTS ${sqlstring.escapeId(name)};`;
-		}),
-	};
-}
-
-/**
- * 比较传入字段和数据库字段
- * @return false 需要更新， true 不需要更新
- */
-function compareColumn(current: ColumnOptions, origin: SqliteColumnOption) {
-	const { type: currentType, default: _default, nullable = true, key = false } = current;
-	const { type: originType, dflt_value, notnull, pk } = origin;
-	if (currentType !== originType) {
-		return false;
-	}
-	if (+key !== +pk) {
-		return false;
-	}
-	if (+nullable !== +!notnull) {
-		return false;
-	}
-	if ((isDef(_default) || isDef(dflt_value)) && toString(_default) !== toString(dflt_value)) {
-		return false;
-	}
-	return true;
-}
-
-/**
- * 数据表更新处理
- * @param sqlite 数据库实例
- * @param tableName 未进行转义的数据表名
- * @param columns 所有列的元数据
- * @param indexs 所有索引的元数据
- * @param createSql 创建表的 sql 语句获取方法
- */
-async function updateTableSql(
-	sqlite: SQLite,
-	tableName: string,
-	columns: ColumnMetadata,
-	indexs: IndexOptions[],
-	createSql: Fn<[string], string[]>,
-) {
-	const escapeTableName = sqlstring.escapeId(tableName);
-	await sqlite.open();
-	const infoList = (await sqlite.select(`PRAGMA table_info(${escapeTableName});`)) as Array<SqliteColumnOption>;
-	const indexList = (await sqlite.select(`PRAGMA index_list(${escapeTableName});`)) as Array<SqliteIndexOption>;
-	if (!infoList || !infoList.length) {
-		await sqlite.close();
-		return;
-	}
-	const tableColumns = columns.map(item => item.options);
-	const adds = [] as ColumnOptions[];
-	const modifies = [] as string[];
-	const removes = [] as string[];
-	// 收集新增字段
-	for (const column of tableColumns) {
-		const target = infoList.find(item => item.name === column.name);
-		if (!target) {
-			adds.push(column);
-			continue;
-		}
-		if (!compareColumn(column, target) && !modifies.find(item => item === column.name)) {
-			modifies.push(target.name);
-		}
-	}
-	// 收集删除字段
-	for (const item of infoList) {
-		const target = tableColumns.find(column => column.name === item.name);
-		if (!target) {
-			removes.push(item.name);
-		}
-	}
-	const _execute = async (sqls: string[]) => {
-		await sqlite.execute(sqls);
-		await sqlite.close();
-		return sqls;
-	};
-	if (modifies.length || removes.length) {
-		// 创建临时表并迁移数据
-		const tempName = sqlstring.escapeId(tableName + '_new_temp');
-		const copyColumns = columns
-			.map(item => {
-				if (!removes.includes(item.options.name!)) {
-					return sqlstring.escapeId(item.options.name);
-				}
-			})
-			.filter(Boolean)
-			.join(',');
-		return await _execute([
-			`DROP TABLE IF EXISTS ${tempName};`,
-			...createSql(tempName),
-			`INSERT INTO ${tempName} (${copyColumns}) SELECT ${copyColumns} FROM ${escapeTableName};`,
-			`DROP TABLE ${escapeTableName};`,
-			`ALTER TABLE ${tempName} RENAME TO ${escapeTableName};`,
-			...compareIndexs(escapeTableName, indexs).add,
-		]);
-	}
-	/** 索引更新执行的 sql */
-	const indexSqls = compareIndexs(escapeTableName, indexs, indexList);
-	if (adds.length) {
-		// 新增字段
-		return await _execute([
-			...adds.map(item => {
-				return `ALTER TABLE ${escapeTableName} ADD COLUMN ${columnSql(item)};`;
-			}),
-			...indexSqls.remove,
-			...indexSqls.add,
-		]);
-	}
-	const updateIndexs = [...indexSqls.remove, ...indexSqls.add];
-	if (updateIndexs.length) {
-		return await _execute(updateIndexs);
-	}
-	await sqlite.close();
-	return;
-}
 
 /**
  * 声明表，如果没有声明数据库，则默认为 `main` 主数据库
@@ -258,7 +47,7 @@ export function Table(options: string | TableOptions, _description?: string) {
 		/** 通过 ID 装饰器注册的字段（经过转义），用于作为查询的主键 id */
 		let idColumnName: string;
 		/** 记录字段数据 */
-		const keys = new Array<{ name: string; id: boolean; key: string; dltVal: any }>();
+		const keys = new Array<{ name: string; id: boolean; key: string; type: Type; hasDefault: boolean }>();
 		/** 转义后的表名 */
 		const tableName = sqlstring.escapeId(name);
 		const fields = columns.map(column => {
@@ -267,7 +56,8 @@ export function Table(options: string | TableOptions, _description?: string) {
 				name: column.options.name!,
 				key: column.key,
 				id: false,
-				dltVal: column.options.dltVal,
+				type: column.options.type!,
+				hasDefault: isDef(column.options.default),
 			});
 			if (column.id) {
 				idColumnName = columnName!;
@@ -297,15 +87,21 @@ export function Table(options: string | TableOptions, _description?: string) {
 			if (!selfDatabaseStatus) {
 				await sqlite.open();
 			}
-			if ((isString(executeSql) && executeSql) || (isArray(executeSql) && executeSql.length)) {
-				await sqlite.execute(executeSql);
-			}
 			let result;
-			if (selectSql) {
-				result = await sqlite.select(selectSql);
-			}
-			if (!selfDatabaseStatus) {
-				await sqlite.close();
+			try {
+				await sqlite.beginTransaction();
+				if ((isString(executeSql) && executeSql) || (isArray(executeSql) && executeSql.length)) {
+					await sqlite.execute(executeSql);
+				}
+				if (selectSql) {
+					result = await sqlite.select(selectSql);
+				}
+				await sqlite.commitTransaction();
+				if (!selfDatabaseStatus) {
+					await sqlite.close();
+				}
+			} catch (error) {
+				await sqlite.rollbackTransaction();
 			}
 			return result;
 		};
@@ -393,25 +189,17 @@ export function Table(options: string | TableOptions, _description?: string) {
 						value: async (fields: object) => {
 							const _insert = async (field: object) => {
 								// 过滤掉主键字段
-								const list = keys
-									.filter(item => !item.id)
-									.map(item => ({ name: item.name, key: item.key, dltVal: item.dltVal }));
+								const list = keys.filter(item => !item.id);
 								const datas = {} as Record<string, any>;
 								// 表字段和对应属性不一定相同，需要分开处理
-								for (const { name, key, dltVal } of list) {
+								for (const { name, key, type, hasDefault } of list) {
+									// 解析输入值，进行格式化
 									if (key in field) {
-										datas[sqlstring.escapeId(name)] = field[key as keyof typeof field];
+										const value = field[key as keyof typeof field];
+										datas[sqlstring.escapeId(name)] = stringifyValue(key, value, type, hasDefault);
 										continue;
 									}
-									if (isFunction(dltVal)) {
-										datas[sqlstring.escapeId(name)] = await dltVal();
-										continue;
-									}
-									if (isDef(dltVal)) {
-										datas[sqlstring.escapeId(name)] = dltVal;
-										continue;
-									}
-									datas[sqlstring.escapeId(name)] = null;
+									datas[sqlstring.escapeId(name)] = stringifyValue(key, void 0, type, hasDefault);
 								}
 								const columnKeys = Object.keys(datas);
 								const columnValues = Object.values(datas);
@@ -484,6 +272,95 @@ export function Table(options: string | TableOptions, _description?: string) {
 							return { affectedRows: affectedRows[0]?.['changes()'] };
 						},
 					},
+					select: {
+						...config,
+						value: async (fields?: any, condition?: Arrayable<string> | boolean, single?: boolean) => {
+							if (isBoolean(fields)) {
+								single = fields;
+								condition = [];
+								fields = void 0;
+							} else if (isBoolean(condition)) {
+								// 第二个参数是boolean，第一个参数可能为 fields 或 condition
+								single = condition;
+								if (isString(fields) || isArray(fields)) {
+									condition = toArray(fields).filter(Boolean);
+									fields = void 0;
+								}
+							} else if (isBoolean(single)) {
+								condition = toArray(condition).filter(Boolean) as any[];
+							} else if (isString(fields) || isArray(fields)) {
+								condition = toArray(condition).filter(Boolean) as any[];
+								fields = void 0;
+							}
+							if (isString(condition) || isUndef(condition)) {
+								condition = toArray(condition).filter(Boolean) as any[];
+							}
+							// 参数归一化检测
+							if (!isArray(condition) || (condition.length && !condition.every(isString))) {
+								throw new Error('`condition` 字段必须为字符串或者字符串数组');
+							}
+							if (isUndef(single)) {
+								// 默认查询所有数据，且返回数组
+								single = false;
+							}
+							const queryFields = [] as string[];
+							if (isDef(fields)) {
+								for (const field in fields) {
+									const value = fields[field];
+									if (!isBoolean(value) && value !== 0 && value !== 1) {
+										throw new Error('`fields` 对象属性值必须为布尔值或者 0/1');
+									}
+									if (!value) {
+										continue;
+									}
+									const target = keys.find(item => item.key === field);
+									if (!target) {
+										throw new Error(`字段 ${field} 未注册`);
+									}
+									queryFields.push(sqlstring.escapeId(target.name));
+								}
+							} else {
+								queryFields.push('*');
+							}
+							const where = condition.length ? ` WHERE ${condition.join(' AND ')}` : '';
+							const sql = `SELECT ${queryFields.join(',')} FROM ${tableName}${where};`;
+							const result = await useSql(getSqlite(), [], sql);
+							function _filter(value: object) {
+								const result = {} as any;
+								for (const key in value) {
+									const target = keys.find(item => item.name === key);
+									const data = value[key as keyof typeof value];
+									if (!target) {
+										throw new Error(`字段 ${key} 未注册`);
+									}
+									result[key] = parseValue(data, target.type);
+								}
+								return result;
+							}
+							if (!isArray(result)) {
+								return result;
+							}
+							return single ? _filter(result[0]) : result.map(_filter);
+						},
+					},
+					execute: {
+						...config,
+						value: async (
+							sql: string | any[],
+							params: object | any[],
+							stringifyObjects?: boolean,
+							timeZone?: string,
+						) => {
+							if (isString(sql)) {
+								sql = [{ sql, params, stringifyObjects, timeZone }];
+							}
+							const sqls = sql.map(({ sql, params, stringifyObjects, timeZone }) => {
+								return sqlstring.format(sql, params, stringifyObjects, timeZone);
+							});
+							const result = await useSql(getSqlite(), sqls);
+							return result;
+						},
+					},
 				});
 				const bindKeyNames = keys.reduce(
 					(prev, { name }) => {
@@ -544,6 +421,10 @@ export function Column(options?: ColumnOptions | string, _description?: string) 
 	options = options || {};
 	return function (target: any, key: string) {
 		options.name = options.name || key;
+		const filter = ['close', 'open', 'insert', 'update', 'delete', 'query'] satisfies DisabledFields[];
+		if (filter.includes(options.name as any)) {
+			throw new Error(`字段名不能为 ${options.name}，与默认方法重名`);
+		}
 		const data = { key, options, id: false } satisfies ElementOf<ColumnMetadata>;
 		if (!Reflect.hasMetadata(TABLE_FIELD, target)) {
 			Reflect.defineMetadata(TABLE_FIELD, [data], target);

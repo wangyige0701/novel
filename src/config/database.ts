@@ -8,6 +8,7 @@ export enum Type {
 	BLOB = 'BLOB',
 	NUMERIC = 'NUMERIC',
 	DATETIME = 'DATETIME',
+	TIMESTAMP = 'TIMESTAMP',
 	BOOLEAN = 'BOOLEAN',
 }
 

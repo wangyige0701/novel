@@ -1,6 +1,20 @@
 import 'reflect-metadata';
 import sqlstring from 'sqlstring';
-import { type Fn, isBoolean, isDate, isDef, isNumber, isUndef, toArray, toNumber, toString } from '@wang-yige/utils';
+import {
+	type ElementOf,
+	type Fn,
+	isArray,
+	isBoolean,
+	isDate,
+	isDef,
+	isNumber,
+	isObject,
+	isString,
+	isUndef,
+	toArray,
+	toNumber,
+	toString,
+} from '@wang-yige/utils';
 import type {
 	ColumnMetadata,
 	ColumnOptions,
@@ -10,6 +24,7 @@ import type {
 } from '@/@types/common/database';
 import { Type } from '@/config/database';
 import SQLite from './SQLite';
+import { SelectConditionArrays } from './base';
 
 /**
  * 根据列的元数据生成对应的字段创建 SQL 语句
@@ -200,14 +215,21 @@ export async function updateTableSql(
 }
 
 export function stringifyValue(key: string, value: any, type: Type, hasDefault: boolean = false) {
-	if (type === Type.DATETIME) {
+	if (type === Type.DATETIME || type === Type.TIMESTAMP) {
 		if (isDef(value) && !isDate(value)) {
 			throw new Error(`字段 ${key} 必须是日期类型`);
 		}
+		const timestamp = type === Type.TIMESTAMP;
 		if (!hasDefault) {
+			if (timestamp) {
+				return (value || new Date()).getTime();
+			}
 			return (value || new Date()).toISOString();
 		}
 		if (value) {
+			if (timestamp) {
+				return value.getTime();
+			}
 			return value.toISOString();
 		}
 		return null;
@@ -268,4 +290,49 @@ export function parseValue(value: any, type: Type) {
 		return value;
 	}
 	return value;
+}
+
+export function parseConditions(condition: ElementOf<SelectConditionArrays<any>>) {
+	let { type, value } = condition;
+	if (type === 'where') {
+		if (isString(value)) {
+			value = [value];
+		}
+		if (!isArray(value) || !value.every(isString)) {
+			throw new Error('where 条件必须为字符串或字符串数组');
+		}
+		return `WHERE ${value.map(i => sqlstring.escapeId(i)).join(' AND ')}`;
+	}
+	if (type === 'order') {
+		if (!isObject(value) || !Object.values(value).every(i => i !== 'DESC' || i !== 'ASC')) {
+			throw new Error('order 条件必须为对象，且值为 DESC 或 ASC');
+		}
+		const orders = [];
+		for (const [key, order] of Object.entries(value)) {
+			orders.push(`${sqlstring.escapeId(key)} ${order}`);
+		}
+		return `ORDER BY ${orders.join(',')}`;
+	}
+	if (type === 'group') {
+		if (isString(value)) {
+			value = [value];
+		}
+		if (!isArray(value) || !value.every(isString)) {
+			throw new Error('group 条件必须为字符串或字符串数组');
+		}
+		return `GROUP BY ${value.map(i => sqlstring.escapeId(i)).join(',')}`;
+	}
+	if (type === 'limit') {
+		if (!isNumber(value)) {
+			throw new Error('limit 条件必须为数字');
+		}
+		return `LIMIT ${value}`;
+	}
+	if (type === 'offset') {
+		if (!isNumber(value)) {
+			throw new Error('offset 条件必须为数字');
+		}
+		return `OFFSET ${value}`;
+	}
+	return '';
 }

@@ -8,6 +8,7 @@ import {
 	isBoolean,
 	isDef,
 	isNumber,
+	isObject,
 	isString,
 	isUndef,
 	toArray,
@@ -15,8 +16,8 @@ import {
 import type { ColumnMetadata, ColumnOptions, TableId, TableOptions } from '@/@types/common/database';
 import DatabaseConfig, { Type } from '@/config/database';
 import SQLite from './SQLite';
-import { BaseTable, DisabledFields } from './base';
-import { columnSql, parseValue, stringifyValue, updateTableSql } from './utils';
+import { BaseTable, DisabledFields, SelectConditionArrays, SelectConditionKeys } from './base';
+import { columnSql, parseConditions, parseValue, stringifyValue, updateTableSql } from './utils';
 
 const TABLE_FIELD = Symbol.for('database#tableField');
 const TABLE_ID = Symbol.for('database#tableId');
@@ -47,7 +48,13 @@ export function Table(options: string | TableOptions, _description?: string) {
 		/** 通过 ID 装饰器注册的字段（经过转义），用于作为查询的主键 id */
 		let idColumnName: string;
 		/** 记录字段数据 */
-		const keys = new Array<{ name: string; id: boolean; key: string; type: Type; hasDefault: boolean }>();
+		const keys = new Array<{
+			name: string;
+			id: boolean;
+			key: string;
+			type: Type;
+			hasDefault: boolean;
+		}>();
 		/** 转义后的表名 */
 		const tableName = sqlstring.escapeId(name);
 		const fields = columns.map(column => {
@@ -240,10 +247,18 @@ export function Table(options: string | TableOptions, _description?: string) {
 								throw new Error(`${idColumnName} 必须是字符串或数字`);
 							}
 							const datas = { ...fields } as Record<string, any>;
-							for (const key in datas) {
-								if (isUndef(datas[key])) {
-									datas[key] = null;
+							for (const name in datas) {
+								const target = keys.find(item => item.name === name);
+								if (!target) {
+									throw new Error(`字段 ${name} 不存在`);
 								}
+								const key = target.key;
+								const value = datas[name];
+								if (isUndef(value)) {
+									datas[key] = null;
+									continue;
+								}
+								datas[key] = stringifyValue(key, value, target.type, target.hasDefault);
 							}
 							const _sql = `UPDATE ${tableName} SET ? WHERE ${idColumnName} IN (?);`;
 							const affectedRows = await useSql(
@@ -274,31 +289,50 @@ export function Table(options: string | TableOptions, _description?: string) {
 					},
 					select: {
 						...config,
-						value: async (fields?: any, condition?: Arrayable<string> | boolean, single?: boolean) => {
+						value: async (
+							fields?: object | string,
+							condition?: Arrayable<string> | any[] | boolean,
+							single?: boolean,
+							timeZone?: string,
+						) => {
+							if (isString(fields)) {
+								const args = condition as object | any[];
+								const stringifyObjects = single as boolean;
+								return await useSql(
+									getSqlite(),
+									[],
+									sqlstring.format(fields, args, stringifyObjects, timeZone),
+								);
+							}
 							if (isBoolean(fields)) {
 								single = fields;
 								condition = [];
 								fields = void 0;
 							} else if (isBoolean(condition)) {
-								// 第二个参数是boolean，第一个参数可能为 fields 或 condition
 								single = condition;
 								condition = void 0;
-								if (isString(fields) || isArray(fields)) {
-									condition = toArray(fields).filter(Boolean);
-									fields = void 0;
-								}
 							} else if (isBoolean(single)) {
 								condition = toArray(condition).filter(Boolean) as any[];
-							} else if (isString(fields) || isArray(fields)) {
-								condition = toArray(condition).filter(Boolean) as any[];
-								fields = void 0;
 							}
 							if (isString(condition) || isUndef(condition)) {
 								condition = toArray(condition).filter(Boolean) as any[];
 							}
 							// 参数归一化检测
-							if (!isArray(condition) || (condition.length && !condition.every(isString))) {
+							if (!isArray(condition)) {
 								throw new Error('`condition` 字段必须为字符串或者字符串数组');
+							}
+							const conditionKeys: SelectConditionKeys[] = ['group', 'limit', 'offset', 'order', 'where'];
+							const conditionStringCheck = condition.every(isString);
+							const conditionObjectCheck = condition.every(i => {
+								return isObject(i) && conditionKeys.includes(i.type);
+							});
+							if (condition.length && !conditionStringCheck && !conditionObjectCheck) {
+								throw new Error(
+									'`condition` 字段如果传入对象数组，则对象必须包含 `type` 字段，且 `type` 字段必须是 `group`、`limit`、`offset`、`order`、`where` 之一',
+								);
+							}
+							if (condition.length && conditionStringCheck) {
+								condition = [{ type: 'where', value: condition }];
 							}
 							if (isUndef(single)) {
 								// 默认查询所有数据，且返回数组
@@ -307,7 +341,7 @@ export function Table(options: string | TableOptions, _description?: string) {
 							const queryFields = [] as string[];
 							if (isDef(fields)) {
 								for (const field in fields) {
-									const value = fields[field];
+									const value = fields[field as keyof typeof fields];
 									if (!isBoolean(value) && value !== 0 && value !== 1) {
 										throw new Error('`fields` 对象属性值必须为布尔值或者 0/1');
 									}
@@ -323,8 +357,24 @@ export function Table(options: string | TableOptions, _description?: string) {
 							} else {
 								queryFields.push('*');
 							}
-							const where = condition.length ? ` WHERE ${condition.join(' AND ')}` : '';
-							const sql = `SELECT ${queryFields.join(',')} FROM ${tableName}${where};`;
+							const conditionMap = (condition as SelectConditionArrays<any>).reduce(
+								(prev, curr) => {
+									const value = parseConditions(curr);
+									if (value) {
+										prev[curr.type] = value;
+									}
+									return prev;
+								},
+								{} as Record<SelectConditionKeys, string>,
+							);
+							const conditionStrings = [
+								conditionMap.where,
+								conditionMap.group,
+								conditionMap.order,
+								conditionMap.limit,
+								conditionMap.offset,
+							].filter(Boolean);
+							const sql = `SELECT ${queryFields.join(',')} FROM ${tableName} ${conditionStrings.join(' ')};`;
 							const result = await useSql(getSqlite(), [], sql);
 							function _filter(value: object) {
 								const result = {} as any;

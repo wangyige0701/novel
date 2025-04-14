@@ -31,4 +31,10 @@ export default class Test extends BaseTable<typeof Test> {
 
 	@Column({ name: 'create_time', type: Type.DATETIME }, '创建时间')
 	createTime: Date;
+
+	@Column({ name: 'timestamp', type: Type.TIMESTAMP }, '时间戳存储')
+	timestamp: Date;
+
+	@Column({ name: 'binary', type: Type.BLOB }, '二进制数据')
+	binary: Blob;
 }

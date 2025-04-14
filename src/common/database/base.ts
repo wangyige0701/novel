@@ -1,5 +1,5 @@
 import type { Delete, Insert, TableId, Update } from '@/@types/common/database';
-import type { Arrayable, Constructor, Fn } from '@wang-yige/utils';
+import type { Arrayable, Constructor, Fn, RestElements } from '@wang-yige/utils';
 import SQLite from './SQLite';
 
 export type DisabledFields = 'open' | 'close' | 'insert' | 'update' | 'delete' | 'query';
@@ -27,42 +27,85 @@ type InsertFun<T extends Constructor<any, any[]>> = {
 
 type Single<T extends any, S extends boolean> = S extends true ? T | undefined : T[];
 
+/** 查询条件参数对象的属性 */
+export type SelectConditionKeys = 'where' | 'order' | 'limit' | 'offset' | 'group';
+
+type SelectConditions<T extends object> = {
+	where: Arrayable<string>;
+	order: Arrayable<{
+		[K in keyof T]?: 'DESC' | 'ASC';
+	}>;
+	limit: number;
+	offset: number;
+	group: Arrayable<string>;
+};
+
+/** 将类型和数据对应 */
+type SelectConditionMap<
+	T extends object,
+	K extends SelectConditionKeys[],
+	R extends any = never,
+> = K['length'] extends 0
+	? R
+	: SelectConditionMap<T, RestElements<K>, R | { type: K[0]; value: SelectConditions<T>[K[0]] }>;
+
+/**
+ * 查询条件数组配置项
+ */
+export type SelectConditionArrays<T extends object> = Array<
+	SelectConditionMap<T, ['where', 'order', 'limit', 'offset', 'group']>
+>;
+
+/**
+ * 查询方法重载
+ */
 type SelectFun<T extends Constructor<any, any[]>> = {
 	/** 查询全部数据 */
 	(): Promise<FilterFields<T>[]>;
+
 	/**
 	 * @param fields 查询过滤字段，传入对象，对象值为 boolean 或者 0/1
 	 */
 	<F extends Partial<OverwriteFields<FilterFields<T>>>>(fields: F): Promise<FilterOriginFields<T, F>[]>;
-	/**
-	 * @param condition 查询条件，传入数组时，内部条件通过 AND 连接
-	 */
-	(condition?: Arrayable<string>): Promise<FilterFields<T>[]>;
+
 	/**
 	 * @param single 是否只返回一条数据
 	 */
-	<S extends boolean>(single?: S): Promise<Single<FilterFields<T>, S>>;
-	/**
-	 * @param condition 查询条件，传入数组时，内部条件通过 AND 连接
-	 * @param single 是否只返回一条数据
-	 */
-	<S extends boolean>(condition?: Arrayable<string>, single?: S): Promise<Single<FilterFields<T>, S>>;
+	<S extends boolean>(single: S): Promise<Single<FilterFields<T>, S>>;
+
 	/**
 	 * @param fields 查询过滤字段，传入对象，对象值为 boolean 或者 0/1
 	 * @param condition 查询条件，传入数组时，内部条件通过 AND 连接
 	 */
 	<F extends Partial<OverwriteFields<FilterFields<T>>>>(
 		fields: F,
-		condition?: Arrayable<string>,
+		condition: SelectConditionArrays<FilterFields<T>>,
 	): Promise<FilterOriginFields<T, F>[]>;
+
+	/**
+	 * @param condition 查询条件，传入数组时，内部条件通过 AND 连接
+	 * @param single 是否只返回一条数据
+	 */
+	<S extends boolean>(condition: Arrayable<string>, single: S): Promise<Single<FilterFields<T>, S>>;
+
+	/**
+	 * @param fields 查询过滤字段，传入对象，对象值为 boolean 或者 0/1
+	 * @param condition 查询条件，传入数组时，内部条件通过 AND 连接
+	 */
+	<F extends Partial<OverwriteFields<FilterFields<T>>>>(
+		fields: F,
+		condition: Arrayable<string>,
+	): Promise<FilterOriginFields<T, F>[]>;
+
 	/**
 	 * @param fields 查询过滤字段，传入对象，对象值为 boolean 或者 0/1
 	 * @param single 是否只返回一条数据
 	 */
 	<F extends Partial<OverwriteFields<FilterFields<T>>>, S extends boolean>(
 		fields: F,
-		single?: S,
+		single: S,
 	): Promise<Single<FilterOriginFields<T, F>, S>>;
+
 	/**
 	 * @param fields 查询过滤字段，传入对象，对象值为 boolean 或者 0/1
 	 * @param condition 查询条件，传入数组时，内部条件通过 AND 连接
@@ -70,17 +113,42 @@ type SelectFun<T extends Constructor<any, any[]>> = {
 	 */
 	<F extends Partial<OverwriteFields<FilterFields<T>>>, S extends boolean>(
 		fields: F,
-		condition?: Arrayable<string>,
-		single?: S,
+		condition: SelectConditionArrays<FilterFields<T>>,
+		single: S,
 	): Promise<Single<FilterOriginFields<T, F>, S>>;
+
+	/**
+	 * @param fields 查询过滤字段，传入对象，对象值为 boolean 或者 0/1
+	 * @param condition 查询条件，传入数组时，内部条件通过 AND 连接
+	 * @param single 是否只返回一条数据
+	 */
+	<F extends Partial<OverwriteFields<FilterFields<T>>>, S extends boolean>(
+		fields: F,
+		condition: Arrayable<string>,
+		single: S,
+	): Promise<Single<FilterOriginFields<T, F>, S>>;
+
+	/**
+	 * 自定义查询
+	 */
+	(sql: string, params?: object | any[], stringifyObjects?: boolean, timeZone?: string): Promise<any>;
 };
 
 type ExecuteSql = { sql: string; params?: object | any[]; stringifyObjects?: boolean; timeZone?: string };
 
 type ExecuteFun = {
-	/** 执行非 select 的 sql 语句 */
+	/**
+	 * 执行非 select 的 sql 语句
+	 * @param sql 执行的语句
+	 * @param params 语句参数
+	 * @param stringifyObjects 是否将对象序列化为 JSON 字符串
+	 * @param timeZone 时区
+	 */
 	(sql: string, params?: object | any[], stringifyObjects?: boolean, timeZone?: string): Promise<any>;
-	/** 执行非 select 的 sql 语句 */
+	/**
+	 * 执行非 select 的 sql 语句
+	 * @param sqls 执行的语句数组
+	 */
 	(sqls: Array<ExecuteSql>): Promise<any>;
 };
 
@@ -109,6 +177,6 @@ export class BaseTable<T extends Constructor<any, any[]>> {
 	 * @param single 是否只返回一条数据
 	 */
 	select: SelectFun<T>;
-	/** 执行 sql */
+	/** 执行非 select 的 sql 语句 */
 	execute: ExecuteFun;
 }

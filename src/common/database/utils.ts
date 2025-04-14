@@ -234,12 +234,6 @@ export function stringifyValue(key: string, value: any, type: Type, hasDefault: 
 		}
 		return null;
 	}
-	if (type === Type.BLOB) {
-		if (isDef(value) && !ArrayBuffer.isView(value)) {
-			throw new Error(`字段 ${key} 必须是 ArrayBuffer 类型`);
-		}
-		return value ? new Uint8Array(value.buffer) : null;
-	}
 	if (type === Type.BOOLEAN) {
 		if (isDef(value) && !isBoolean(value)) {
 			throw new Error(`字段 ${key} 必须是布尔类型`);
@@ -265,12 +259,6 @@ export function parseValue(value: any, type: Type) {
 	if (type === Type.DATETIME) {
 		if (isDef(value)) {
 			return new Date(value);
-		}
-		return value;
-	}
-	if (type === Type.BLOB) {
-		if (isDef(value)) {
-			return new Blob([value]);
 		}
 		return value;
 	}

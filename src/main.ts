@@ -11,11 +11,13 @@ import { useSearchProxyStore } from '@/store/proxy';
 import App from './App.vue';
 
 // @ts-expect-error 添加 Buffer api，并禁止使用 Buffer
-globalThis.Buffer = class Buffer {
-	isBuffer(obj: any) {
+globalThis.Buffer = Object.defineProperty(class {}, 'isBuffer', {
+	writable: false,
+	configurable: false,
+	value: function (_obj: any) {
 		return false;
-	}
-};
+	},
+});
 
 export function createApp() {
 	const app = createSSRApp(App);

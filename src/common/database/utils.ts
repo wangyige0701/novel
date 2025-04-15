@@ -234,6 +234,12 @@ export function stringifyValue(key: string, value: any, type: Type, hasDefault: 
 		}
 		return null;
 	}
+	if (type === Type.BLOB) {
+		if (isDef(value)) {
+			return value.toString();
+		}
+		return value;
+	}
 	if (type === Type.BOOLEAN) {
 		if (isDef(value) && !isBoolean(value)) {
 			throw new Error(`字段 ${key} 必须是布尔类型`);
@@ -256,9 +262,15 @@ export function stringifyValue(key: string, value: any, type: Type, hasDefault: 
 }
 
 export function parseValue(value: any, type: Type) {
-	if (type === Type.DATETIME) {
+	if (type === Type.DATETIME || type === Type.TIMESTAMP) {
 		if (isDef(value)) {
 			return new Date(value);
+		}
+		return value;
+	}
+	if (type === Type.BLOB) {
+		if (isDef(value)) {
+			return new Uint8Array(value.split(',').map(Number));
 		}
 		return value;
 	}

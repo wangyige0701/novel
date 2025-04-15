@@ -15,7 +15,7 @@ type OverwriteFields<T extends object> = {
 };
 
 type FilterOriginFields<T extends Constructor<any, any[]>, F extends Record<string, boolean | 0 | 1 | undefined>> = {
-	[K in keyof F as F[K] extends true ? K : never]: T[K & keyof T];
+	[K in keyof F as F[K] extends true | 1 ? K : never]: InstanceType<T>[K];
 };
 
 type InsertFun<T extends Constructor<any, any[]>> = {

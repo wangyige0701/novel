@@ -36,5 +36,5 @@ export default class Test extends BaseTable<typeof Test> {
 	timestamp: Date;
 
 	@Column({ name: 'binary', type: Type.BLOB }, '二进制数据')
-	binary: Blob;
+	binary: Uint8Array<ArrayBuffer>;
 }

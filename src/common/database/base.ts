@@ -156,6 +156,8 @@ type ExecuteFun = {
  * 提供数据表基础方法
  */
 export class BaseTable<T extends Constructor<any, any[]>> {
+	/** 未经转义的表名 */
+	static oname: string;
 	/** 经过转义的表名 */
 	static name: string;
 	/** sqlite 实例 */

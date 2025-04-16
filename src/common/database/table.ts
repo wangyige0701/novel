@@ -112,57 +112,47 @@ export function Table(options: string | TableOptions, _description?: string) {
 			}
 			return result;
 		};
+		function _inject(t: object, key: string, value: any) {
+			Object.defineProperty(t, key, { ...config, value });
+		}
 		// sqlite 实例注入
-		Object.defineProperty(target, 'sqlite', {
-			...config,
-			value: getSqlite(),
-		});
+		_inject(target, 'sqlite', getSqlite());
 		// 表名属性注入
-		Object.defineProperty(target, 'name', {
-			...config,
-			value: tableName,
-		});
+		_inject(target, 'name', tableName);
+		// 未转义表名注入
+		_inject(target, 'oname', name);
 		// 预执行的 sql 语句注入
-		Object.defineProperty(target.prototype, '__sql', {
-			...config,
-			value: sql().join('\n'),
-		});
+		_inject(target.prototype, '__sql', sql().join('\n'));
 		// 数据库信息注入
-		Object.defineProperty(target.prototype, '__info', {
-			...config,
-			value: () => {
-				const config = DatabaseConfig[database];
-				return {
-					name: config.name,
-					path: config.path,
-					table: name,
-				};
-			},
+		_inject(target.prototype, '__info', () => {
+			const config = DatabaseConfig[database];
+			return {
+				name: config.name,
+				path: config.path,
+				table: name,
+			};
 		});
 		// 数据表创建执行函数注入
-		Object.defineProperty(target.prototype, '__create', {
-			...config,
-			value: async () => {
-				if (disabled) {
-					console.log(`表 ${name} 已禁用，取消执行`);
-					// 禁用状态
-					return false;
-				}
-				if (test && import.meta.env.PROD) {
-					// 测试表，生产环境不创建
-					return false;
-				}
-				const sqlite = getSqlite();
-				// 如果更新表，则不继续执行
-				let update;
-				if ((update = await updateTableSql(sqlite, name, columns, indexs, sql))) {
-					console.log(`数据表 ${name} 更新成功：\n${update.join('\n')}`);
-					return false;
-				}
-				// 执行 __create 方法需要关闭手动数据库操作
-				selfDatabaseStatus = false;
-				await useSql(sqlite, sql());
-			},
+		_inject(target.prototype, '__create', async () => {
+			if (disabled) {
+				console.log(`表 ${name} 已禁用，取消执行`);
+				// 禁用状态
+				return false;
+			}
+			if (test && import.meta.env.PROD) {
+				// 测试表，生产环境不创建
+				return false;
+			}
+			const sqlite = getSqlite();
+			// 如果更新表，则不继续执行
+			let update;
+			if ((update = await updateTableSql(sqlite, name, columns, indexs, sql))) {
+				console.log(`数据表 ${name} 更新成功：\n${update.join('\n')}`);
+				return false;
+			}
+			// 执行 __create 方法需要关闭手动数据库操作
+			selfDatabaseStatus = false;
+			await useSql(sqlite, sql());
 		});
 		// 单例缓存
 		return new Proxy(class {}, {
@@ -172,259 +162,246 @@ export function Table(options: string | TableOptions, _description?: string) {
 				}
 				const instance = new target(...args);
 				// 注入基础方法
-				Object.defineProperties(instance, {
-					open: {
-						...config,
-						value: async () => {
-							selfDatabaseStatus = true;
-							await getSqlite().open();
-							return instance;
-						},
-					},
-					close: {
-						...config,
-						value: async () => {
-							if (!selfDatabaseStatus) {
-								throw new Error('数据库未手动打开');
+				_inject(instance, 'open', async () => {
+					selfDatabaseStatus = true;
+					await getSqlite().open();
+					return instance;
+				});
+				_inject(instance, 'close', async () => {
+					if (!selfDatabaseStatus) {
+						throw new Error('数据库未手动打开');
+					}
+					selfDatabaseStatus = false;
+					await getSqlite().close();
+				});
+				_inject(instance, 'insert', async (fields: object) => {
+					const _insert = async (field: object) => {
+						// 过滤掉主键字段
+						const list = keys.filter(item => !item.id);
+						const datas = {} as Record<string, any>;
+						// 表字段和对应属性不一定相同，需要分开处理
+						for (const { name, key, type, hasDefault } of list) {
+							// 解析输入值，进行格式化
+							if (key in field) {
+								const value = field[key as keyof typeof field];
+								datas[sqlstring.escapeId(name)] = stringifyValue(key, value, type, hasDefault);
+								continue;
 							}
-							selfDatabaseStatus = false;
-							await getSqlite().close();
-						},
-					},
-					insert: {
-						...config,
-						value: async (fields: object) => {
-							const _insert = async (field: object) => {
-								// 过滤掉主键字段
-								const list = keys.filter(item => !item.id);
-								const datas = {} as Record<string, any>;
-								// 表字段和对应属性不一定相同，需要分开处理
-								for (const { name, key, type, hasDefault } of list) {
-									// 解析输入值，进行格式化
-									if (key in field) {
-										const value = field[key as keyof typeof field];
-										datas[sqlstring.escapeId(name)] = stringifyValue(key, value, type, hasDefault);
-										continue;
-									}
-									datas[sqlstring.escapeId(name)] = stringifyValue(key, void 0, type, hasDefault);
+							datas[sqlstring.escapeId(name)] = stringifyValue(key, void 0, type, hasDefault);
+						}
+						const columnKeys = Object.keys(datas);
+						const columnValues = Object.values(datas);
+						const _sql = `INSERT INTO ${tableName} (${columnKeys.join(',')}) VALUES (?);`;
+						const lastRowtId = await useSql(
+							getSqlite(),
+							[sqlstring.format(_sql, [columnValues])],
+							'SELECT last_insert_rowid();',
+						);
+						return { lastRowtId: lastRowtId[0]?.['last_insert_rowid()'] };
+					};
+					if (isArray(fields)) {
+						await instance.open();
+						const sqlite = getSqlite();
+						const results = [];
+						try {
+							await sqlite.beginTransaction();
+							for (const field of fields) {
+								results.push(await _insert(field));
+							}
+							await sqlite.commitTransaction();
+						} catch (error) {
+							await sqlite.rollbackTransaction();
+						}
+						await instance.close();
+						return results;
+					}
+					return _insert(fields);
+				});
+				_inject(instance, 'update', async (id: TableId, fields: object) => {
+					if (!idColumnName) {
+						throw new Error('使用 `update` 方法时，必须使用 ID 装饰器注册主键字段');
+					}
+					if (!isString(id) && !isNumber(id)) {
+						throw new Error(`${idColumnName} 必须是字符串或数字`);
+					}
+					const datas = { ...fields } as Record<string, any>;
+					for (const name in datas) {
+						const target = keys.find(item => item.name === name);
+						if (!target) {
+							throw new Error(`字段 ${name} 不存在`);
+						}
+						const key = target.key;
+						const value = datas[name];
+						if (isUndef(value)) {
+							datas[key] = null;
+							continue;
+						}
+						datas[key] = stringifyValue(key, value, target.type, target.hasDefault);
+					}
+					const _sql = `UPDATE ${tableName} SET ? WHERE ${idColumnName} IN (?);`;
+					const affectedRows = await useSql(
+						getSqlite(),
+						sqlstring.format(_sql, [datas, toArray(id)]),
+						'SELECT changes();',
+					);
+					return { affectedRows: affectedRows[0]?.['changes()'] };
+				});
+				_inject(instance, 'delete', async (id: TableId) => {
+					if (!idColumnName) {
+						throw new Error('使用 `delete` 方法时，必须使用 ID 装饰器注册主键字段');
+					}
+					if (!isString(id) && !isNumber(id)) {
+						throw new Error(`${idColumnName} 必须是字符串或数字`);
+					}
+					const _sql = `DELETE FROM ${tableName} WHERE ${idColumnName} IN (?);`;
+					const affectedRows = await useSql(
+						getSqlite(),
+						sqlstring.format(_sql, [toArray(id)]),
+						'SELECT changes();',
+					);
+					return { affectedRows: affectedRows[0]?.['changes()'] };
+				});
+				_inject(
+					instance,
+					'select',
+					async (
+						fields?: object | string,
+						condition?: Arrayable<string> | any[] | boolean,
+						single?: boolean,
+						timeZone?: string,
+					) => {
+						if (isString(fields)) {
+							const args = condition as object | any[];
+							const stringifyObjects = single as boolean;
+							return await useSql(
+								getSqlite(),
+								[],
+								sqlstring.format(fields, args, stringifyObjects, timeZone),
+							);
+						}
+						if (isBoolean(fields)) {
+							single = fields;
+							condition = [];
+							fields = void 0;
+						} else if (isBoolean(condition)) {
+							single = condition;
+							condition = void 0;
+						} else if (isBoolean(single)) {
+							condition = toArray(condition).filter(Boolean) as any[];
+						}
+						if (isString(condition) || isUndef(condition)) {
+							condition = toArray(condition).filter(Boolean) as any[];
+						}
+						// 参数归一化检测
+						if (!isArray(condition)) {
+							throw new Error('`condition` 字段必须为字符串或者字符串数组');
+						}
+						const conditionKeys: SelectConditionKeys[] = ['group', 'limit', 'offset', 'order', 'where'];
+						const conditionStringCheck = condition.every(isString);
+						const conditionObjectCheck = condition.every(i => {
+							return isObject(i) && conditionKeys.includes(i.type);
+						});
+						if (condition.length && !conditionStringCheck && !conditionObjectCheck) {
+							throw new Error(
+								'`condition` 字段如果传入对象数组，则对象必须包含 `type` 字段，且 `type` 字段必须是 `group`、`limit`、`offset`、`order`、`where` 之一',
+							);
+						}
+						if (condition.length && conditionStringCheck) {
+							condition = [{ type: 'where', value: condition }];
+						}
+						if (isUndef(single)) {
+							// 默认查询所有数据，且返回数组
+							single = false;
+						}
+						const queryFields = [] as string[];
+						if (isDef(fields)) {
+							for (const field in fields) {
+								const value = fields[field as keyof typeof fields];
+								if (!isBoolean(value) && value !== 0 && value !== 1) {
+									throw new Error('`fields` 对象属性值必须为布尔值或者 0/1');
 								}
-								const columnKeys = Object.keys(datas);
-								const columnValues = Object.values(datas);
-								const _sql = `INSERT INTO ${tableName} (${columnKeys.join(',')}) VALUES (?);`;
-								const lastRowtId = await useSql(
-									getSqlite(),
-									[sqlstring.format(_sql, [columnValues])],
-									'SELECT last_insert_rowid();',
-								);
-								return { lastRowtId: lastRowtId[0]?.['last_insert_rowid()'] };
-							};
-							if (isArray(fields)) {
-								await instance.open();
-								const sqlite = getSqlite();
-								const results = [];
-								try {
-									await sqlite.beginTransaction();
-									for (const field of fields) {
-										results.push(await _insert(field));
-									}
-									await sqlite.commitTransaction();
-								} catch (error) {
-									await sqlite.rollbackTransaction();
-								}
-								await instance.close();
-								return results;
-							}
-							return _insert(fields);
-						},
-					},
-					update: {
-						...config,
-						value: async (id: TableId, fields: object) => {
-							if (!idColumnName) {
-								throw new Error('使用 `update` 方法时，必须使用 ID 装饰器注册主键字段');
-							}
-							if (!isString(id) && !isNumber(id)) {
-								throw new Error(`${idColumnName} 必须是字符串或数字`);
-							}
-							const datas = { ...fields } as Record<string, any>;
-							for (const name in datas) {
-								const target = keys.find(item => item.name === name);
-								if (!target) {
-									throw new Error(`字段 ${name} 不存在`);
-								}
-								const key = target.key;
-								const value = datas[name];
-								if (isUndef(value)) {
-									datas[key] = null;
+								if (!value) {
 									continue;
 								}
-								datas[key] = stringifyValue(key, value, target.type, target.hasDefault);
-							}
-							const _sql = `UPDATE ${tableName} SET ? WHERE ${idColumnName} IN (?);`;
-							const affectedRows = await useSql(
-								getSqlite(),
-								sqlstring.format(_sql, [datas, toArray(id)]),
-								'SELECT changes();',
-							);
-							return { affectedRows: affectedRows[0]?.['changes()'] };
-						},
-					},
-					delete: {
-						...config,
-						value: async (id: TableId) => {
-							if (!idColumnName) {
-								throw new Error('使用 `delete` 方法时，必须使用 ID 装饰器注册主键字段');
-							}
-							if (!isString(id) && !isNumber(id)) {
-								throw new Error(`${idColumnName} 必须是字符串或数字`);
-							}
-							const _sql = `DELETE FROM ${tableName} WHERE ${idColumnName} IN (?);`;
-							const affectedRows = await useSql(
-								getSqlite(),
-								sqlstring.format(_sql, [toArray(id)]),
-								'SELECT changes();',
-							);
-							return { affectedRows: affectedRows[0]?.['changes()'] };
-						},
-					},
-					select: {
-						...config,
-						value: async (
-							fields?: object | string,
-							condition?: Arrayable<string> | any[] | boolean,
-							single?: boolean,
-							timeZone?: string,
-						) => {
-							if (isString(fields)) {
-								const args = condition as object | any[];
-								const stringifyObjects = single as boolean;
-								return await useSql(
-									getSqlite(),
-									[],
-									sqlstring.format(fields, args, stringifyObjects, timeZone),
-								);
-							}
-							if (isBoolean(fields)) {
-								single = fields;
-								condition = [];
-								fields = void 0;
-							} else if (isBoolean(condition)) {
-								single = condition;
-								condition = void 0;
-							} else if (isBoolean(single)) {
-								condition = toArray(condition).filter(Boolean) as any[];
-							}
-							if (isString(condition) || isUndef(condition)) {
-								condition = toArray(condition).filter(Boolean) as any[];
-							}
-							// 参数归一化检测
-							if (!isArray(condition)) {
-								throw new Error('`condition` 字段必须为字符串或者字符串数组');
-							}
-							const conditionKeys: SelectConditionKeys[] = ['group', 'limit', 'offset', 'order', 'where'];
-							const conditionStringCheck = condition.every(isString);
-							const conditionObjectCheck = condition.every(i => {
-								return isObject(i) && conditionKeys.includes(i.type);
-							});
-							if (condition.length && !conditionStringCheck && !conditionObjectCheck) {
-								throw new Error(
-									'`condition` 字段如果传入对象数组，则对象必须包含 `type` 字段，且 `type` 字段必须是 `group`、`limit`、`offset`、`order`、`where` 之一',
-								);
-							}
-							if (condition.length && conditionStringCheck) {
-								condition = [{ type: 'where', value: condition }];
-							}
-							if (isUndef(single)) {
-								// 默认查询所有数据，且返回数组
-								single = false;
-							}
-							const queryFields = [] as string[];
-							if (isDef(fields)) {
-								for (const field in fields) {
-									const value = fields[field as keyof typeof fields];
-									if (!isBoolean(value) && value !== 0 && value !== 1) {
-										throw new Error('`fields` 对象属性值必须为布尔值或者 0/1');
-									}
-									if (!value) {
-										continue;
-									}
-									const target = keys.find(item => item.key === field);
-									if (!target) {
-										throw new Error(`字段 ${field} 未注册`);
-									}
-									queryFields.push(sqlstring.escapeId(target.name));
+								const target = keys.find(item => item.key === field);
+								if (!target) {
+									throw new Error(`字段 ${field} 未注册`);
 								}
-							} else {
-								queryFields.push('*');
+								queryFields.push(sqlstring.escapeId(target.name));
 							}
-							const conditionMap = (condition as SelectConditionArrays<any>).reduce(
-								(prev, curr) => {
-									const value = parseConditions(curr);
-									if (value) {
-										prev[curr.type] = value;
-									}
-									return prev;
-								},
-								{} as Record<SelectConditionKeys, string>,
-							);
-							const conditionStrings = [
-								conditionMap.where,
-								conditionMap.group,
-								conditionMap.order,
-								conditionMap.limit,
-								conditionMap.offset,
-							].filter(Boolean);
-							const sql = `SELECT ${queryFields.join(',')} FROM ${tableName} ${conditionStrings.join(' ')};`;
-							const result = await useSql(getSqlite(), [], sql);
-							function _filter(value: object) {
-								const result = {} as any;
-								for (const key in value) {
-									const target = keys.find(item => item.name === key);
-									const data = value[key as keyof typeof value];
-									if (!target) {
-										throw new Error(`字段 ${key} 未注册`);
-									}
-									result[key] = parseValue(data, target.type);
+						} else {
+							queryFields.push('*');
+						}
+						const conditionMap = (condition as SelectConditionArrays<any>).reduce(
+							(prev, curr) => {
+								const value = parseConditions(curr);
+								if (value) {
+									prev[curr.type] = value;
 								}
-								return result;
+								return prev;
+							},
+							{} as Record<SelectConditionKeys, string>,
+						);
+						const conditionStrings = [
+							conditionMap.where,
+							conditionMap.group,
+							conditionMap.order,
+							conditionMap.limit,
+							conditionMap.offset,
+						].filter(Boolean);
+						const sql = `SELECT ${queryFields.join(',')} FROM ${tableName} ${conditionStrings.join(' ')};`;
+						const result = await useSql(getSqlite(), [], sql);
+						function _filter(value: object) {
+							const result = {} as any;
+							for (const key in value) {
+								const target = keys.find(item => item.name === key);
+								const data = value[key as keyof typeof value];
+								if (!target) {
+									throw new Error(`字段 ${key} 未注册`);
+								}
+								result[key] = parseValue(data, target.type);
 							}
-							if (!isArray(result)) {
-								return result;
-							}
-							return single ? _filter(result[0]) : result.map(_filter);
-						},
-					},
-					execute: {
-						...config,
-						value: async (
-							sql: string | any[],
-							params: object | any[],
-							stringifyObjects?: boolean,
-							timeZone?: string,
-						) => {
-							if (isString(sql)) {
-								sql = [{ sql, params, stringifyObjects, timeZone }];
-							}
-							const sqls = sql.map(({ sql, params, stringifyObjects, timeZone }) => {
-								return sqlstring.format(sql, params, stringifyObjects, timeZone);
-							});
-							const result = await useSql(getSqlite(), sqls);
 							return result;
-						},
+						}
+						if (!isArray(result)) {
+							return result;
+						}
+						return single ? _filter(result[0]) : result.map(_filter);
 					},
-				});
-				const bindKeyNames = keys.reduce(
-					(prev, { name }) => {
-						prev[name] = {
-							...config,
-							value: sqlstring.escapeId(name),
-						};
-						return prev;
+				);
+				_inject(
+					instance,
+					'execute',
+					async (
+						sql: string | any[],
+						params: object | any[],
+						stringifyObjects?: boolean,
+						timeZone?: string,
+					) => {
+						if (isString(sql)) {
+							sql = [{ sql, params, stringifyObjects, timeZone }];
+						}
+						const sqls = sql.map(({ sql, params, stringifyObjects, timeZone }) => {
+							return sqlstring.format(sql, params, stringifyObjects, timeZone);
+						});
+						const result = await useSql(getSqlite(), sqls);
+						return result;
 					},
-					{} as Record<string, PropertyDescriptor>,
 				);
 				// 绑定所有经过转义的字段名
-				Object.defineProperties(instance, bindKeyNames);
+				Object.defineProperties(
+					instance,
+					keys.reduce(
+						(prev, { name }) => {
+							prev[name] = {
+								...config,
+								value: sqlstring.escapeId(name),
+							};
+							return prev;
+						},
+						{} as Record<string, PropertyDescriptor>,
+					),
+				);
 				instanceCache.set(target, instance);
 				return instance;
 			},

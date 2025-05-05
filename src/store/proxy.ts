@@ -1,13 +1,13 @@
 import { defineStore } from 'pinia';
 import type { SearchProxy, SearchProxyData } from '@/@types/api/proxy';
 import { StoreKey } from '@/config/store';
-import { searchProxy } from '@/api/proxy';
+import { searchProxy, SearchProxyKeys } from '@/api/proxy';
 
 /**
  * 数据获取网络代理配置
  */
 export const useSearchProxyStore = defineStore(StoreKey.searchProxy, () => {
-	const current = ref<keyof SearchProxy>('biqu');
+	const current = ref<keyof SearchProxy>(SearchProxyKeys.biqu);
 	const path = computed(() => {
 		const config = getConfig();
 		if (process.env.UNI_PLATFORM === 'h5') {

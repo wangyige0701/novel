@@ -1,16 +1,11 @@
 import type { SearchProxy } from '@/@types/api/proxy';
 
 export enum SearchProxyKeys {
+	/** 笔趣阁 */
 	biqu = 'biqu',
 }
 
 export const searchProxy: SearchProxy = {
-	local: {
-		domain: '/',
-		alias: 'novel-search',
-		description: '本地代理',
-		local: true,
-	},
 	[SearchProxyKeys.biqu]: {
 		domain: 'https://www.xbiqu6.com/',
 		alias: SearchProxyKeys.biqu,

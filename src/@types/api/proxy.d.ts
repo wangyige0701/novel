@@ -9,7 +9,9 @@ export type SearchProxyData = {
 	local?: boolean;
 };
 
+/**
+ * 代理列表
+ */
 export type SearchProxy = {
-	local: SearchProxyData;
 	biqu: SearchProxyData;
 };

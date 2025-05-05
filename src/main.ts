@@ -9,6 +9,7 @@ import { isFunction } from '@wang-yige/utils';
 import { useInfoStore } from '@/store/info';
 import { useSearchProxyStore } from '@/store/proxy';
 import App from './App.vue';
+import { SearchProxyKeys } from './api/proxy';
 
 // @ts-expect-error 添加 Buffer api，并禁止使用 Buffer
 globalThis.Buffer = Object.defineProperty(class {}, 'isBuffer', {
@@ -24,22 +25,20 @@ export function createApp() {
 	app.use(createPinia());
 
 	const infoStore = useInfoStore();
+	// app 环境设置状态栏高度
 	if (uni && isFunction(uni.getSystemInfoSync)) {
 		infoStore.set('statusBarHeight', uni.getSystemInfoSync().statusBarHeight ?? 0);
 	}
-
 	// 设备信息
-	const deviceInfo = uni.getDeviceInfo();
-	for (const key in deviceInfo) {
-		infoStore.set(key as keyof DeviceInfoResult, deviceInfo[key as keyof DeviceInfoResult]);
+	for (const [key, value] of Object.entries(uni.getDeviceInfo())) {
+		infoStore.set(key as keyof DeviceInfoResult, value);
 	}
 
 	// 加载数据库
 	loadDatabase();
 
 	// 默认的数据请求节点
-	const searchProxyStore = useSearchProxyStore();
-	searchProxyStore.switch('biqu');
+	useSearchProxyStore().switch(SearchProxyKeys.biqu);
 
 	return {
 		app,

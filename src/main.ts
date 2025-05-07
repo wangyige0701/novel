@@ -9,7 +9,7 @@ import { isFunction } from '@wang-yige/utils';
 import { useInfoStore } from '@/store/info';
 import { useSearchProxyStore } from '@/store/proxy';
 import App from './App.vue';
-import { SearchProxyKeys } from './api/proxy';
+import { SearchProxyKeys } from './config/proxy';
 
 // @ts-expect-error 添加 Buffer api，并禁止使用 Buffer
 globalThis.Buffer = Object.defineProperty(class {}, 'isBuffer', {

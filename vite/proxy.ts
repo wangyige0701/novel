@@ -1,7 +1,6 @@
 import type { ProxyOptions } from 'vite';
-import { searchProxy } from '../src/api/proxy';
-import ProxyConfig from '../src/config/proxy';
 import type { SearchProxy } from '@/@types/api/proxy';
+import ProxyConfig, { searchProxy } from '../src/config/proxy';
 
 /**
  * 自动生成代理配置

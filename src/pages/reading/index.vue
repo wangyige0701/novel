@@ -26,49 +26,36 @@ const testModel = new TestModel();
 
 async function add() {
 	console.log(test.id, test.name, test.gender);
-	// const result = await testModel.all();
-	// const a = await test.insert([
-	// 	{
-	// 		name: 'test' + result.length,
-	// 		gender: result.length % 2,
-	// 		idCard: randomString(10),
-	// 	},
-	// 	{
-	// 		name: 'test' + (result.length + 1),
-	// 		gender: (result.length + 1) % 2,
-	// 		idCard: randomString(10),
-	// 	},
-	// ]);
-
-	// const a = await test.insert({
-	// 	name: 'test' + result.length,
-	// 	gender: result.length % 2,
-	// 	idCard: randomString(10),
-	// });
-	// console.log(a);
+	const data = new Uint8Array([0x48, 0x65, 0x6c, 0x6c, 0x6f]);
+	const a = await test.update(1, {
+		binary: data,
+	});
+	console.log(a);
 	// console.log(await testModel.all());
-
-	const value = await test.select(
-		{
-			name: 1,
-			gender: 1,
-			createTime: 1,
-		},
-		true,
-	);
-	console.log(value);
 }
 
 async function remove() {
-	const result = await testModel.all();
-	console.log(result);
-	const first = result[0];
-	if (first) {
-		const a = await test.delete(first?.id);
-		console.log(a);
-	} else {
-		console.log('没有数据');
+	const result = await test.select(true);
+	if (result) {
+		console.log(result);
+
+		function uint8ArrayToBinaryStr(u8arr: Uint8Array<ArrayBuffer>) {
+			let str = '';
+			for (let i = 0; i < u8arr.length; i++) {
+				str += String.fromCharCode(u8arr[i]);
+			}
+			return str;
+		}
+		console.log(uint8ArrayToBinaryStr(result.binary));
 	}
+
+	// const first = result[0];
+	// if (first) {
+	// 	const a = await test.delete(first?.id);
+	// 	console.log(a);
+	// } else {
+	// 	console.log('没有数据');
+	// }
 }
 </script>
 

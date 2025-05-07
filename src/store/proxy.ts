@@ -1,7 +1,7 @@
 import { defineStore } from 'pinia';
 import type { SearchProxy, SearchProxyData } from '@/@types/api/proxy';
 import { StoreKey } from '@/config/store';
-import { searchProxy, SearchProxyKeys } from '@/api/proxy';
+import { searchProxy, SearchProxyKeys } from '@/config/proxy';
 
 /**
  * 数据获取网络代理配置

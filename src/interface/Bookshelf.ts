@@ -41,15 +41,51 @@ export abstract class Bookshelf {
 	/**
 	 * 搜索方法实现
 	 */
-	protected abstract handleSearch(keyword: string): Promise<Book[]>;
+	protected abstract handleSearch(keyword: string, page?: number, prevPage?: number): Promise<Book[]>;
+
+	private searchKeyword: string;
+	private page: number = 1;
+
+	/**
+	 * 搜索行为处理
+	 */
+	private async __search(keyword: string, prevPage?: number) {
+		const result = await this.handleSearch(keyword, this.page, prevPage);
+		this.searchDatas.splice(0, this.searchDatas.length, ...result);
+		return this.searchDatas;
+	}
 
 	/**
 	 * 触发搜索
 	 */
-	public async search(keyword: string) {
-		const result = await this.handleSearch(keyword);
-		this.searchDatas.splice(0, this.searchDatas.length, ...result);
-		return this.searchDatas;
+	public async search(keyword: string, page?: number) {
+		this.searchKeyword = keyword;
+		this.page = page || 1;
+		if (this.page <= 0) {
+			this.page = 1;
+		}
+		return await this.__search(keyword, this.page);
+	}
+
+	/**
+	 * 搜索下一页
+	 */
+	public async searchNext() {
+		const prev = this.page;
+		this.page++;
+		return await this.__search(this.searchKeyword, prev);
+	}
+
+	/**
+	 * 搜索上一页
+	 */
+	public async searchPrev() {
+		const prev = this.page;
+		this.page--;
+		if (this.page <= 0) {
+			this.page = 1;
+		}
+		return await this.__search(this.searchKeyword, prev);
 	}
 
 	/**

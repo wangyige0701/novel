@@ -14,8 +14,11 @@ export default class Book extends BaseTable<typeof Book> {
 	@Column('书籍 id')
 	id: number;
 
-	@Column({ name: 'source_id', type: Type.INTEGER, nullable: false }, '书籍来源 id')
+	@Column({ name: 'source_id', type: Type.INTEGER, nullable: false }, '书籍来源 id，如笔趣阁')
 	sourceId: number;
+
+	@Column({ name: 'query_id', type: Type.TEXT, nullable: false }, '书籍查询 id，可以是参数也可以是查询路径')
+	queryId: string;
 
 	@Column({ type: Type.TEXT, nullable: false }, '书籍名称')
 	name: string;

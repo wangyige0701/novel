@@ -17,8 +17,11 @@ export default class Chapter extends BaseTable<typeof Chapter> {
 	@Column({ name: 'book_id', type: Type.INTEGER, nullable: false }, '所属书籍 id')
 	bookId: number;
 
-	@Column({ name: 'source_id', type: Type.INTEGER, nullable: false }, '章节来源，记录编号')
+	@Column({ name: 'source_id', type: Type.INTEGER, nullable: false }, '章节来源，记录编号，如笔趣阁')
 	sourceId: number;
+
+	@Column({ name: 'query_id', type: Type.TEXT }, '章节查询 id，可以是参数也可以是查询路径')
+	queryId: string;
 
 	@Column({ name: 'prev_id', type: Type.INTEGER }, '上一个章节 id')
 	prevId: number;
@@ -29,7 +32,7 @@ export default class Chapter extends BaseTable<typeof Chapter> {
 	@Column({ type: Type.TEXT }, '章节标题')
 	title: string;
 
-	@Column({ type: Type.TEXT }, '章节内容')
+	@Column({ type: Type.TEXT }, '章节内容，是数组并且以 json 格式存储')
 	content: string;
 
 	@Column({ name: 'content_length', type: Type.INTEGER, default: 0 }, '章节内容长度')

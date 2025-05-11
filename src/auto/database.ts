@@ -1,3 +1,4 @@
+import SQLite from '@/common/database/SQLite';
 import { Constructor, Fn } from '@wang-yige/utils';
 
 type Clz = {
@@ -14,6 +15,9 @@ type Clz = {
  * 加载数据表
  */
 export async function loadDatabase() {
+	if (!SQLite.usable) {
+		return false;
+	}
 	const configs = import.meta.glob('../database/*.ts', {
 		eager: true,
 		import: 'default',

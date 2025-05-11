@@ -85,7 +85,11 @@ export function Table(options: string | TableOptions, _description?: string) {
 			configurable: false,
 		} as PropertyDescriptor;
 		/** 获取当前数据库对应的 sqlite 实例 */
-		const getSqlite = () => {
+		const getSqlite = (): InstanceType<typeof SQLite> => {
+			if (!SQLite.usable) {
+				// @ts-expect-error
+				return;
+			}
 			const config = DatabaseConfig[database];
 			return new SQLite(config.name, config.path);
 		};

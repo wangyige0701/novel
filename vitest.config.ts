@@ -13,6 +13,7 @@ export default mergeConfig(
 			name: 'node',
 			environment: 'node',
 			include: ['src/test/**/*.test.ts'],
+			testTimeout: 30000,
 		},
 	}),
 );

@@ -40,6 +40,9 @@ export abstract class Bookshelf {
 
 	/**
 	 * 搜索方法实现
+	 * @param keyword 搜索关键词
+	 * @param page 页码
+	 * @param prevPage 上一页页码，在不能直接通过接口传递页码时判断触发上一页还是下一页
 	 */
 	protected abstract handleSearch(keyword: string, page?: number, prevPage?: number): Promise<Book[]>;
 

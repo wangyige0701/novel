@@ -1,3 +1,3 @@
 import { BookItemInfo } from '.';
 
-export type SearchBookInfo = BookItemInfo;
+export type SearchBookInfo = Omit<BookItemInfo, 'id'>;

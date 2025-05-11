@@ -10,7 +10,9 @@ export interface BookContentType {
 	id: IDType;
 	title: string;
 	/** 每个元素是一段内容 */
-	content: string[];
+	contents: string[];
 	hasNext: boolean;
 	hasPrev: boolean;
+	prev?: IDType;
+	next?: IDType;
 }

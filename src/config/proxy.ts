@@ -7,7 +7,7 @@ export enum SearchProxyKeys {
 
 export const searchProxy: SearchProxy = {
 	[SearchProxyKeys.biqu]: {
-		domain: 'https://www.xbiqu6.com/',
+		domain: 'https://www.xbiqu6.com',
 		alias: SearchProxyKeys.biqu,
 		description: '笔趣阁',
 	},

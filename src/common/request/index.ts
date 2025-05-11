@@ -45,11 +45,11 @@ export class UseRequest {
 			throw new Error(`请求过于频繁，请稍后再试`);
 		}
 		if (this.isSync && RequestSync.has(url)) {
-			return RequestSync.get(url);
+			return RequestSync.get(url)!;
 		}
 		const isGet = this.isCache && this.method === 'GET';
 		if (isGet && RequestCache.has(url)) {
-			return RequestCache.get(url);
+			return RequestCache.get(url)!;
 		}
 		const res = uni.request({ ...this.options, method: this.method });
 		if (isGet) {
@@ -65,12 +65,25 @@ export class UseRequest {
 		const useRequest = new UseRequest(params(options, method));
 		return useRequest.request();
 	}
+}
 
-	static get(options: string | RequestConfig) {
-		return this.request(options, 'GET');
+/**
+ * 发送具体类型请求，会对返回结果进行解析
+ */
+export class Request extends UseRequest {
+	private static _parse(res: UniApp.RequestSuccessCallbackResult) {
+		if (res.statusCode >= 400 && res.statusCode < 600) {
+			// 400 和 500 的状态码会抛出错误
+			return Promise.reject(res.data);
+		}
+		return Promise.resolve(res.data);
 	}
 
-	static post(options: string | RequestConfig) {
-		return this.request(options, 'POST');
+	static async get(options: string | RequestConfig) {
+		return this._parse(await this.request(options, 'GET'));
+	}
+
+	static async post(options: string | RequestConfig) {
+		return this._parse(await this.request(options, 'POST'));
 	}
 }

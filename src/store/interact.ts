@@ -28,6 +28,9 @@ function bindType<T extends InteractBindTypeUse>(fn: T) {
 	return result;
 }
 
+/**
+ * 交互控制
+ */
 export const useInteractStore = defineStore(StoreKey.interact, () => {
 	let index = 0;
 	const list = shallowReactive<InteractStoreListItem[]>([]);

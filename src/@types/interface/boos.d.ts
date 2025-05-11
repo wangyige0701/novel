@@ -3,6 +3,7 @@ import type { IDType } from '..';
 export interface ChapterType {
 	id: IDType;
 	title: string;
+	page: number;
 }
 
 export interface BookContentType {

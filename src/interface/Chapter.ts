@@ -1,7 +1,8 @@
 import { createPromise, isDef, PromiseReject, PromiseResolve, type Constructor } from '@wang-yige/utils';
 import type { IDType } from '@/@types';
-import type { ChapterType, BookContentType } from '@/@types/interface/boos';
+import type { ChapterType } from '@/@types/interface/boos';
 import type { Content } from './Content';
+import type { ReadingChapterInfo } from '@/@types/pages/reading';
 
 export type ContentConstructor = Constructor<InstanceType<typeof Content>, ConstructorParameters<typeof Content>>;
 
@@ -33,7 +34,7 @@ export abstract class Chapter {
 	/** 书籍章节内容存放数组 */
 	private chapterDatas: (ChapterType & Link)[] = [];
 	/** 当前 */
-	private bookData: BookContentType | undefined = void 0;
+	private bookData: ReadingChapterInfo | undefined = void 0;
 
 	constructor(bookId: IDType) {
 		this.bookId = bookId;
@@ -46,7 +47,11 @@ export abstract class Chapter {
 				this.__init.status = true;
 			}
 		});
+		const content = this.bindContent();
+		this.__content = new content();
 	}
+
+	protected abstract bindContent(): any;
 
 	/**
 	 * 根据书籍 id 获取所有章节信息实现
@@ -85,8 +90,7 @@ export abstract class Chapter {
 		}
 		this.__init.resolve(
 			this.chapterDatas.map(item => ({
-				id: item.id,
-				title: item.title,
+				...item,
 			})),
 		);
 		this.chapterId = data[0]?.id;

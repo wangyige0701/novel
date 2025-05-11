@@ -6,7 +6,7 @@ import type { Chapter } from './Chapter';
  * 书籍类
  * - 加载章节信息
  */
-export class Book implements BookItemInfo {
+export abstract class Book {
 	private readonly __chapter: Chapter;
 
 	id: IDType;
@@ -21,7 +21,11 @@ export class Book implements BookItemInfo {
 		this.img = data.img;
 		this.author = data.author;
 		this.description = data.description;
+		const chapter = this.bindChapter();
+		this.__chapter = new chapter(data.id);
 	}
+
+	protected abstract bindChapter(): any;
 
 	/**
 	 * 初始化并获取所有章节信息

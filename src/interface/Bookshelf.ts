@@ -1,8 +1,8 @@
 import type { Clz, IDType } from '@/@types';
 import type { Chapter } from './Chapter';
 import type { Content } from './Content';
+import type { BookItemInfo } from '@/@types/pages';
 import { Book } from './Book';
-import { BookItemInfo } from '@/@types/pages';
 
 type BookConstructor = Clz<typeof Book>;
 type ChapterConstructor = Clz<typeof Chapter>;
@@ -27,16 +27,18 @@ export abstract class Bookshelf {
 	/** 书架中的书籍列表 */
 	private books: Book[] = [];
 	/** 查询的书籍列表 */
-	private searchDatas: Book[] = [];
+	private searchDatas: BookItemInfo[] = [];
 	/** 当前查看的书籍 */
 	private selectBook: Book | null = null;
 
 	constructor(chapter: ChapterConstructor, content: ContentConstructor) {
-		this.__book = Book;
 		this.__chapter = chapter;
 		this.__content = content;
 		// 实现数据库读取书架内容
+		this.__book = this.bindBook();
 	}
+
+	protected abstract bindBook(): any;
 
 	/**
 	 * 搜索方法实现
@@ -44,7 +46,7 @@ export abstract class Bookshelf {
 	 * @param page 页码
 	 * @param prevPage 上一页页码，在不能直接通过接口传递页码时判断触发上一页还是下一页
 	 */
-	protected abstract handleSearch(keyword: string, page?: number, prevPage?: number): Promise<Book[]>;
+	protected abstract handleSearch(keyword: string, page?: number, prevPage?: number): Promise<BookItemInfo[]>;
 
 	private searchKeyword: string;
 	private page: number = 1;
@@ -127,6 +129,11 @@ export abstract class Bookshelf {
 	}
 
 	/**
+	 * 在选择书之前处理数据，填入正确书籍信息
+	 */
+	protected abstract handleSelectBook(target: BookItemInfo): Promise<BookItemInfo>;
+
+	/**
 	 * 选择一本书
 	 */
 	public async select(id: IDType) {
@@ -134,7 +141,7 @@ export abstract class Bookshelf {
 		if (!target) {
 			return null;
 		}
-		this.selectBook = new this.__book(target);
+		this.selectBook = new this.__book(await this.handleSelectBook(target));
 		const chapter = new this.__chapter(id);
 		const content = new this.__content();
 		Object.defineProperty(chapter, '__content', {

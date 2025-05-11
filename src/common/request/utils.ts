@@ -19,7 +19,7 @@ export class RequestCache {
 			this.cacheMap.set(src, value);
 			setTimeout(() => {
 				this.cacheMap.delete(src);
-			});
+			}, time);
 		}
 	}
 }

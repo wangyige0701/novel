@@ -1,4 +1,4 @@
-import { isNumber } from '@wang-yige/utils';
+import { isBoolean, isNumber, isString } from '@wang-yige/utils';
 import type { RequestConfig } from '@/@types/common/request';
 import { params, RequestCache, RequestFrequent, RequestSync, type Config } from './utils';
 
@@ -20,11 +20,14 @@ export class UseRequest {
 		this.url = options.url;
 		this.method = options.method;
 
-		this.cacheTime = options.cache ?? -1;
-		if (!isNumber(this.cacheTime)) {
-			this.cacheTime = -1;
+		if (isNumber(options.cache)) {
+			this.cacheTime = options.cache ?? 5000;
+		} else if (isBoolean(options.cache)) {
+			this.cacheTime = options.cache ? -1 : 0;
+		} else {
+			throw new Error('cache 参数类型错误，需要为数字类型或布尔类型');
 		}
-		if (this.cacheTime <= 0) {
+		if (this.cacheTime === 0) {
 			this.isCache = false;
 		}
 		this.limitCount = options.frequent ?? -1;
@@ -79,8 +82,11 @@ export class Request extends UseRequest {
 		return Promise.resolve(res.data);
 	}
 
+	/**
+	 * `GET` 请求，默认设置 `cache` 为 `true`
+	 */
 	static async get(options: string | RequestConfig) {
-		return this._parse(await this.request(options, 'GET'));
+		return this._parse(await this.request(isString(options) ? options : { cache: true, ...options }, 'GET'));
 	}
 
 	static async post(options: string | RequestConfig) {

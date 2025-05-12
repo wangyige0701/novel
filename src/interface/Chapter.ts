@@ -51,6 +51,13 @@ export abstract class Chapter {
 		this.__content = new content();
 	}
 
+	/**
+	 * 获取内容对象实例
+	 */
+	public get content() {
+		return this.__content;
+	}
+
 	protected abstract bindContent(): any;
 
 	/**

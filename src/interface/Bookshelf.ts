@@ -5,8 +5,6 @@ import type { BookItemInfo } from '@/@types/pages';
 import { Book } from './Book';
 
 type BookConstructor = Clz<typeof Book>;
-type ChapterConstructor = Clz<typeof Chapter>;
-type ContentConstructor = Clz<typeof Content>;
 
 /**
  * 书架类
@@ -18,12 +16,8 @@ type ContentConstructor = Clz<typeof Content>;
  * @abstract `handleSearch`
  */
 export abstract class Bookshelf {
-	/** `Chapter` 类 */
-	private __chapter: ChapterConstructor;
 	/** `Book` 类 */
 	private __book: BookConstructor;
-	/** `Content` 类 */
-	private __content: ContentConstructor;
 	/** 书架中的书籍列表 */
 	private books: Book[] = [];
 	/** 查询的书籍列表 */
@@ -31,9 +25,7 @@ export abstract class Bookshelf {
 	/** 当前查看的书籍 */
 	private selectBook: Book | null = null;
 
-	constructor(chapter: ChapterConstructor, content: ContentConstructor) {
-		this.__chapter = chapter;
-		this.__content = content;
+	constructor() {
 		// 实现数据库读取书架内容
 		this.__book = this.bindBook();
 	}
@@ -142,15 +134,6 @@ export abstract class Bookshelf {
 			return null;
 		}
 		this.selectBook = new this.__book(await this.handleSelectBook(target));
-		const chapter = new this.__chapter(id);
-		const content = new this.__content();
-		Object.defineProperty(chapter, '__content', {
-			get: () => content,
-		});
-		Object.defineProperty(this.selectBook, '__chapter', {
-			get: () => chapter,
-		});
-		await this.selectBook.getChapters();
 		return this.selectBook;
 	}
 }

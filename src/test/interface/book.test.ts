@@ -28,7 +28,7 @@ describe('Book', () => {
 			return Promise.resolve({
 				id: '1',
 				title: '标题',
-				content: ['第一段'],
+				contents: ['第一段'],
 				hasNext: false,
 				hasPrev: false,
 			});

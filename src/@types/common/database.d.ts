@@ -80,3 +80,9 @@ export type SqliteIndexOption = {
 	origin: string;
 	partial: number;
 };
+
+export type SelectFormatOptions = {
+	args?: object | any[];
+	stringifyObjects?: boolean;
+	timeZone?: string;
+};

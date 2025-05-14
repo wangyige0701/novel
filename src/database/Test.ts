@@ -9,6 +9,7 @@ import { BaseTable } from '@/common/database/base';
 			{ name: 'idx_level', columns: ['level_id'] },
 			{ name: 'idx_card', columns: ['id_card'], unique: true },
 		],
+		disabled: import.meta.env.PROD,
 	},
 	'测试',
 )

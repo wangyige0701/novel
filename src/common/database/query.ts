@@ -6,7 +6,7 @@ import SQLite from './SQLite';
 
 type SQLMetadata = {
 	transaction: boolean; // 是否事务
-	sql?: { type: 'execute' | 'select'; statement: string; params?: any[] | object };
+	sql?: { type: 'execute' | 'select'; statement: string; params?: any[] | object; single: boolean; field?: string };
 };
 
 const USE_DATABASE = Symbol.for('USE_DATABASE');
@@ -80,12 +80,21 @@ function getSqlMetadata(target: any, key: string) {
 						await sqlite.beginTransaction();
 					}
 					if (options.sql) {
-						const { type, statement, params } = options.sql;
-						const sql = sqlstring.format(statement, params);
+						const { type, statement, params, single, field } = options.sql;
+						const sql = sqlstring.format(
+							statement,
+							params ? (isArray(params) ? [...params, ...args] : params) : args,
+						);
 						if (type === 'execute') {
 							await sqlite.execute(sql);
 						} else if (type === 'select') {
 							result = await sqlite.select(sql);
+							if (single) {
+								result = isArray(result) ? result[0] : result;
+								if (field) {
+									result = result[field];
+								}
+							}
 						} else {
 							throw new Error('不支持的 SQLite 操作类型');
 						}
@@ -138,11 +147,18 @@ export function Execute(sql: string, params?: any[]) {
 	return function (target: any, key: string) {
 		const metadata = getSqlMetadata(target, key);
 		if (metadata) {
-			metadata.sql = {
+			metadata.sql = metadata.sql || {
 				type: 'execute',
 				statement: sql,
 				params,
+				single: false,
 			};
+			if (metadata.sql.single) {
+				throw new Error('Single 和 Execute 不能同时使用');
+			}
+			metadata.sql.statement = sql;
+			metadata.sql.params = params;
+			metadata.sql.type = 'execute';
 		}
 	};
 }
@@ -154,11 +170,37 @@ export function Select(sql: string, params?: any[]) {
 	return function (target: any, key: string) {
 		const metadata = getSqlMetadata(target, key);
 		if (metadata) {
-			metadata.sql = {
+			metadata.sql = metadata.sql || {
 				type: 'select',
 				statement: sql,
 				params,
+				single: false,
 			};
+			metadata.sql.statement = sql;
+			metadata.sql.params = params;
+			metadata.sql.type = 'select';
+		}
+	};
+}
+
+/**
+ * 声明一个 SQLite 查询语句返回单个结果
+ * @param field 需要从查询的第一条结果中提取的字段
+ */
+export function Single(field?: string) {
+	return function (target: any, key: string) {
+		const metadata = getSqlMetadata(target, key);
+		if (metadata) {
+			metadata.sql = metadata.sql || {
+				type: 'select',
+				statement: '',
+				single: true,
+				field,
+			};
+			if (metadata.sql.type === 'execute') {
+				throw new Error('不能在 Execute 中使用 Single');
+			}
+			metadata.sql.single = true;
 		}
 	};
 }

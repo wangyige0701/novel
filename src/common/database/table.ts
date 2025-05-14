@@ -13,7 +13,13 @@ import {
 	isUndef,
 	toArray,
 } from '@wang-yige/utils';
-import type { ColumnMetadata, ColumnOptions, TableId, TableOptions } from '@/@types/common/database';
+import type {
+	ColumnMetadata,
+	ColumnOptions,
+	SelectFormatOptions,
+	TableId,
+	TableOptions,
+} from '@/@types/common/database';
 import DatabaseConfig, { Type } from '@/config/database';
 import SQLite from './SQLite';
 import { BaseTable, DisabledFields, SelectConditionArrays, SelectConditionKeys } from './base';
@@ -269,25 +275,16 @@ export function Table(options: string | TableOptions, _description?: string) {
 					instance,
 					'select',
 					async (
-						fields?: object | string,
+						fields?: object | boolean,
 						condition?: Arrayable<string> | any[] | boolean,
 						single?: boolean,
-						timeZone?: string,
 					) => {
-						if (isString(fields)) {
-							const args = condition as object | any[];
-							const stringifyObjects = single as boolean;
-							return await useSql(
-								getSqlite(),
-								[],
-								sqlstring.format(fields, args, stringifyObjects, timeZone),
-							);
-						}
 						if (isBoolean(fields)) {
 							single = fields;
 							condition = [];
 							fields = void 0;
 						} else if (isBoolean(condition)) {
+							// 第一个参数是字段，第二个参数是单条数据
 							single = condition;
 							condition = void 0;
 						} else if (isBoolean(single)) {
@@ -390,6 +387,22 @@ export function Table(options: string | TableOptions, _description?: string) {
 						});
 						const result = await useSql(getSqlite(), sqls);
 						return result;
+					},
+				);
+				_inject(
+					instance,
+					'sqlstring',
+					async (sql: string, formatOptions?: SelectFormatOptions, single?: boolean) => {
+						if (!isString(sql)) {
+							throw new Error('sql 必须是字符串');
+						}
+						const { args, stringifyObjects, timeZone } = (formatOptions || {}) as SelectFormatOptions;
+						const result = await useSql(
+							getSqlite(),
+							[],
+							sqlstring.format(sql, args, stringifyObjects, timeZone),
+						);
+						return single ? result[0] : result;
 					},
 				);
 				// 绑定所有经过转义的字段名

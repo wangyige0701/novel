@@ -5,6 +5,10 @@ export enum SearchProxyKeys {
 	biqu = 'biqu',
 }
 
+export const SourceIds = {
+	[SearchProxyKeys.biqu]: 1,
+};
+
 export const searchProxy: SearchProxy = {
 	[SearchProxyKeys.biqu]: {
 		domain: 'https://www.xbiqu6.com',

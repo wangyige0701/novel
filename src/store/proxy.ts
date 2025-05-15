@@ -1,7 +1,7 @@
 import { defineStore } from 'pinia';
 import type { SearchProxy, SearchProxyData } from '@/@types/api/proxy';
 import { StoreKey } from '@/config/store';
-import { searchProxy, SearchProxyKeys } from '@/config/proxy';
+import { searchProxy, SearchProxyKeys, SourceIds } from '@/config/proxy';
 
 /**
  * 数据获取网络代理配置
@@ -16,6 +16,9 @@ export const useSearchProxyStore = defineStore(StoreKey.searchProxy, () => {
 		}
 		return config.domain || '/';
 	});
+	const sourceId = computed(() => {
+		return SourceIds[current.value] || 0;
+	});
 	function getConfig() {
 		return (searchProxy[current.value] || {}) as SearchProxyData;
 	}
@@ -23,6 +26,8 @@ export const useSearchProxyStore = defineStore(StoreKey.searchProxy, () => {
 		current.value = key;
 	}
 	return {
+		/** 当前代理 id */
+		sourceId,
 		/** 请求路径 */
 		path,
 		switch: switchProxy,

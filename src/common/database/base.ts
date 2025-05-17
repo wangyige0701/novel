@@ -160,9 +160,9 @@ export class BaseTable<T extends Constructor<any, any[]>> {
 	/** sqlite 实例 */
 	static sqlite: SQLite;
 	/** 手动打开数据库，如果执行此函数则内部方法不会自动开启数据库，且需要手动执行关闭函数 */
-	open: Fn<[], BaseTable<T>>;
+	open: Fn<[], Promise<BaseTable<T>>>;
 	/** 手动关闭数据库 */
-	close: Fn<[], void>;
+	close: Fn<[], Promise<void>>;
 	/** 插入一条数据 */
 	insert: InsertFun<T>;
 	/** 更新指定 id 的数据，可以传入多个 id */

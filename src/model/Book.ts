@@ -1,10 +1,11 @@
-import type { Fn } from '@wang-yige/utils';
+import { isDef, type Fn } from '@wang-yige/utils';
 import type { IDType } from '@/@types';
 import { Database, Select, Single } from '@/common/database';
 import Book from '@/database/Book';
 import BookShelf from '@/database/BookShelf';
 import type { BookItemInfo } from '@/@types/pages';
 import { useSearchProxyStore } from '@/store/proxy';
+import Chapter from '@/database/Chapter';
 
 @Database('main')
 export class BookModel {
@@ -24,12 +25,62 @@ export class BookModel {
 	getBookshelf: Fn<[], Promise<any[]>>;
 
 	/**
+	 * 从书架移除书籍，同时删除书籍的章节信息和书籍信息
+	 */
+	async deleteFromBookshelf(queryId: IDType) {
+		const book = new BookModel.Book();
+		await book.open();
+		await BookModel.Book.sqlite.beginTransaction();
+		try {
+			await BookModel.Book.sqlite.commitTransaction();
+			await this.deleteBook(queryId);
+			await book.close();
+			return true;
+		} catch (error) {
+			await BookModel.Book.sqlite.rollbackTransaction();
+			await book.close();
+			return false;
+		}
+	}
+
+	private async deleteBook(queryId: IDType) {
+		const book = new BookModel.Book();
+		const query = await book.select({ id: true }, [
+			{ type: 'where', value: [`query_id = ${queryId}`, `source_id = ${useSearchProxyStore().sourceId}`] },
+		]);
+		const id = query[0].id;
+		if (isDef(id)) {
+			await book.delete(id);
+			await this.deleteChapters(id);
+			await this.toDeleteFromBookshelf(id);
+		}
+	}
+
+	private async deleteChapters(bookId: IDType) {
+		await new Chapter().open();
+		await new Chapter().execute(`DELETE FROM ${Chapter.name} WHERE book_id = ?;`, [bookId]);
+	}
+
+	private async toDeleteFromBookshelf(bookId: IDType) {
+		await new BookModel.Bookshelf().open();
+		const bookshelf = await new BookModel.Bookshelf().select({ id: true }, [
+			{ type: 'where', value: [`book_id = ${bookId}`] },
+		]);
+		const bookshelfId = bookshelf[0].id;
+		if (isDef(bookshelfId)) {
+			await new BookModel.Bookshelf().delete(bookshelfId);
+		}
+	}
+
+	/**
 	 * 插入书籍信息，并写入书架
 	 */
 	async insertBook(data: BookItemInfo) {
+		const book = new BookModel.Book();
+		await book.open();
 		await BookModel.Book.sqlite.beginTransaction();
 		try {
-			const insert = await new BookModel.Book().open().insert({
+			const insert = await book.insert({
 				sourceId: useSearchProxyStore().sourceId,
 				queryId: data.id,
 				name: data.name,
@@ -37,15 +88,14 @@ export class BookModel {
 				description: data.description,
 				img: data.img,
 			});
-			await new BookModel.Bookshelf().open().insert({
+			await new BookModel.Bookshelf().open();
+			await new BookModel.Bookshelf().insert({
 				bookId: insert.lastRowtId,
 			});
 			await BookModel.Book.sqlite.commitTransaction();
 		} catch (error) {
 			await BookModel.Book.sqlite.rollbackTransaction();
 		}
-		new BookModel.Book().close();
+		await book.close();
 	}
-
-	async removeBook(id: IDType) {}
 }

@@ -63,8 +63,8 @@ export class ChapterModel {
 	 */
 	async insertChapters(bookId: IDType, datas: ChapterType[]) {
 		const chapter = new ChapterModel.Chapter();
-		chapter.open();
-		ChapterModel.Chapter.sqlite.beginTransaction();
+		await chapter.open();
+		await ChapterModel.Chapter.sqlite.beginTransaction();
 		const insertIds = [];
 		try {
 			const sourceId = useSearchProxyStore().sourceId;
@@ -89,7 +89,7 @@ export class ChapterModel {
 		} catch (error) {
 			await ChapterModel.Chapter.sqlite.rollbackTransaction();
 		}
-		chapter.close();
+		await chapter.close();
 		return insertIds;
 	}
 }

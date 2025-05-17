@@ -116,18 +116,21 @@ export abstract class Bookshelf {
 	/**
 	 * 包装书籍对象
 	 */
-	public book(data: BookItemInfo) {
+	private book(data: BookItemInfo) {
 		return new this.__book(data);
 	}
 
 	/**
 	 * 书架移除书籍
 	 */
-	public remove(id: IDType) {
-		this.books.splice(
-			this.books.findIndex(item => String(item.id) === String(id)),
-			1,
-		);
+	public async remove(id: IDType) {
+		const result = await new BookModel().deleteFromBookshelf(id);
+		if (result) {
+			this.books.splice(
+				this.books.findIndex(item => String(item.id) === String(id)),
+				1,
+			);
+		}
 		return this;
 	}
 

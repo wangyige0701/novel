@@ -17,7 +17,7 @@ export class BiquBookshelf extends Bookshelf {
 		return parseSearchHtml(html);
 	}
 
-	protected async handleSelectBook(target: BookItemInfo) {
+	protected async handleAddBook(target: BookItemInfo) {
 		const html = await book(target.id)
 			.then(res => res as string)
 			.catch(() => '');

@@ -3,12 +3,16 @@ import type { IDType } from '@/@types';
 import type { ChapterType } from '@/@types/interface/boos';
 import type { Content } from './Content';
 import type { ReadingChapterInfo } from '@/@types/pages/reading';
+import { ChapterModel } from '@/model/Chapter';
+import { useSearchProxyStore } from '@/store/proxy';
 
 export type ContentConstructor = Constructor<InstanceType<typeof Content>, ConstructorParameters<typeof Content>>;
 
 type Link = {
-	next: ChapterType | undefined;
-	prev: ChapterType | undefined;
+	/** 数据库主索引 */
+	index: number;
+	next: (ChapterType & Link) | undefined;
+	prev: (ChapterType & Link) | undefined;
 };
 
 /**
@@ -82,17 +86,26 @@ export abstract class Chapter {
 	/**
 	 * 初始化章节信息
 	 */
-	public async init() {
+	public async init(index = 0) {
 		if (this.__init.status) {
 			return await this.__init.promise;
 		}
-		const data = (await this.handleGetChapters(this.bookId)) || [];
+		let datas = await new ChapterModel().getChapterByBookId(this.bookId, useSearchProxyStore().sourceId);
+		if (!datas.length) {
+			const gets = (await this.handleGetChapters(this.bookId)) || [];
+			const insertIds = await new ChapterModel().insertChapters(this.bookId, gets);
+			datas = gets.map((item, inedx) => {
+				return { ...item, index: insertIds[inedx] };
+			});
+		}
 		this.chapterDatas.length = 0;
-		for (const [index, item] of data.entries()) {
+		for (const [i, item] of datas.entries()) {
 			this.chapterDatas.push({
 				...item,
-				prev: data[index - 1],
-				next: data[index + 1],
+				// @ts-expect-error
+				prev: datas[i - 1],
+				// @ts-expect-error
+				next: datas[i + 1],
 			});
 		}
 		this.__init.resolve(
@@ -100,7 +113,7 @@ export abstract class Chapter {
 				...item,
 			})),
 		);
-		this.chapterId = data[0]?.id;
+		this.chapterId = datas[Math.max(0, index)]?.index;
 		if (isDef(this.chapterId)) {
 			this.bookData = await this.getContent(this.chapterId);
 		}
@@ -126,7 +139,7 @@ export abstract class Chapter {
 	public async getNext() {
 		await this.__init.promise;
 		if (this.bookData && this.bookData.hasNext && this.current?.next) {
-			return await this.getContent(this.current.next.id);
+			return await this.getContent(this.current.next.index);
 		}
 		return null;
 	}
@@ -137,7 +150,7 @@ export abstract class Chapter {
 	public async getPrev() {
 		await this.__init.promise;
 		if (this.bookData && this.bookData.hasPrev && this.current?.prev) {
-			return await this.getContent(this.current.prev.id);
+			return await this.getContent(this.current.prev.index);
 		}
 		return null;
 	}

@@ -1,6 +1,8 @@
 import type { IDType } from '@/@types';
 import type { BookItemInfo } from '@/@types/pages';
 import type { Chapter } from './Chapter';
+import { BookModel } from '@/model/Book';
+import { isDef, isUndef } from '@wang-yige/utils';
 
 /**
  * 书籍类
@@ -32,7 +34,8 @@ export abstract class Book {
 	 * @return 所有章节数组
 	 */
 	public async getChapters() {
-		return await this.__chapter.init();
+		const chapters = await this.__chapter.init();
+		return chapters;
 	}
 
 	/**

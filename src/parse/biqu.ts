@@ -1,11 +1,11 @@
 import type { ReadingChapterInfo } from '@/@types/pages/reading';
 import type { SearchBookInfo } from '@/@types/pages/search';
 import type { BookItemInfo } from '@/@types/pages';
+import type { ChapterType } from '@/@types/interface/boos';
 import { parse } from '@/common/document';
 import { Request } from '@/common/request';
-import { delay, Fn, ParallelTask } from '@wang-yige/utils';
+import { delay, type Fn, ParallelTask } from '@wang-yige/utils';
 import { useSearchProxyStore as proxy } from '@/store/proxy';
-import { ChapterType } from '@/@types/interface/boos';
 
 /**
  * 解析笔趣阁搜索结果
@@ -59,6 +59,7 @@ export async function parseBookChaptersHtml(
 ): Promise<ChapterType[]> {
 	let page = 1;
 	let h = parse(html);
+	let prev: ChapterType;
 	let chapters = h.$('.container div.row.row-section');
 	const chapterLists = chapters.$$('.listpage span.middle > select > option');
 	const _l = (html?: string, index = page) => {
@@ -75,11 +76,14 @@ export async function parseBookChaptersHtml(
 			const chapter = item.$('a');
 			const url = chapter.attr('href');
 			const name = chapter.text();
-			return {
-				page: index,
+			prev && (prev.nextId = url);
+			prev = {
 				id: url,
 				title: name,
+				prevId: prev?.id,
+				nextId: void 0,
 			};
+			return prev;
 		});
 	};
 	const lists = _l();

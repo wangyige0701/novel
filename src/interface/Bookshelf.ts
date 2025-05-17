@@ -1,8 +1,8 @@
 import type { Clz, IDType } from '@/@types';
-import type { Chapter } from './Chapter';
-import type { Content } from './Content';
 import type { BookItemInfo } from '@/@types/pages';
 import { Book } from './Book';
+import { BookModel } from '@/model/Book';
+import { useSearchProxyStore } from '@/store/proxy';
 
 type BookConstructor = Clz<typeof Book>;
 
@@ -40,8 +40,21 @@ export abstract class Bookshelf {
 	 */
 	protected abstract handleSearch(keyword: string, page?: number, prevPage?: number): Promise<BookItemInfo[]>;
 
+	/**
+	 * 在选择书之前处理数据，填入正确书籍信息
+	 */
+	protected abstract handleAddBook(target: BookItemInfo): Promise<BookItemInfo>;
+
 	private searchKeyword: string;
 	private page: number = 1;
+
+	/**
+	 * 初始化书架信息
+	 */
+	public async init() {
+		const datas = await new BookModel().getBookshelf();
+		this.books.splice(0, this.books.length, ...datas);
+	}
 
 	/**
 	 * 搜索行为处理
@@ -88,9 +101,14 @@ export abstract class Bookshelf {
 	/**
 	 * 书架插入书籍
 	 */
-	public add(data: Book) {
+	public async add(data: BookItemInfo) {
+		const book = new BookModel();
+		if (!(await book.hasBook(data.id, useSearchProxyStore().sourceId))) {
+			data = await this.handleAddBook(data);
+			await book.insertBook(data);
+		}
 		if (data && !this.books.find(item => String(item.id) === String(data.id))) {
-			this.books.push(data);
+			this.books.push(this.book(data));
 		}
 		return this;
 	}
@@ -121,19 +139,14 @@ export abstract class Bookshelf {
 	}
 
 	/**
-	 * 在选择书之前处理数据，填入正确书籍信息
-	 */
-	protected abstract handleSelectBook(target: BookItemInfo): Promise<BookItemInfo>;
-
-	/**
 	 * 选择一本书
 	 */
-	public async select(id: IDType) {
+	public select(id: IDType) {
 		const target = this.books.find(item => String(item.id) === String(id));
 		if (!target) {
 			return null;
 		}
-		this.selectBook = new this.__book(await this.handleSelectBook(target));
+		this.selectBook = target;
 		return this.selectBook;
 	}
 }

@@ -5,7 +5,7 @@ import { BaseTable } from '@/common/database/base';
 	{
 		name: 'book',
 		disabled: import.meta.env.DEV,
-		indexs: [{ name: 'source_id', columns: ['source_id'] }],
+		indexs: [{ name: 'idx_query_source', columns: ['source_id', 'query_id'] }],
 	},
 	'记录书籍信息，如作者、描述、名称等',
 )

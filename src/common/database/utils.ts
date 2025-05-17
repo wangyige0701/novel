@@ -301,7 +301,7 @@ export function parseConditions(condition: ElementOf<SelectConditionArrays<any>>
 		if (!isArray(value) || !value.every(isString)) {
 			throw new Error('where 条件必须为字符串或字符串数组');
 		}
-		return `WHERE ${value.map(i => sqlstring.escapeId(i)).join(' AND ')}`;
+		return `WHERE ${value.join(' AND ')}`;
 	}
 	if (type === 'order') {
 		if (!isObject(value) || !Object.values(value).every(i => i !== 'DESC' || i !== 'ASC')) {

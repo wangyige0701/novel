@@ -58,6 +58,7 @@ export type SelectConditionArrays<T extends object> = Array<
 
 /**
  * 查询方法重载
+ * @description 需要优化，select().where().order() => 进行链式调用
  */
 type SelectFun<T extends Constructor<any, any[]>> = {
 	/** 查询全部数据 */

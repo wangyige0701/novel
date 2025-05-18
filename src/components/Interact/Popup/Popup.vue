@@ -22,9 +22,9 @@
 					@click.stop="() => close(CloseTypes.Icon)"
 				></text>
 			</template>
-			<view class="flex flex-col full relative popup_content">
+			<view class="flex flex-col flex-1 full relative hidden">
 				<view v-if="props.title" class="flex flex-center popup_title">{{ props.title }}</view>
-				<view class="full">
+				<view class="full flex-1 hidden">
 					<template v-if="props.component">
 						<component :is="props.component" v-bind="{ ...props.componentProps }" />
 					</template>
@@ -278,9 +278,5 @@ defineExpose({
 	height: Scss.$font-xl;
 	font-size: Scss.$font-lg;
 	color: Scss.$text-color;
-}
-
-.popup_content {
-	height: calc(100% - 60rpx - (20rpx * 2));
 }
 </style>

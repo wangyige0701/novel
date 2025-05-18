@@ -2,7 +2,7 @@
 	<view class="full-screen">
 		<view class="status_bar"></view>
 		<view class="page">
-			<view v-bind="{ ...$attrs }">
+			<view class="full" v-bind="{ ...$attrs }">
 				<slot></slot>
 				<Interact />
 			</view>

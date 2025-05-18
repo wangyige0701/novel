@@ -118,7 +118,9 @@ defineExpose({
 }
 
 .modal_message {
-	max-height: calc(100% - 81rpx - (Scss.$font-xl * 1.5) - 17rpx);
+	--diff: calc(81rpx + (#{Scss.$font-xl} * 1.5) + 17rpx);
+	min-height: calc(250rpx - var(--diff));
+	max-height: calc(100% - var(--diff));
 	font-size: Scss.$font-lg;
 	padding: 17rpx;
 	color: Scss.$text-normal-color;

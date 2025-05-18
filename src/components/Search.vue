@@ -48,11 +48,13 @@ function search() {
 	if (!modelValue.value) {
 		return;
 	}
-	Path.navigateTo(Pages.Search, {
-		params: {
-			search: modelValue.value,
-		},
-	});
+	if (!props.back) {
+		Path.navigateTo(Pages.Search, {
+			params: {
+				search: modelValue.value,
+			},
+		});
+	}
 }
 
 function toBack() {

@@ -5,7 +5,7 @@
 		</view>
 		<view class="h-full flex flex-col flex-1 book_info">
 			<view class="flex flex-row justify-end">
-				<text class="icon-delete remove_book" @click="remove(`${props.id}`)"></text>
+				<text class="icon-delete remove_book" @click="remove(props)"></text>
 			</view>
 			<view class="flex flex-col">
 				<text class="text-ellipsis book_name">{{ props.name }}</text>
@@ -24,11 +24,11 @@ import Image from '@/components/Image.vue';
 
 const props = defineProps<BookItemInfo>();
 const emit = defineEmits<{
-	(e: 'remove', id: string): void;
+	(e: 'remove', data: BookItemInfo): void;
 }>();
 
-function remove(id: string) {
-	emit('remove', id);
+function remove(data: BookItemInfo) {
+	emit('remove', data);
 }
 </script>
 

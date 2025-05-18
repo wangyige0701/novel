@@ -8,8 +8,9 @@ import { createPinia } from 'pinia';
 import { isFunction } from '@wang-yige/utils';
 import { useInfoStore } from '@/store/info';
 import { useSearchProxyStore } from '@/store/proxy';
+import { SearchProxyKeys } from '@/config/proxy';
+import { initResolve } from '@/config/init';
 import App from './App.vue';
-import { SearchProxyKeys } from './config/proxy';
 
 // @ts-expect-error 添加 Buffer api，并禁止使用 Buffer
 globalThis.Buffer = Object.defineProperty(class {}, 'isBuffer', {
@@ -34,11 +35,13 @@ export function createApp() {
 		infoStore.set(key as keyof DeviceInfoResult, value);
 	}
 
-	// 加载数据库
-	loadDatabase();
-
 	// 默认的数据请求节点
 	useSearchProxyStore().switch(SearchProxyKeys.biqu);
+
+	// 加载数据库
+	loadDatabase().finally(() => {
+		initResolve(true);
+	});
 
 	return {
 		app,

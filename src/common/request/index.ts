@@ -1,4 +1,4 @@
-import { isBoolean, isNumber, isString } from '@wang-yige/utils';
+import { isBoolean, isNumber, isString, isUndef } from '@wang-yige/utils';
 import type { RequestConfig } from '@/@types/common/request';
 import { params, RequestCache, RequestFrequent, RequestSync, type Config } from './utils';
 
@@ -20,7 +20,7 @@ export class UseRequest {
 		this.url = options.url;
 		this.method = options.method;
 
-		if (isNumber(options.cache)) {
+		if (isNumber(options.cache) || isUndef(options.cache)) {
 			this.cacheTime = options.cache ?? 5000;
 		} else if (isBoolean(options.cache)) {
 			this.cacheTime = options.cache ? -1 : 0;

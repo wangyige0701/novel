@@ -28,6 +28,9 @@ function bindType<T extends InteractBindTypeUse>(fn: T) {
 	return result;
 }
 
+type Fulfilled<T extends any> = ((value: InteractResolve) => T | PromiseLike<T>) | null | undefined;
+type Rejected<T extends any> = ((reason: any) => PromiseLike<T>) | null | undefined;
+
 /**
  * 交互控制
  */
@@ -45,13 +48,13 @@ export const useInteractStore = defineStore(StoreKey.interact, () => {
 		};
 		return {
 			close: _close,
-			then: (onfulfilled?: ((value: InteractResolve) => void | PromiseLike<void>) | null | undefined) => {
+			then: <T extends any>(onfulfilled?: Fulfilled<T>) => {
 				return promise.then(onfulfilled);
 			},
-			catch: (onrejected?: ((reason: any) => PromiseLike<any>) | null | undefined) => {
+			catch: <T extends any>(onrejected?: Rejected<T>) => {
 				return promise.catch(onrejected);
 			},
-			finally: (onfinally?: (() => void) | null | undefined) => {
+			finally: <T extends any>(onfinally?: (() => T) | null | undefined) => {
 				return promise.finally(onfinally);
 			},
 		};

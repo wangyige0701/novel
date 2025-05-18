@@ -27,7 +27,6 @@ export abstract class Bookshelf {
 	private books: Book[] = [];
 	/** 查询的书籍列表 */
 	private searchDatas: BookItemInfo[] = [];
-	private isInit = false;
 
 	constructor() {
 		// 实现数据库读取书架内容
@@ -61,12 +60,9 @@ export abstract class Bookshelf {
 	 * 初始化书架信息
 	 */
 	public async init() {
-		if (this.isInit) {
-			return;
-		}
 		const datas = await new BookModel().getBookshelf();
-		this.books.splice(0, this.books.length, ...datas.map(this.package));
-		this.isInit = true;
+		const books = datas.map(item => this.package(item));
+		this.books.splice(0, this.books.length, ...books);
 	}
 
 	/**

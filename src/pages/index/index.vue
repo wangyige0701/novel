@@ -1,6 +1,8 @@
 <template>
 	<Page class="flex flex-col justify-start items-center container">
 		<Search :back="false" />
+		<!-- <Button type="danger" @click="openDatabase">打开数据库</Button>
+		<Button type="danger" @click="closeDatabase">关闭数据库</Button> -->
 		<view class="width-full flex flex-col flex-1 content scroll-y bookshelf">
 			<view class="width-full">
 				<template v-for="(item, index) of bookshelf" :key="item.id + '-' + index">
@@ -40,6 +42,10 @@ import Page from '@/components/Page.vue';
 import Search from '@/components/Search.vue';
 import Image from '@/components/Image.vue';
 import BookInfo from '@/components/pages/index/BookInfo.vue';
+import Button from '@/components/Button.vue';
+import SQLite from '@/common/database/SQLite';
+import database from '@/config/database';
+import { initPromise } from '@/config/init';
 
 backInteract();
 const bookshelf = shallowReactive<BookItemInfo[]>([]);
@@ -59,6 +65,7 @@ function operate(e: BookItemInfo) {
 			onRemove: remove,
 		},
 		direction: 'bottom',
+		button: false,
 	}).catch(VOID_FUNCTION);
 }
 
@@ -81,16 +88,27 @@ async function remove(data: BookItemInfo) {
 }
 
 async function init() {
+	const state = useInteractStore().loading();
 	const Bookshelf = useBookshelf().current;
 	const bs = new Bookshelf();
 	await bs.init().catch(VOID_FUNCTION);
 	bookshelf.splice(0, bookshelf.length, ...bs.datas);
+	state.close();
+}
+
+function openDatabase() {
+	const sqlite = new SQLite(database.main.name, database.main.path);
+	sqlite.open();
+}
+
+function closeDatabase() {
+	const sqlite = new SQLite(database.main.name, database.main.path);
+	sqlite.close();
 }
 
 onBeforeMount(async () => {
-	const state = useInteractStore().loading();
+	await initPromise;
 	await init();
-	state.close();
 });
 </script>
 

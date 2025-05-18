@@ -21,7 +21,11 @@ export class BookModel {
 	hasBook: Fn<[id: IDType, source: number], Promise<number>>;
 
 	/** 获取所有书架数据 */
-	@Select(`SELECT * FROM ${BookShelf.name} ORDER BY id ASC, sort DESC;`)
+	@Select(`
+		SELECT b.query_id AS id, b.name, b.img, b.author, b.description FROM ${BookShelf.name} AS bs
+		LEFT JOIN ${Book.name} AS b ON bs.book_id = b.id
+		ORDER BY id ASC, sort DESC;
+	`)
 	getBookshelf: Fn<[], Promise<any[]>>;
 
 	/**

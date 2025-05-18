@@ -3,6 +3,7 @@
 		type="default"
 		class="flex flex-center a-button"
 		:class="[`size_${props.size}`, `type_${props.type}`, props.disabled ? 'disabled' : '']"
+		v-bind="{ ...$attrs }"
 		@click.stop="click"
 	>
 		<template v-if="!props.disabled && props.loading">
@@ -42,6 +43,7 @@ function click(e: any) {
 	font-size: Scss.$font-lg;
 	color: Scss.$text-normal-color;
 	background-color: Scss.$white;
+	padding: 10rpx 12rpx;
 	border-radius: Scss.$border-radius-base;
 	border-width: 1rpx;
 	border-style: solid;
@@ -60,6 +62,7 @@ function click(e: any) {
 	}
 	&.size_small {
 		font-size: Scss.$font-base;
+		padding: 4rpx 6rpx;
 	}
 	&.type_default {
 		color: Scss.$text-normal-color;

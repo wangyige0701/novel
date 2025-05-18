@@ -13,8 +13,13 @@
 						<view class="hidden book_left">
 							<Image class="full" :src="item.img" mode="heightFix"></Image>
 						</view>
-						<view class="flex flex-col justify-evenly flex-1">
-							<text class="text-ellipsis book_title">{{ item.name }}</text>
+						<view class="flex flex-col justify-evenly flex-1 hidden">
+							<view class="flex flex-row flex-nowrap">
+								<text class="flex-1 text-ellipsis book_title">{{ item.name }}</text>
+								<view class="add_bookshelf">
+									<Button size="small" type="primary" @click="addBookshelf(item)">加入书架</Button>
+								</view>
+							</view>
 							<text class="text-ellipsis book_author">{{ item.author }}</text>
 							<text class="text-ellipsis book_desc">{{ item.description }}</text>
 						</view>
@@ -30,6 +35,7 @@ import type { SearchBookInfo } from '@/@types/pages/search';
 import Page from '@/components/Page.vue';
 import Search from '@/components/Search.vue';
 import Image from '@/components/Image.vue';
+import Button from '@/components/Button.vue';
 import { useBookshelf } from '@/store/bookshelf';
 import { useInteractStore } from '@/store/interact';
 
@@ -60,6 +66,29 @@ watch(
 		searchContent.value = '';
 	},
 );
+
+async function addBookshelf(item: SearchBookInfo) {
+	const { modal, loading, tip } = useInteractStore();
+	const select = await modal({
+		title: '提示',
+		message: `是否添加【${item.name}】到书架？`,
+	})
+		.then(() => true)
+		.catch(() => false);
+	if (!select) {
+		return;
+	}
+	const state = loading();
+	const Bookshelf = useBookshelf().current;
+	const result = await new Bookshelf().add(item).catch(() => false);
+	if (!result) {
+		state.close();
+		tip.error({ message: '添加失败' });
+		return;
+	}
+	state.close();
+	tip.success({ message: '添加成功' });
+}
 
 onLoad(options => {
 	const { search = '' } = options || {};
@@ -107,6 +136,10 @@ onLoad(options => {
 		font-size: Scss.$font-xl;
 		color: Scss.$text-color;
 		line-height: Scss.$font-xl * 1.8;
+	}
+	.add_bookshelf {
+		width: 120rpx;
+		line-height: Scss.$font-xl * 1.4;
 	}
 	.book_author,
 	.book_desc {

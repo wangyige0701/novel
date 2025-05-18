@@ -104,6 +104,7 @@ defineExpose({
 .modal {
 	width: 500rpx;
 	min-height: 250rpx;
+	max-height: 95%;
 	border-radius: Scss.$border-radius-lg;
 	background-color: Scss.$white;
 	transform: scale(1.2);
@@ -111,26 +112,28 @@ defineExpose({
 
 .modal_title {
 	font-size: Scss.$font-xl;
-	padding: 17px 15px 0;
+	line-height: 1.5em;
+	padding: 17rpx 15rpx 0;
 	color: Scss.$text-color;
 }
 
 .modal_message {
+	max-height: calc(100% - 81rpx - (Scss.$font-xl * 1.5) - 17rpx);
 	font-size: Scss.$font-lg;
-	padding: 17px;
+	padding: 17rpx;
 	color: Scss.$text-normal-color;
 }
 
 .modal_operation {
 	height: 80rpx;
-	border-top: 1px solid Scss.$border-splice-color;
+	border-top: 1rpx solid Scss.$border-splice-color;
 	border-radius: 0 0 Scss.$border-radius-lg Scss.$border-radius-lg;
 	background-color: Scss.$white;
 	overflow: hidden;
 	&::before {
 		content: '';
 		display: inline-block;
-		width: 1px;
+		width: 1rpx;
 		height: 50%;
 		position: absolute;
 		top: 50%;

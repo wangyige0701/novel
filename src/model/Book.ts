@@ -13,11 +13,11 @@ export class BookModel {
 	static Bookshelf = BookShelf;
 
 	@Single()
-	@Select(`SELECT * FROM ${Book.name} WHERE queryId = ? AND sourceId = ?;`)
+	@Select(`SELECT * FROM ${Book.name} WHERE query_id = ? AND source_id = ?;`)
 	selectById: Fn<[id: IDType, source: number], Promise<any>>;
 
 	@Single('COUNT(1)')
-	@Select(`SELECT COUNT(1) FROM ${Book.name} WHERE queryId = ? AND sourceId = ?;`)
+	@Select(`SELECT COUNT(1) FROM ${Book.name} WHERE query_id = ? AND source_id = ?;`)
 	hasBook: Fn<[id: IDType, source: number], Promise<number>>;
 
 	/** 获取所有书架数据 */
@@ -91,6 +91,7 @@ export class BookModel {
 			await new BookModel.Bookshelf().open();
 			await new BookModel.Bookshelf().insert({
 				bookId: insert.lastRowtId,
+				sort: 0,
 			});
 			await BookModel.Book.sqlite.commitTransaction();
 		} catch (error) {

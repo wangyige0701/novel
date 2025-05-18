@@ -68,6 +68,7 @@ export default class SQLite {
 	private name: string;
 	private path: string.JSURIString | string;
 	private __transaction: SQLiteTransaction | null = null;
+	private isTransaction: number = 0;
 
 	constructor(name: string, path: string.JSURIString | string) {
 		if (!SQLite.usable) {
@@ -180,6 +181,9 @@ export default class SQLite {
 	 * 开启事务
 	 */
 	public async beginTransaction() {
+		if (this.isTransaction++ > 0) {
+			return;
+		}
 		return await this.transaction.begin();
 	}
 
@@ -187,6 +191,9 @@ export default class SQLite {
 	 * 提交事务
 	 */
 	public async commitTransaction() {
+		if (--this.isTransaction > 0) {
+			return;
+		}
 		return await this.transaction.commit();
 	}
 
@@ -194,6 +201,9 @@ export default class SQLite {
 	 * 回滚事务
 	 */
 	public async rollbackTransaction() {
+		if (--this.isTransaction > 0) {
+			return;
+		}
 		return await this.transaction.rollback();
 	}
 

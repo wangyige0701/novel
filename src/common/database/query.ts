@@ -201,6 +201,7 @@ export function Single(field?: string) {
 				throw new Error('不能在 Execute 中使用 Single');
 			}
 			metadata.sql.single = true;
+			metadata.sql.field = field;
 		}
 	};
 }

@@ -119,6 +119,10 @@ export function Table(options: string | TableOptions, _description?: string) {
 				}
 			} catch (error) {
 				await sqlite.rollbackTransaction();
+				if (!selfDatabaseStatus) {
+					await sqlite.close();
+				}
+				throw error;
 			}
 			return result;
 		};
@@ -210,7 +214,9 @@ export function Table(options: string | TableOptions, _description?: string) {
 						return { lastRowtId: lastRowtId[0]?.['last_insert_rowid()'] };
 					};
 					if (isArray(fields)) {
-						await instance.open();
+						if (!selfDatabaseStatus) {
+							await instance.open();
+						}
 						const sqlite = getSqlite();
 						const results = [];
 						try {
@@ -219,10 +225,16 @@ export function Table(options: string | TableOptions, _description?: string) {
 								results.push(await _insert(field));
 							}
 							await sqlite.commitTransaction();
+							if (!selfDatabaseStatus) {
+								await instance.close();
+							}
 						} catch (error) {
 							await sqlite.rollbackTransaction();
+							if (!selfDatabaseStatus) {
+								await instance.close();
+							}
+							throw error;
 						}
-						await instance.close();
 						return results;
 					}
 					return _insert(fields);

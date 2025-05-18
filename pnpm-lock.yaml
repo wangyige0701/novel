@@ -54,8 +54,8 @@ importers:
         specifier: 3.0.0-4040520250104002
         version: 3.0.0-4040520250104002(postcss@8.5.3)(rollup@4.34.0)(vue@3.5.13(typescript@4.9.5))
       '@wang-yige/utils':
-        specifier: ^0.0.17
-        version: 0.0.17
+        specifier: ^0.0.18
+        version: 0.0.18
       pinia:
         specifier: ^2.3.1
         version: 2.3.1(typescript@4.9.5)(vue@3.5.13(typescript@4.9.5))
@@ -1721,8 +1721,8 @@ packages:
       '@types/node':
         optional: true
 
-  '@wang-yige/utils@0.0.17':
-    resolution: {integrity: sha512-Q4X5G8ZvWeX6pg5hN5hQ+u7WJqgdCF5cztcmwCvTwZLUzSaWBY3Wun8qRAsD5ay1pUZ0Gd0jD+wStOv9SkMaaw==}
+  '@wang-yige/utils@0.0.18':
+    resolution: {integrity: sha512-5u+zMn201PtAY1VusvBLD+r/dy5hfH+AvItWan7fubllKogwtO5XuDAgNGLnhuSAFM0YW3WHFdygv+kfWTdkfg==}
 
   '@wang-yige/utils@0.0.9':
     resolution: {integrity: sha512-VU3AR08kOMKNxgRY4DdQoU7reavLOPIaRWB+YOG9kJ+xR/wvA/p1EMe94ETP0Mz7CX4C0IH6q63HqeVdnkQc1Q==}
@@ -6240,7 +6240,7 @@ snapshots:
     optionalDependencies:
       '@types/node': 22.13.0
 
-  '@wang-yige/utils@0.0.17': {}
+  '@wang-yige/utils@0.0.18': {}
 
   '@wang-yige/utils@0.0.9': {}
 

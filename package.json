@@ -50,7 +50,7 @@
     "@dcloudio/uni-mp-weixin": "3.0.0-4040520250104002",
     "@dcloudio/uni-mp-xhs": "3.0.0-4040520250104002",
     "@dcloudio/uni-quickapp-webview": "3.0.0-4040520250104002",
-    "@wang-yige/utils": "^0.0.17",
+    "@wang-yige/utils": "^0.0.18",
     "pinia": "^2.3.1",
     "reflect-metadata": "^0.2.2",
     "sqlstring": "^2.3.3",

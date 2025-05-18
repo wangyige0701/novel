@@ -1,16 +1,16 @@
 <template>
 	<Page class="flex flex-col justify-start items-center container">
 		<Search v-model:model-value="searchContent" />
-		<view class="width-full flex flex-col flex-1 content">
+		<view class="width-full flex flex-col flex-1 hidden content">
 			<view class="search_tip">
 				<text>搜索结果</text>
 				<text class="search_result_num">{{ searchResult.length }}</text>
 				<text>条</text>
 			</view>
-			<view class="flex flex-col flex-1 search_list">
+			<view class="flex flex-col flex-1 scroll-y search_list">
 				<template v-for="(item, index) of searchResult" :key="index">
 					<view class="flex flex-row flex-nowrap search_item">
-						<view class="book_left">
+						<view class="hidden book_left">
 							<Image class="full" :src="item.img" mode="heightFix"></Image>
 						</view>
 						<view class="flex flex-col justify-evenly flex-1">
@@ -30,18 +30,36 @@ import type { SearchBookInfo } from '@/@types/pages/search';
 import Page from '@/components/Page.vue';
 import Search from '@/components/Search.vue';
 import Image from '@/components/Image.vue';
+import { useBookshelf } from '@/store/bookshelf';
+import { useInteractStore } from '@/store/interact';
 
 backInteract();
 const searchContent = ref('');
-const searchResult = shallowReactive<SearchBookInfo[]>([
-	{
-		id: '1',
-		name: '书籍1',
-		img: 'https://picsum.photos/70/90',
-		author: '作者1',
-		description: '书籍1的描述',
+const searchResult = shallowReactive<SearchBookInfo[]>([]);
+
+watch(
+	searchContent,
+	async newValue => {
+		if (newValue) {
+			const state = useInteractStore().loading();
+			const Bookshelf = useBookshelf().current;
+			const results = await new Bookshelf().search(newValue).catch(() => []);
+			searchResult.length = 0;
+			searchResult.push(...results);
+			state.close();
+		} else {
+			searchResult.length = 0;
+		}
 	},
-]);
+	{ immediate: true },
+);
+
+watch(
+	() => useBookshelf().current,
+	() => {
+		searchContent.value = '';
+	},
+);
 
 onLoad(options => {
 	const { search = '' } = options || {};
@@ -69,7 +87,6 @@ onLoad(options => {
 }
 
 .search_list {
-	overflow-y: scroll;
 	gap: Scss.$gap-base;
 	padding: Scss.$gap-base;
 }
@@ -79,9 +96,9 @@ onLoad(options => {
 	color: Scss.$text-normal-color;
 	font-size: Scss.$font-lg;
 	gap: Scss.$gap-base;
+	padding: 5px;
 	box-shadow: 0 0 5px Scss.$text-placeholder-color;
 	border-radius: Scss.$border-radius-base;
-	padding: 5px;
 	transition: box-shadow 0.1s ease;
 	&:active {
 		box-shadow: 0 0 5px Scss.$warning-hover-color;
@@ -100,6 +117,5 @@ onLoad(options => {
 .book_left {
 	width: 140rpx;
 	border-radius: Scss.$border-radius-base;
-	overflow: hidden;
 }
 </style>

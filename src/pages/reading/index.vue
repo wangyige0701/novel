@@ -1,62 +1,56 @@
 <template>
-	<Page class="width-full height-full">
-		<view class="width-full height-full scroll-y reading">
-			<view class="width-full content" v-html="unref(content)"></view>
+	<Page class="full">
+		<view class="full scroll-y reading">
+			<view>
+				<view class="width-full title">
+					<text>{{ data.title }}</text>
+				</view>
+				<view class="width-full content">
+					<template v-for="(item, index) of data.contents" :key="index">
+						<p class="paragraph">{{ item }}</p>
+					</template>
+				</view>
+			</view>
 			<view class="width-full flex flex-row flex-nowrap operate">
-				<text class="flex-1 flex flex-center change" @click="remove">上一章</text>
-				<text class="flex-1 flex flex-center change" @click="add">下一章</text>
+				<text class="flex-1 flex flex-center change" @click="prev">上一章</text>
+				<text class="flex-1 flex flex-center change" @click="next">下一章</text>
 			</view>
 		</view>
 	</Page>
 </template>
 
 <script setup lang="ts">
-import { unref } from 'vue';
 import { getReading } from '@/common/reading';
 import Page from '@/components/Page.vue';
-import Test from '@/database/Test';
-import { TestModel } from '@/model/Test';
-import { randomString } from '@wang-yige/utils';
+import { useInteractStore } from '@/store/interact';
+import { Fn } from '@wang-yige/utils';
 
 backInteract();
-const { page, content, loading } = getReading();
+const { closeWatch, data } = await getReading();
 
-const test = new Test();
-const testModel = new TestModel();
-
-async function add() {
-	console.log(test.id, test.name, test.gender);
-	const data = new Uint8Array([0x48, 0x65, 0x6c, 0x6c, 0x6f]);
-	const a = await test.update(1, {
-		binary: data,
-	});
-	console.log(a);
-	// console.log(await testModel.all());
-}
-
-async function remove() {
-	const result = await test.select(true);
-	if (result) {
-		console.log(result);
-
-		function uint8ArrayToBinaryStr(u8arr: Uint8Array<ArrayBuffer>) {
-			let str = '';
-			for (let i = 0; i < u8arr.length; i++) {
-				str += String.fromCharCode(u8arr[i]);
-			}
-			return str;
+let closeLoading: { close: Fn } & {};
+watch(
+	() => data.loading,
+	newValue => {
+		if (newValue) {
+			closeLoading = useInteractStore().loading();
+		} else {
+			closeLoading && closeLoading.close();
 		}
-		console.log(uint8ArrayToBinaryStr(result.binary));
-	}
+	},
+);
 
-	// const first = result[0];
-	// if (first) {
-	// 	const a = await test.delete(first?.id);
-	// 	console.log(a);
-	// } else {
-	// 	console.log('没有数据');
-	// }
+async function prev() {
+	await data.prev();
 }
+
+async function next() {
+	await data.next();
+}
+
+onBeforeUnmount(() => {
+	closeWatch && closeWatch();
+});
 </script>
 
 <style scoped lang="scss">
@@ -64,6 +58,10 @@ async function remove() {
 
 .reading {
 	--operate: 150rpx;
+}
+.title {
+	line-height: 2em;
+	margin: 0 auto;
 }
 .content {
 	min-height: calc(100% - var(--operate));

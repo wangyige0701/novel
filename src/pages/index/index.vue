@@ -1,11 +1,11 @@
 <template>
 	<Page class="flex flex-col justify-start items-center container">
 		<Search :back="false" />
-		<view class="width-full flex flex-col flex-1 content bookshelf">
+		<view class="width-full flex flex-col flex-1 content scroll-y bookshelf">
 			<view class="width-full">
 				<template v-for="(item, index) of bookshelf" :key="item.id + '-' + index">
 					<view class="width-full flex flex-row flex-nowrap bookshelf_item" @click.stop="select(item)">
-						<view class="height-full book_left">
+						<view class="height-full hidden book_left">
 							<Image class="full" :src="item.img" mode="heightFix" />
 						</view>
 						<view class="flex flex-col justify-evenly flex-1 hidden">
@@ -26,95 +26,72 @@
 				</template>
 			</view>
 		</view>
-		<radio-group @change="changeRadio">
-			<label v-for="(item, index) of test" :key="index">
-				<radio :value="item.name" :checked="item.name === 'tip'" />
-				<view>{{ item.name }}</view>
-			</label>
-		</radio-group>
-		<button @click="useTest">打开</button>
 	</Page>
 </template>
 
 <script setup lang="ts">
 import type { BookItemInfo } from '@/@types/pages';
-import Page from '@/components/Page.vue';
-import Search from '@/components/Search.vue';
-import Image from '@/components/Image.vue';
 import { Path } from '@/common/path';
 import { Pages } from '@/config/pages';
 import { useInteractStore } from '@/store/interact';
+import { VOID_FUNCTION } from '@wang-yige/utils';
+import { useBookshelf } from '@/store/bookshelf';
+import Page from '@/components/Page.vue';
+import Search from '@/components/Search.vue';
+import Image from '@/components/Image.vue';
 import BookInfo from '@/components/pages/index/BookInfo.vue';
 
 backInteract();
-const interactStore = useInteractStore();
-const bookshelf = shallowReactive<BookItemInfo[]>([
-	{
-		id: '1',
-		name: '书籍1',
-		img: 'https://picsum.photos/70/90',
-		author: '作者1',
-		description: Array.from({ length: 100 })
-			.map(() => '书籍1的描述')
-			.join(''),
-	},
-]);
+const bookshelf = shallowReactive<BookItemInfo[]>([]);
 
 function select(e: BookItemInfo) {
-	console.log(e);
+	const Bookshelf = useBookshelf().current;
+	new Bookshelf().select(e.id);
+	Path.navigateTo(Pages.Reading);
 }
 
-function operate(e: BookItemInfo) {}
-
-const current = ref(0);
-const test = [
-	{
-		name: 'tip',
-	},
-	{
-		name: 'popup',
-	},
-	{
-		name: 'modal',
-	},
-	{
-		name: 'loading',
-	},
-];
-function changeRadio(e: any) {
-	const index = test.findIndex(item => item.name === e.detail.value);
-	current.value = index;
+function operate(e: BookItemInfo) {
+	const { popup } = useInteractStore();
+	popup({
+		component: BookInfo,
+		componentProps: {
+			...e,
+			onRemove: remove,
+		},
+		direction: 'bottom',
+	}).catch(VOID_FUNCTION);
 }
-function useTest() {
-	const target = test[current.value]?.name;
-	const { popup, tip, modal, loading } = interactStore;
-	if (target === 'popup') {
-		popup({
-			title: '提示',
-			button: false,
-		});
-	} else if (target === 'tip') {
-		tip.warning({
-			message: '功能开发中',
-			position: 'stick-top',
-		});
-	} else if (target === 'modal') {
-		modal({
-			title: '提示',
-			message: '功能开发中',
-		})
-			.then(res => {
-				console.log(res);
-			})
-			.catch(err => {
-				console.log(err);
-			});
-	} else if (target === 'loading') {
-		loading({
-			duration: 2000,
-		});
+
+async function remove(data: BookItemInfo) {
+	const { loading, modal } = useInteractStore();
+	const select = await modal({
+		title: '提示',
+		message: `确定要删除【${data.name}】吗？`,
+	})
+		.then(() => true)
+		.catch(() => false);
+	if (!select) {
+		return;
 	}
+	const state = loading();
+	const Bookshelf = useBookshelf().current;
+	const bs = new Bookshelf();
+	await bs.remove(data.id);
+	state.close();
 }
+
+async function init() {
+	const Bookshelf = useBookshelf().current;
+	const bs = new Bookshelf();
+	await bs.init().catch(VOID_FUNCTION);
+	bookshelf.splice(0, bookshelf.length, ...bs.datas);
+}
+
+onBeforeMount(async () => {
+	const state = useInteractStore().loading();
+	await init();
+	state.close();
+});
 </script>
 
 <style scoped lang="scss">
@@ -122,7 +99,6 @@ function useTest() {
 
 .bookshelf {
 	gap: Scss.$gap-base;
-	overflow-y: scroll;
 	.bookshelf_item {
 		height: 200rpx;
 		gap: Scss.$gap-base;
@@ -139,7 +115,6 @@ function useTest() {
 .book_left {
 	width: 140rpx;
 	border-radius: Scss.$border-radius-base;
-	overflow: hidden;
 }
 
 .book_right_top {

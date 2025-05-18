@@ -38,7 +38,7 @@ export abstract class Chapter {
 	/** 书籍章节内容存放数组 */
 	private chapterDatas: (ChapterType & Link)[] = [];
 	/** 当前 */
-	private bookData: ReadingChapterInfo | undefined = void 0;
+	private contentData: ReadingChapterInfo | undefined = void 0;
 
 	constructor(bookId: IDType) {
 		this.bookId = bookId;
@@ -53,13 +53,6 @@ export abstract class Chapter {
 		});
 		const content = this.bindContent();
 		this.__content = new content();
-	}
-
-	/**
-	 * 获取内容对象实例
-	 */
-	public get content() {
-		return this.__content;
 	}
 
 	protected abstract bindContent(): any;
@@ -115,9 +108,13 @@ export abstract class Chapter {
 		);
 		this.chapterId = datas[Math.max(0, index)]?.index;
 		if (isDef(this.chapterId)) {
-			this.bookData = await this.getContent(this.chapterId);
+			this.contentData = await this.getContent(this.chapterId);
 		}
 		return await this.__init.promise;
+	}
+
+	public get content() {
+		return this.contentData;
 	}
 
 	/**
@@ -126,11 +123,11 @@ export abstract class Chapter {
 	public async getContent(chapterId: IDType) {
 		await this.__init.promise;
 		if (this.chapterId === chapterId) {
-			return this.bookData;
+			return this.contentData;
 		}
 		this.chapterId = chapterId;
-		this.bookData = await this.__content.getContent(chapterId);
-		return this.bookData;
+		this.contentData = await this.__content.getContent(chapterId);
+		return this.contentData;
 	}
 
 	/**
@@ -138,7 +135,7 @@ export abstract class Chapter {
 	 */
 	public async getNext() {
 		await this.__init.promise;
-		if (this.bookData && this.bookData.hasNext && this.current?.next) {
+		if (this.contentData && this.contentData.hasNext && this.current?.next) {
 			return await this.getContent(this.current.next.index);
 		}
 		return null;
@@ -149,7 +146,7 @@ export abstract class Chapter {
 	 */
 	public async getPrev() {
 		await this.__init.promise;
-		if (this.bookData && this.bookData.hasPrev && this.current?.prev) {
+		if (this.contentData && this.contentData.hasPrev && this.current?.prev) {
 			return await this.getContent(this.current.prev.index);
 		}
 		return null;

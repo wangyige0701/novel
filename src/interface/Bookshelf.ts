@@ -6,6 +6,8 @@ import { useSearchProxyStore } from '@/store/proxy';
 
 type BookConstructor = Clz<typeof Book>;
 
+const cache = new WeakMap<BookConstructor, Bookshelf>();
+
 /**
  * 书架类
  * - 新增书籍
@@ -16,18 +18,25 @@ type BookConstructor = Clz<typeof Book>;
  * @abstract `handleSearch`
  */
 export abstract class Bookshelf {
+	/** 当前查看的书籍 */
+	static book: Book | undefined;
+
 	/** `Book` 类 */
 	private __book: BookConstructor;
 	/** 书架中的书籍列表 */
 	private books: Book[] = [];
 	/** 查询的书籍列表 */
 	private searchDatas: BookItemInfo[] = [];
-	/** 当前查看的书籍 */
-	private selectBook: Book | null = null;
+	private isInit = false;
 
 	constructor() {
 		// 实现数据库读取书架内容
 		this.__book = this.bindBook();
+		if (!cache.has(this.__book)) {
+			cache.set(this.__book, this);
+		} else {
+			return cache.get(this.__book)!;
+		}
 	}
 
 	protected abstract bindBook(): any;
@@ -52,8 +61,12 @@ export abstract class Bookshelf {
 	 * 初始化书架信息
 	 */
 	public async init() {
+		if (this.isInit) {
+			return;
+		}
 		const datas = await new BookModel().getBookshelf();
-		this.books.splice(0, this.books.length, ...datas);
+		this.books.splice(0, this.books.length, ...datas.map(this.package));
+		this.isInit = true;
 	}
 
 	/**
@@ -108,7 +121,7 @@ export abstract class Bookshelf {
 			await book.insertBook(data);
 		}
 		if (data && !this.books.find(item => String(item.id) === String(data.id))) {
-			this.books.push(this.book(data));
+			this.books.push(this.package(data));
 		}
 		return this;
 	}
@@ -116,7 +129,7 @@ export abstract class Bookshelf {
 	/**
 	 * 包装书籍对象
 	 */
-	private book(data: BookItemInfo) {
+	private package(data: BookItemInfo) {
 		return new this.__book(data);
 	}
 
@@ -146,10 +159,10 @@ export abstract class Bookshelf {
 	 */
 	public select(id: IDType) {
 		const target = this.books.find(item => String(item.id) === String(id));
+		Bookshelf.book = target;
 		if (!target) {
 			return null;
 		}
-		this.selectBook = target;
-		return this.selectBook;
+		return Bookshelf.book;
 	}
 }
